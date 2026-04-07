@@ -1,0 +1,109 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\citation{keplerCNCF2023}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Progettazione e Realizzazione}{42}{chapter.3}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{cap:ProgettazioneRealizzazione}{{3}{42}{Progettazione e Realizzazione}{chapter.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Integrazione di Kepler per il monitoraggio energetico}{42}{section.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1.1}Funzionamento di Kepler}{43}{subsection.3.1.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces Architettura di Kepler per la raccolta dei consumi energetici in ambienti bare-metal e virtuali. In ambienti bare-metal, Kepler accede direttamente ai contatori hardware tramite RAPL, ottenendo misurazioni real-time senza necessità di modelli predittivi. }}{44}{figure.3.1}\protected@file@percent }
+\newlabel{fig:kepler-arch}{{3.1}{44}{Architettura di Kepler per la raccolta dei consumi energetici in ambienti bare-metal e virtuali. In ambienti bare-metal, Kepler accede direttamente ai contatori hardware tramite RAPL, ottenendo misurazioni real-time senza necessità di modelli predittivi}{figure.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1.2}Infrastruttura di supporto}{44}{subsection.3.1.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.2}{\ignorespaces Architettura dell'infrastruttura di monitoraggio energetico. I componenti di monitoraggio esterni (Kepler, Prometheus, Grafana) sono separati dagli store interni (etcd, InfluxDB), con Serverledge al centro che interagisce con entrambi i livelli.}}{45}{figure.3.2}\protected@file@percent }
+\newlabel{fig:infra-arch}{{3.2}{45}{Architettura dell'infrastruttura di monitoraggio energetico. I componenti di monitoraggio esterni (Kepler, Prometheus, Grafana) sono separati dagli store interni (etcd, InfluxDB), con Serverledge al centro che interagisce con entrambi i livelli}{figure.3.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Il modello di funzione logica con varianti}{46}{section.3.2}\protected@file@percent }
+\newlabel{sec:variant-model}{{3.2}{46}{Il modello di funzione logica con varianti}{section.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}Struttura della funzione e profilo energetico}{46}{subsection.3.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.1.1}Determinazione dei profili energetici iniziali}{47}{subsubsection.3.2.1.1}\protected@file@percent }
+\newlabel{eq:inv-joule}{{3.2.1}{48}{Determinazione dei profili energetici iniziali}{equation.3.2.1}{}}
+\newlabel{eq:cold-joule}{{3.2.2}{48}{Determinazione dei profili energetici iniziali}{equation.3.2.2}{}}
+\newlabel{lst:fibonacci-json}{{3.1}{48}{File di definizione delle varianti per la funzione \texttt {fibonacci}. Ciascuna variante specifica runtime, entry point, profilo energetico iniziale e modello di output}{lstlisting.3.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.1}File di definizione delle varianti per la funzione \texttt  {fibonacci}. Ciascuna variante specifica runtime, entry point, profilo energetico iniziale e modello di output.}{48}{lstlisting.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.2}Il modello di output e la classificazione dell'accuratezza}{49}{subsection.3.2.2}\protected@file@percent }
+\newlabel{sec:output-model}{{3.2.2}{49}{Il modello di output e la classificazione dell'accuratezza}{subsection.3.2.2}{}}
+\newlabel{lst:imageclassification-json}{{3.2}{50}{File di definizione delle varianti per la funzione \texttt {ImageClassification}. Il campo \texttt {quality} esprime l'accuratezza in forma discreta, adatta a output non numericamente quantificabili}{lstlisting.3.2}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.2}File di definizione delle varianti per la funzione \texttt  {ImageClassification}. Il campo \texttt  {quality} esprime l'accuratezza in forma discreta, adatta a output non numericamente quantificabili.}{50}{lstlisting.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces Modello di output adottato per ciascuna funzione. Per il tipo \texttt  {error} il valore riportato è \texttt  {error\_estimate}; per il tipo \texttt  {quality} il livello discreto assegnato.}}{51}{table.3.1}\protected@file@percent }
+\newlabel{tab:output-models}{{3.1}{51}{Modello di output adottato per ciascuna funzione. Per il tipo \texttt {error} il valore riportato è \texttt {error\_estimate}; per il tipo \texttt {quality} il livello discreto assegnato}{table.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.3}Registrazione e indicizzazione delle varianti in etcd}{51}{subsection.3.2.3}\protected@file@percent }
+\newlabel{sec:variant-registration}{{3.2.3}{51}{Registrazione e indicizzazione delle varianti in etcd}{subsection.3.2.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.3.1}Convenzione di denominazione}{52}{subsubsection.3.2.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.3.2}Struttura delle chiavi in etcd}{52}{subsubsection.3.2.3.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.3}{\ignorespaces Struttura delle chiavi etcd per la funzione logica \texttt  {fibonacci} con tre varianti. Le chiavi sotto \texttt  {/function/} contengono i profili completi aggiornati dal worker periodico. L'indice sotto \texttt  {/index/logical/} consente allo scheduler di recuperare efficientemente le sole varianti della funzione richiesta, senza scorrere l'intero store.}}{53}{figure.3.3}\protected@file@percent }
+\newlabel{fig:etcd-structure}{{3.3}{53}{Struttura delle chiavi etcd per la funzione logica \texttt {fibonacci} con tre varianti. Le chiavi sotto \texttt {/function/} contengono i profili completi aggiornati dal worker periodico. L'indice sotto \texttt {/index/logical/} consente allo scheduler di recuperare efficientemente le sole varianti della funzione richiesta, senza scorrere l'intero store}{figure.3.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}Misurazione e aggiornamento adattivo dei profili energetici}{54}{section.3.3}\protected@file@percent }
+\newlabel{sec:worker}{{3.3}{54}{Misurazione e aggiornamento adattivo dei profili energetici}{section.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.1}Tracciamento dei container e conteggio delle invocazioni}{54}{subsection.3.3.1}\protected@file@percent }
+\newlabel{subsec:container-registry}{{3.3.1}{54}{Tracciamento dei container e conteggio delle invocazioni}{subsection.3.3.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.4}{\ignorespaces Schema del feedback loop energetico. Il worker periodico legge le metriche cumulative da Kepler tramite Prometheus e il numero di invocazioni dal livello di esecuzione, calcola i delta, applica un filtro EMA e aggiorna il profilo persistito in etcd, archiviando contestualmente i campioni in InfluxDB.}}{55}{figure.3.4}\protected@file@percent }
+\newlabel{fig:worker-architecture}{{3.4}{55}{Schema del feedback loop energetico. Il worker periodico legge le metriche cumulative da Kepler tramite Prometheus e il numero di invocazioni dal livello di esecuzione, calcola i delta, applica un filtro EMA e aggiorna il profilo persistito in etcd, archiviando contestualmente i campioni in InfluxDB}{figure.3.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.2}Il worker periodico di raccolta}{56}{subsection.3.3.2}\protected@file@percent }
+\newlabel{subsec:worker-periodico}{{3.3.2}{56}{Il worker periodico di raccolta}{subsection.3.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.3}Attribuzione dell'energia per invocazione e gestione del lag}{57}{subsection.3.3.3}\protected@file@percent }
+\newlabel{subsec:lag}{{3.3.3}{57}{Attribuzione dell'energia per invocazione e gestione del lag}{subsection.3.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.4}Aggiornamento del profilo tramite media mobile esponenziale}{57}{subsection.3.3.4}\protected@file@percent }
+\newlabel{subsec:ema}{{3.3.4}{57}{Aggiornamento del profilo tramite media mobile esponenziale}{subsection.3.3.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.5}Archiviazione su InfluxDB}{58}{subsection.3.3.5}\protected@file@percent }
+\newlabel{subsec:influxdb}{{3.3.5}{58}{Archiviazione su InfluxDB}{subsection.3.3.5}{}}
+\citation{jouleguard}
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}Lo scheduler energy-aware}{59}{section.3.4}\protected@file@percent }
+\newlabel{sec:scheduler}{{3.4}{59}{Lo scheduler energy-aware}{section.3.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4.1}Il consenso esplicito dell'utente}{60}{subsection.3.4.1}\protected@file@percent }
+\newlabel{sec:scheduler:consenso}{{3.4.1}{60}{Il consenso esplicito dell'utente}{subsection.3.4.1}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces \texttt  {SubmitRequest} con variant selection opt-in}}{61}{algorithm.1}\protected@file@percent }
+\newlabel{alg:submit}{{1}{61}{Il consenso esplicito dell'utente}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4.2}Selezione per errore minimo}{61}{subsection.3.4.2}\protected@file@percent }
+\newlabel{sec:scheduler:error}{{3.4.2}{61}{Selezione per errore minimo}{subsection.3.4.2}{}}
+\newlabel{eq:error_first}{{3.4.1}{62}{Selezione per errore minimo}{equation.3.4.1}{}}
+\newlabel{eq:energy_estimate}{{3.4.2}{63}{Selezione per errore minimo}{equation.3.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4.3}Selezione con vincolo energetico}{63}{subsection.3.4.3}\protected@file@percent }
+\newlabel{sec:scheduler:budget}{{3.4.3}{63}{Selezione con vincolo energetico}{subsection.3.4.3}{}}
+\newlabel{eq:f_strict}{{3.4.3}{64}{Selezione con vincolo energetico}{equation.3.4.3}{}}
+\newlabel{eq:f_relaxed}{{3.4.4}{64}{Selezione con vincolo energetico}{equation.3.4.4}{}}
+\newlabel{eq:v1}{{3.4.5}{64}{Selezione con vincolo energetico}{equation.3.4.5}{}}
+\newlabel{eq:v2}{{3.4.6}{64}{Selezione con vincolo energetico}{equation.3.4.6}{}}
+\newlabel{eq:tradeoff}{{3.4.7}{65}{Selezione con vincolo energetico}{equation.3.4.7}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces \texttt  {SelectEnergyAwareVariant}: politica a casi}}{66}{algorithm.2}\protected@file@percent }
+\newlabel{alg:select}{{2}{66}{Selezione con vincolo energetico}{algorithm.2}{}}
+\@setckpt{src/capitoli/03-ProgettazioneRealizzazione}{
+\setcounter{page}{67}
+\setcounter{equation}{7}
+\setcounter{enumi}{0}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{3}
+\setcounter{section}{4}
+\setcounter{subsection}{3}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{4}
+\setcounter{table}{1}
+\setcounter{float@type}{16}
+\setcounter{lofdepth}{1}
+\setcounter{lotdepth}{1}
+\setcounter{parentequation}{0}
+\setcounter{section@level}{0}
+\setcounter{Item}{0}
+\setcounter{Hfootnote}{1}
+\setcounter{bookmark@seq@number}{47}
+\setcounter{lstnumber}{29}
+\setcounter{algorithm}{2}
+\setcounter{ALG@line}{32}
+\setcounter{ALG@rem}{0}
+\setcounter{ALG@nested}{0}
+\setcounter{ALG@Lnr}{2}
+\setcounter{ALG@blocknr}{12}
+\setcounter{ALG@storecount}{0}
+\setcounter{ALG@tmpcounter}{0}
+\setcounter{obs}{0}
+\setcounter{pro}{0}
+\setcounter{teor}{0}
+\setcounter{defn}{0}
+\setcounter{lstlisting}{2}
+}

@@ -1,0 +1,21 @@
+\chapter{Progettazione e Realizzazione}
+\label{cap:ProgettazioneRealizzazione}
+
+\emph{In questo capitolo vengono descritte le scelte progettuali e i meccanismi 
+realizzati per estendere Serverledge con capacità di monitoraggio e 
+schedulazione energeticamente consapevole. Viene dapprima introdotto il 
+modello di funzione logica con varianti energetiche, che costituisce 
+l'astrazione fondamentale su cui si basa l'intero sistema. Si descrive 
+quindi l'integrazione di Kepler per la misurazione dei consumi a livello 
+di container e il worker periodico responsabile dell'aggiornamento adattivo 
+dei profili energetici delle varianti. Infine, viene illustrata la logica 
+decisionale dello scheduler energy-aware, progettato per selezionare a 
+runtime la variante più accurata nel rispetto di un eventuale vincolo 
+energetico, subordinatamente al consenso esplicito dell'utente.}
+\input{src/section/chapter3/section1/UtilizzoKepler}
+\input{src/section/chapter3/section2/variants}
+%\input{src/section/chapter3/section3/AggiornamentoAdattivo}
+
+\input{src/section/chapter3/section3/AggiornamentoAdattivo}
+\input{src/section/chapter3/section4/Scheduler}
+

@@ -1,0 +1,18 @@
+\subsection{Verso uno scheduling energy-aware con consenso esplicito}
+
+La combinazione tra (i)~l'adozione crescente di architetture edge--cloud
+ibride, (ii)~i vincoli energetici stringenti nei nodi edge e
+(iii)~la disponibilità di misurazioni energetiche a granularità
+container-level rende oggi possibile e necessario studiare meccanismi
+di esecuzione in grado di controllare dinamicamente l'energia
+associata alle funzioni serverless.
+
+Tuttavia, la riduzione del consumo energetico ottenuta tramite
+approssimazione introduce un compromesso con l'accuratezza del
+risultato che non può essere gestito unilateralmente dalla piattaforma.
+Tale compromesso richiede un \emph{consenso esplicito} da parte
+dell'utente che invoca la funzione: solo in presenza di tale consenso
+lo scheduler è autorizzato a selezionare varianti approssimate.
+Questa scelta progettuale garantisce che il comportamento del sistema
+resti trasparente e controllabile, distinguendo nettamente tra
+ottimizzazione energetica e degradazione indesiderata della qualità.

@@ -1,0 +1,18 @@
+\subsection{Approximate Computing come leva per la riduzione dei consumi}
+
+Una direzione promettente per la riduzione del consumo energetico
+in ambito FaaS è rappresentata dal paradigma dell'\emph{Approximate
+Computing}, che consente di ridurre il costo computazionale
+accettando, in modo controllato, una diminuzione dell'accuratezza
+del risultato prodotto. Lavori come JouleGuard~\cite{jouleguard}
+hanno mostrato come sia possibile progettare meccanismi di controllo
+runtime capaci di rispettare un budget energetico prefissato,
+regolando dinamicamente il livello di approssimazione dell'esecuzione.
+
+Applicata al paradigma FaaS, questa idea si traduce nella possibilità
+di associare a una stessa funzione logica più varianti implementative,
+caratterizzate da diversi profili energetici e da diversi livelli
+di accuratezza del risultato. La selezione della variante da eseguire
+può quindi diventare una decisione dello scheduler, guidata da
+informazioni energetiche aggiornate a runtime e dai vincoli
+espressi dall'utente al momento dell'invocazione.

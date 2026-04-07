@@ -1,0 +1,45 @@
+\subsection{Infrastruttura di supporto}
+
+L'avvio dell'infrastruttura di monitoraggio è gestito dallo script 
+\texttt{StartMetrics.sh}, che inizializza come container Docker tutti 
+i servizi necessari al funzionamento del sistema.  
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/infrastructure-diagram.jpg}
+    \caption{Architettura dell'infrastruttura di monitoraggio energetico. 
+    I componenti di monitoraggio esterni (Kepler, Prometheus, Grafana) sono 
+    separati dagli store interni (etcd, InfluxDB), con Serverledge al centro 
+    che interagisce con entrambi i livelli.}
+    \label{fig:infra-arch}
+\end{figure}
+
+I componenti avviati,  come mostrato anche in Figura~\ref{fig:infra-arch}, sono i seguenti:
+
+\begin{itemize}
+    \item \textbf{Kepler}: eseguito in modalità privilegiata con accesso
+ a \texttt{/sys}, \texttt{/proc} e al socket Docker dell'host, 
+    condizioni necessarie per la lettura dei contatori RAPL e 
+    l'associazione dei consumi ai container tramite cgroup.
+    
+    \item \textbf{Prometheus}: configurato per effettuare lo scraping 
+    periodico delle metriche esposte da Kepler, rendendole disponibili 
+    tramite API di interrogazione.
+    
+    \item \textbf{InfluxDB}: database a serie temporali utilizzato per 
+    l'archiviazione storica dei campioni energetici prodotti dal 
+    sistema ad ogni ciclo di raccolta.
+    
+    \item \textbf{etcd}: store distribuito chiave-valore che funge da 
+    registro delle funzioni e delle relative varianti, inclusi i profili 
+    energetici aggiornati dinamicamente a runtime.
+    
+    \item \textbf{Grafana}: strumento di visualizzazione utilizzato per 
+    il monitoraggio in tempo reale dei consumi durante gli esperimenti.
+\end{itemize}
+
+Una volta avviata, l'infrastruttura opera in modo autonomo: Kepler 
+rileva i container Docker presenti sull'host e ne aggiorna le metriche 
+energetiche ad ogni ciclo di campionamento; Prometheus le raccoglie e 
+le rende interrogabili; il sistema interno di Serverledge, descritto 
+nelle sezioni successive, le legge periodicamente per aggiornare i 
+profili energetici delle varianti di funzione.

@@ -1,0 +1,24 @@
+\subsection{Le criticità energetiche dell'esecuzione all'edge}
+
+Nonostante i benefici in termini di latenza e prossimità
+ai dati, l'esecuzione all'edge introduce criticità significative.
+I nodi edge sono tipicamente caratterizzati da risorse
+computazionali limitate, eterogeneità hardware e condizioni
+operative variabili. A differenza dei data center cloud,
+progettati per offrire elevata capacità e ridondanza, i nodi
+edge devono operare con vincoli stringenti su CPU, memoria e,
+soprattutto, energia disponibile.
+
+In molti scenari applicativi -- dispositivi alimentati a batteria,
+infrastrutture soggette a limiti di potenza, contesti IoT -- l'energia
+non rappresenta soltanto un costo operativo, ma una risorsa limitata
+e dinamica. La letteratura sul resource scheduling in ambienti edge
+evidenzia come la gestione efficiente delle risorse, inclusa
+l'energia, costituisca una delle principali sfide ancora aperte
+\cite{Luo2021_EdgeSchedulingSurvey,Kar2023_OffloadingFederatedSurvey}.
+
+In tali contesti non è sufficiente adottare politiche che
+minimizzano il consumo medio di energia: diventa necessario
+controllare l'energia associata alle singole esecuzioni,
+garantendo il rispetto di budget energetici prefissati
+e potenzialmente variabili nel tempo.

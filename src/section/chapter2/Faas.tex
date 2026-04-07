@@ -1,0 +1,42 @@
+\section{Il paradigma FaaS in ambienti cloud-edge}
+\label{sec:faas_cloud_edge}
+
+Negli ambienti cloud-edge l'elaborazione è distribuita su un insieme
+eterogeneo di nodi di calcolo, caratterizzati da differenti capacità
+computazionali, disponibilità di memoria, ampiezza di banda e latenza
+di rete. Nel paradigma Function-as-a-Service, le applicazioni sono
+scomposite in funzioni stateless invocate su richiesta, la cui
+esecuzione è demandata alla piattaforma. In un contesto cloud-edge,
+ciascuna funzione può essere eseguita localmente su un nodo edge,
+oppure instradata verso altri nodi o verso il cloud, in funzione
+dello stato delle risorse disponibili al momento dell'invocazione.
+
+Le differenze strutturali tra nodi cloud e nodi edge rendono il
+consumo energetico un fattore particolarmente rilevante in questi
+scenari. I nodi edge dispongono tipicamente di risorse limitate e
+operano in condizioni di maggiore variabilità del carico, spesso
+in assenza di infrastrutture di raffreddamento dedicate. Di
+conseguenza, le decisioni di allocazione e gestione delle funzioni
+non possono basarsi esclusivamente su metriche prestazionali, ma
+devono tenere conto dell'impatto energetico delle scelte effettuate,
+soprattutto in presenza di vincoli operativi stringenti.
+
+Le tecniche discusse nelle sezioni precedenti — scheduling
+energeticamente consapevole, power capping e meccanismi applicativi
+basati su approximate computing — sono state sviluppate prevalentemente
+in contesti cloud o HPC, con assunzioni sull'infrastruttura che non
+sempre si trasferiscono direttamente all'ambiente cloud-edge. In
+particolare, la modularità della piattaforma serverless di riferimento
+è un requisito determinante: affinché meccanismi di controllo
+energetico possano essere integrati senza alterare il modello di
+interazione lato utente, l'architettura della piattaforma deve
+esporre punti di estensione adeguati a livello di scheduling e
+gestione delle funzioni.
+
+In questa prospettiva, la scelta della piattaforma serverless su
+cui condurre la sperimentazione non è indifferente. Nella sezione
+seguente viene presentata Serverledge, la piattaforma adottata come
+riferimento nel presente lavoro, descrivendone le caratteristiche
+architetturali rilevanti ai fini della ricerca.
+
+\input{src/subsubsection/Chapter2/Serverledge}

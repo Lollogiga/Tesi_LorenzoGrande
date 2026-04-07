@@ -1,0 +1,103 @@
+\subsection{Il modello di output e la classificazione dell'accuratezza}
+\label{sec:output-model}
+
+Per consentire allo scheduler di confrontare le varianti in termini di 
+accuratezza, ciascuna variante è dotata di un \texttt{OutputModel} che 
+descrive la qualità del suo output. Il modello supporta due tipologie 
+di classificazione, scelte in base alla natura computazionale della 
+funzione:
+
+\begin{itemize}
+    \item \textbf{Tipo \texttt{error}}: adatto a funzioni il cui output 
+    è un valore numerico misurabile. L'accuratezza è espressa tramite 
+    il campo \texttt{error\_estimate}, che rappresenta l'errore relativo 
+    atteso rispetto alla variante di riferimento. Una variante esatta 
+    presenta \texttt{error\_estimate = 0.0}, mentre varianti approssimate 
+    presentano valori positivi proporzionali alla deviazione introdotta 
+    dalla semplificazione algoritmica adottata.
+
+    \item \textbf{Tipo \texttt{quality}}: adatto a funzioni il cui 
+    output non è facilmente quantificabile con un errore numerico, 
+    come classificatori o modelli di machine learning. L'accuratezza 
+    è espressa tramite un livello discreto: \texttt{high}, 
+    \texttt{medium} o \texttt{low}, che riflette la qualità complessiva 
+    del risultato prodotto dalla variante.
+\end{itemize}
+
+Il ~\autoref{lst:imageclassification-json} mostra un esempio 
+applicativo del tipo \texttt{quality} per la funzione 
+\texttt{ImageClassification}, in cui la variante base utilizza un 
+modello di rete neurale più accurato ma più oneroso, mentre la 
+variante \texttt{Light} adotta un modello più compatto a qualità ridotta.
+
+\begin{lstlisting}[
+    language=json,
+    caption={File di definizione delle varianti per la funzione 
+    \texttt{ImageClassification}. Il campo \texttt{quality} esprime 
+    l'accuratezza in forma discreta, adatta a output non numericamente 
+    quantificabili.},
+    label={lst:imageclassification-json}
+]
+{
+  "variants": [
+    {
+      "id": "base",
+      "runtime": "python-ml",
+      "entry_point": "ImageClassification.handler",
+      "src": "ImageClassification.py",
+      "energy": {
+        "cold_start_joule": 1.894736842,
+        "invocation_joule": 1.455263158
+      },
+      "output": { "type": "quality", "quality": "high" },
+      "is_approximate": false
+    },
+    {
+      "id": "Light",
+      "runtime": "python-ml",
+      "entry_point": "ImageClassificationLight.handler",
+      "src": "ImageClassificationLight.py",
+      "energy": {
+        "cold_start_joule": 1.071052329,
+        "invocation_joule": 0.22894768
+      },
+      "output": { "type": "quality", "quality": "low" },
+      "is_approximate": true
+    }
+  ]
+}
+\end{lstlisting}
+
+Lo scheduler converte internamente entrambe le rappresentazioni in un 
+punteggio numerico (\emph{ErrorScore}) secondo una scala uniforme: 
+per il tipo \texttt{error} viene utilizzato direttamente il valore di 
+\texttt{error\_estimate}, mentre per il tipo \texttt{quality} i livelli 
+\texttt{high}, \texttt{medium} e \texttt{low} vengono mappati 
+rispettivamente a $0.0$, $1.0$ e $2.0$. La selezione privilegia 
+sempre la variante con il punteggio più basso compatibile con il 
+vincolo energetico, garantendo che la qualità del risultato sia 
+massimizzata nei limiti imposti dalla richiesta.
+
+La Tabella~\ref{tab:output-models} riassume il modello di output 
+adottato per ciascuna delle funzioni utilizzate negli esperimenti.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{llll}
+        \toprule
+        \textbf{Funzione} & \textbf{Tipo} & 
+        \textbf{Variante base} & \textbf{Variante approssimata} \\
+        \midrule
+        Fibonacci         & \texttt{error}   & 0.0  & 0.0 \\
+        PiLeibniz         & \texttt{error}   & 0.0  & $1.99 \times 10^{-8}$ \\
+        Sqrt              & \texttt{error}   & 0.0  & 0.043 \\
+        VectorMagnitude   & \texttt{error}   & 0.0  & 0.04 \\
+        SentimentAnalysis & \texttt{quality} & high & low \\
+        ImageClassification & \texttt{quality} & high & low \\
+        \bottomrule
+    \end{tabular}
+    \caption{Modello di output adottato per ciascuna funzione. Per il 
+    tipo \texttt{error} il valore riportato è \texttt{error\_estimate}; 
+    per il tipo \texttt{quality} il livello discreto assegnato.}
+    \label{tab:output-models}
+\end{table}

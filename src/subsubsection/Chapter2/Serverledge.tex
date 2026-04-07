@@ -1,0 +1,40 @@
+\subsection{La piattaforma Serverledge}
+\label{subsec:serverledge}
+
+Serverledge è una piattaforma Function-as-a-Service progettata
+per ambienti cloud-edge, caratterizzata da un'architettura
+decentralizzata che consente l'esecuzione di funzioni serverless
+all'interno di container. La piattaforma separa le componenti di
+controllo da quelle di esecuzione, permettendo una gestione
+distribuita delle istanze e delle informazioni di stato tra i
+nodi che compongono l'infrastruttura.
+
+Ogni nodo Serverledge espone un'interfaccia per la creazione,
+l'eliminazione e l'invocazione delle funzioni, supportando sia
+la modalità sincrona sia quella asincrona. Le decisioni di
+esecuzione sono affidate a uno scheduler, responsabile del
+\emph{placement} delle richieste sui nodi disponibili.
+L'esecuzione avviene tramite container Docker, mantenuti attivi
+per un intervallo di tempo limitato successivamente all'invocazione,
+con l'obiettivo di ridurre l'impatto dei \emph{cold start} sulle
+invocazioni successive.
+
+La condivisione delle informazioni tra nodi è realizzata tramite
+un meccanismo di storage distribuito, che consente di propagare
+metadati e informazioni di stato all'interno del cluster. Tali
+informazioni sono accessibili dallo scheduler al momento della
+decisione di \emph{placement}, permettendo di scegliere tra
+l'esecuzione locale sul nodo ricevente e l'offloading verso
+altri nodi edge o verso il cloud, in funzione delle condizioni
+operative rilevate.
+
+Dal punto di vista architetturale, Serverledge è progettata per
+essere estensibile: le logiche di scheduling e di gestione delle
+funzioni sono separate dal modello di interazione lato utente,
+rendendo possibile l'integrazione di componenti aggiuntivi di
+monitoraggio e controllo senza modificare l'interfaccia esposta
+agli utenti. Questa proprietà è particolarmente rilevante nel
+contesto del presente lavoro, in quanto consente di introdurre
+meccanismi di gestione energetica direttamente a livello di
+scheduler, sfruttando i punti di estensione nativi della
+piattaforma senza alterarne il comportamento di base.

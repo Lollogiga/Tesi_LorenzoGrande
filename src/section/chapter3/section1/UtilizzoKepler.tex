@@ -1,0 +1,20 @@
+\section{Integrazione di Kepler per il monitoraggio energetico}
+
+Il monitoraggio dei consumi energetici a livello di container costituisce 
+il fondamento del sistema realizzato. A tal fine è stato adottato Kepler 
+(Kubernetes-based Efficient Power Level Exporter), uno strumento open 
+source sviluppato nell'ambito della CNCF (Cloud Native Computing 
+Foundation) che stima il consumo energetico di processi, container e 
+pod Kubernetes attraverso l'accesso diretto alle interfacce hardware del 
+sistema operativo host~\cite{keplerCNCF2023}.
+
+La scelta di Kepler è motivata principalmente dalla sua granularità di 
+misurazione, che opera a livello di singolo container Docker: questa 
+corrisponde esattamente all'unità di esecuzione delle funzioni serverless 
+in Serverledge. Kepler espone inoltre le proprie metriche nel formato 
+standard Prometheus, consentendo un'integrazione diretta con l'ecosistema 
+di monitoraggio senza richiedere componenti aggiuntivi per la raccolta 
+dei dati.
+
+\input{src/subsection/chapter3/Sezione1/01-FunzionamentoKepler}
+\input{src/subsection/chapter3/Sezione1/02InfrastrutturaSupport}

@@ -1,0 +1,161 @@
+\documentclass[a4paper,12pt,italian]{report}
+
+% =====================================================
+% PACCHETTI BASE
+% =====================================================
+\usepackage[italian]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{tocloft}
+\usepackage{booktabs}
+\setlength{\cftchapnumwidth}{2.5em}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage[hidelinks]{hyperref}
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{14.5pt}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage[noend]{algpseudocode}
+\usepackage{amsmath}
+\input{listing}
+% =====================================================
+% TEMPLATE TOR VERGATA
+% (DEVE essere presente nel progetto)
+% =====================================================
+\usepackage{tesisty}
+
+% =====================================================
+% CONFIGURAZIONE ALGORITMI
+% =====================================================
+\makeatletter
+\def\BState{\State\hskip-\ALG@thistlm}
+\makeatother
+
+\algdef{SE}[DOWHILE]{Do}{doWhile}{\algorithmicdo}[1]{\algorithmicwhile\ #1}
+
+\algdef{SE}[VARIABLES]{Variables}{EndVariables}
+  {\algorithmicvariables}
+  {\algorithmicend\ \algorithmicvariables}
+\algnewcommand{\algorithmicvariables}{\textbf{global variables}}
+
+\floatname{algorithm}{Algoritmo}
+
+% =====================================================
+% CONFIGURAZIONE LISTINGS
+% =====================================================
+\addto\captionsitalian{
+  \renewcommand{\lstlistingname}{Codice}
+}
+\addto\captionsitalian{
+  \renewcommand{\lstlistlistingname}{Elenco dei codici}
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red}
+}
+
+% =====================================================
+% AMBIENTI PERSONALIZZATI
+% =====================================================
+\newtheorem{obs}{Osservazione}[section]
+\newenvironment{oss}
+    {\begin{obs}\begin{normalfont}}
+    {\hfill $\square$ \end{normalfont}\end{obs}}
+
+\newtheorem{pro}{Problema}[chapter]
+\newenvironment{prob}
+    {\begin{pro}\begin{normalfont}}
+    {\hfill $\spadesuit$ \end{normalfont}\end{pro}}
+
+\newtheorem{teor}{Teorema}[section]
+\newenvironment{teorema}
+    {\begin{teor}\itshape}
+    {\end{teor}}
+
+\newtheorem{defn}{Definizione}[section]
+\newenvironment{de}
+    {\begin{defn}\begin{normalfont}}
+    {\hfill $\clubsuit$ \end{normalfont}\end{defn}}
+
+% =====================================================
+% NUMERAZIONE
+% =====================================================
+\numberwithin{equation}{section}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+% =====================================================
+% INIZIO DOCUMENTO
+% =====================================================
+\begin{document}
+
+% =====================================================
+% FRONTESPIZIO (TESISTY)
+% =====================================================
+\titoloTesi{Scheduling adattivo carbon-aware in ambienti serverless: gestione del trade-off energia-accuratezza tramite varianti di funzione}
+\anno{A.A 2025/2026}
+\relatore{Prof.ssa Valeria Cardellini\\
+Prof. Gabriele Russo Russo}
+\candidato{\parbox[t]{6cm}{%
+Lorenzo Grande\\
+0350212}}
+
+
+\baselineskip=25pt
+\intestazione
+\impaginazione
+% =====================================================
+% BIBLIOGRAFIA
+% =====================================================
+\pagenumbering{arabic}
+
+\tableofcontents
+\include{abstract/Abstract}
+\newpage
+\include{ringraziamenti/Ringraziamenti}
+
+\newpage
+
+
+
+%==============Chapters============================
+\include{src/capitoli/01-Introduzione}
+\include{src/capitoli/02-StateArt}
+\include{src/capitoli/03-ProgettazioneRealizzazione}
+\include{src/capitoli/04-RisultatiSperimentali}
+\include{src/capitoli/05-Conclusioni}
+%==============Content===========================
+\addcontentsline{toc}{chapter}{Elenco delle figure}
+\listoffigures
+
+\addcontentsline{toc}{chapter}{Elenco dei codici}
+\lstlistoflistings
+
+\addcontentsline{toc}{chapter}{Elenco degli algoritmi}
+\listofalgorithms
+
+% =====================================================
+% BIBLIOGRAFIA
+% =====================================================
+\bibliographystyle{IEEEtran}
+\bibliography{bibliografia/Bibliography}
+
+
+\end{document}

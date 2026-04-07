@@ -1,0 +1,37 @@
+\section{Struttura della tesi}
+\label{sec:struttura}
+
+Il \textbf{Capitolo~\ref{cap:Stato dell'arte}} analizza lo stato dell'arte
+relativo all'elaborazione serverless sostenibile, esaminando le
+principali soluzioni proposte in letteratura per il monitoraggio
+energetico del software, con particolare attenzione agli strumenti
+capaci di operare a granularità container-level. Vengono inoltre
+discusse le tecniche di scheduling energy-aware per ambienti FaaS
+e le direzioni emergenti nell'ambito dell'Approximate Computing
+applicato all'esecuzione serverless. Il capitolo si conclude con
+la presentazione della piattaforma Serverledge, adottata come base
+sperimentale per lo sviluppo del sistema proposto.
+
+Il \textbf{Capitolo~\ref{cap:ProgettazioneRealizzazione}} descrive le scelte
+progettuali e i meccanismi realizzati. Vengono presentati il modello
+di funzione logica con varianti energetiche, l'integrazione di Kepler
+per il monitoraggio dei consumi a livello di container, il worker
+periodico responsabile dell'aggiornamento adattivo dei profili
+energetici e la logica decisionale dello scheduler energy-aware,
+con particolare attenzione al ruolo del consenso esplicito
+dell'utente nella selezione di varianti approssimate.
+
+Il \textbf{Capitolo~\ref{cap:RisultatiSperimentali}} riporta i risultati
+della valutazione sperimentale condotta su un insieme di funzioni
+di test rappresentative di differenti profili computazionali.
+Vengono analizzati il comportamento dello scheduler al variare
+del budget energetico, il risparmio energetico ottenuto tramite
+le varianti approssimate e il corrispondente impatto sull'accuratezza
+del risultato, quantificando il compromesso introdotto dalle
+scelte progettuali adottate.
+
+Il \textbf{Capitolo~\ref{cap:Conclusioni}} raccoglie le conclusioni
+del lavoro, discutendo i risultati ottenuti in relazione agli
+obiettivi definiti e identificando le principali direzioni di
+sviluppo futuro.
+.

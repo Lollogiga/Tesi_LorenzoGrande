@@ -1,0 +1,54 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {chapter}{Abstract}{4}{chapter*.1}%
+\contentsline {chapter}{Ringraziamenti}{5}{chapter*.2}%
+\contentsline {chapter}{\numberline {1}Introduzione}{6}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Contesto e motivazioni}{6}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Le criticità energetiche dell'esecuzione all'edge}{7}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}Il problema della granularità nella misurazione energetica}{8}{subsection.1.1.2}%
+\contentsline {subsection}{\numberline {1.1.3}Approximate Computing come leva per la riduzione dei consumi}{9}{subsection.1.1.3}%
+\contentsline {subsection}{\numberline {1.1.4}Verso uno scheduling energy-aware con consenso esplicito}{9}{subsection.1.1.4}%
+\contentsline {section}{\numberline {1.2}Contributi e obiettivi della tesi}{10}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Struttura della tesi}{11}{section.1.3}%
+\contentsline {chapter}{\numberline {2}Stato dell’arte}{13}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Il monitoraggio dell’energia software}{13}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Misuratori hardware del consumo energetico}{15}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Misuratori software e modelli di stima}{19}{subsection.2.1.2}%
+\contentsline {section}{\numberline {2.2}Elaborazione serverless sostenibile}{23}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Scheduling energeticamente consapevole nelle piattaforme FaaS}{24}{subsection.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.1.1}Scheduling basato sullo stato energetico dei nodi}{26}{subsubsection.2.2.1.1}%
+\contentsline {subsubsection}{\numberline {2.2.1.2}Scheduling per consolidamento energetico con vincoli di deadline}{28}{subsubsection.2.2.1.2}%
+\contentsline {subsubsection}{\numberline {2.2.1.3}Scheduling Energy-Aware in Ambienti FaaS Federati ed Eterogenei}{30}{subsubsection.2.2.1.3}%
+\contentsline {subsection}{\numberline {2.2.2}Power capping come tecnica di controllo energetico}{33}{subsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.2.1}Applicabilità degli approcci tradizionali nel contesto serverless}{33}{subsubsection.2.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2.2}Impatto sulle prestazioni e approcci adattivi}{34}{subsubsection.2.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Direzioni emergenti per l'elaborazione serverless sostenibile}{36}{subsection.2.2.3}%
+\contentsline {section}{\numberline {2.3}Il paradigma FaaS in ambienti cloud-edge}{38}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}La piattaforma Serverledge}{39}{subsection.2.3.1}%
+\contentsline {section}{\numberline {2.4}Posizionamento del contributo}{40}{section.2.4}%
+\contentsline {chapter}{\numberline {3}Progettazione e Realizzazione}{42}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Integrazione di Kepler per il monitoraggio energetico}{42}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Funzionamento di Kepler}{43}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Infrastruttura di supporto}{44}{subsection.3.1.2}%
+\contentsline {section}{\numberline {3.2}Il modello di funzione logica con varianti}{46}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Struttura della funzione e profilo energetico}{46}{subsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.1.1}Determinazione dei profili energetici iniziali}{47}{subsubsection.3.2.1.1}%
+\contentsline {subsection}{\numberline {3.2.2}Il modello di output e la classificazione dell'accuratezza}{49}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Registrazione e indicizzazione delle varianti in etcd}{51}{subsection.3.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.3.1}Convenzione di denominazione}{52}{subsubsection.3.2.3.1}%
+\contentsline {subsubsection}{\numberline {3.2.3.2}Struttura delle chiavi in etcd}{52}{subsubsection.3.2.3.2}%
+\contentsline {section}{\numberline {3.3}Misurazione e aggiornamento adattivo dei profili energetici}{54}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Tracciamento dei container e conteggio delle invocazioni}{54}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Il worker periodico di raccolta}{56}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Attribuzione dell'energia per invocazione e gestione del lag}{57}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Aggiornamento del profilo tramite media mobile esponenziale}{57}{subsection.3.3.4}%
+\contentsline {subsection}{\numberline {3.3.5}Archiviazione su InfluxDB}{58}{subsection.3.3.5}%
+\contentsline {section}{\numberline {3.4}Lo scheduler energy-aware}{59}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Il consenso esplicito dell'utente}{60}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Selezione per errore minimo}{61}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Selezione con vincolo energetico}{63}{subsection.3.4.3}%
+\contentsline {chapter}{\numberline {4}Risultati Sperimentali}{67}{chapter.4}%
+\contentsline {chapter}{\numberline {5}Conclusioni}{68}{chapter.5}%
+\contentsline {chapter}{Elenco delle figure}{69}{chapter.5}%
+\contentsline {chapter}{Elenco dei codici}{71}{chapter.5}%
+\contentsline {chapter}{Elenco degli algoritmi}{72}{chapter*.3}%

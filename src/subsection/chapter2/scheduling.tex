@@ -1,0 +1,52 @@
+\subsection{Scheduling energeticamente consapevole nelle piattaforme FaaS}
+\label{subsec:energy_aware_scheduling}
+
+Nel paradigma Function-as-a-Service (FaaS), lo scheduling non costituisce
+soltanto un meccanismo di allocazione delle risorse, ma rappresenta uno
+strumento strategico per il controllo del consumo energetico
+dell'infrastruttura. A differenza delle politiche di pianificazione
+tradizionali, orientate prevalentemente all'ottimizzazione delle
+prestazioni o al bilanciamento del carico, lo scheduling energeticamente
+consapevole integra il consumo energetico tra i criteri che guidano
+le decisioni di \emph{placement} e la selezione delle risorse di
+esecuzione.
+
+Nel contesto serverless, tale problematica presenta caratteristiche
+peculiari legate al modello di esecuzione. La breve durata delle
+funzioni, la loro natura stateless e l'isolamento in ambienti
+containerizzati determinano un'elevata frequenza delle decisioni di
+scheduling e una forte sensibilità alle condizioni operative. In
+particolare, l'inizializzazione di nuovi ambienti di esecuzione
+(\emph{cold start}) può generare picchi di consumo energetico istantaneo
+che influenzano in modo non trascurabile l'efficienza complessiva del
+sistema. Per questa ragione, la gestione del riutilizzo degli ambienti
+di esecuzione (\emph{warm scheduling}) rappresenta una dimensione
+rilevante tanto per la latenza quanto per il profilo energetico.
+
+L'analisi allo stato dell'arte mostra come l'integrazione della dimensione
+energetica nel processo decisionale possa assumere forme concettualmente
+distinte, in funzione delle assunzioni architetturali e degli obiettivi
+perseguiti. Una prima classe di approcci considera il consumo energetico
+come una metrica aggiuntiva in modelli di ottimizzazione multi-obiettivo,
+con l'intento di ridurre il consumo medio del sistema senza introdurre
+vincoli espliciti. Una seconda classe tratta l'energia come vincolo
+infrastrutturale, adottando politiche di redistribuzione del carico
+in base alla disponibilità energetica corrente dei nodi. Una terza
+direzione, rilevante in scenari distribuiti e federati, estende la
+consapevolezza energetica al costo di comunicazione, incorporando nella
+decisione di \emph{placement} il costo energetico della movimentazione
+dei dati tra siti eterogenei.
+
+Nei paragrafi seguenti vengono analizzati tre contributi rappresentativi
+di queste direzioni. Faashouse~\cite{faashouse} esemplifica l'approccio basato sullo
+stato energetico dei nodi, con redistribuzione dinamica del carico
+in ambienti edge alimentati da fonti intermittenti. E$^{2}$FIS~\cite{e2fis_smartcomp} rappresenta invece una strategia di consolidamento del carico orientata
+alla minimizzazione del numero di nodi attivi, con gestione esplicita
+delle deadline. GreenFaaS~\cite{greenfaas} estende infine la prospettiva agli ambienti
+federati multi-sito, integrando nella funzione di scheduling una stima
+del costo energetico dei trasferimenti tra domini amministrativi distinti.
+
+
+\input{src/subsubsection/Chapter2/SchedulingStatoEnergetico}
+\input{src/subsubsection/Chapter2/schedulerTorvergata}
+\input{src/subsubsection/Chapter2/GreenFaas}    

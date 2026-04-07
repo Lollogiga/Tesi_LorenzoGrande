@@ -1,0 +1,33 @@
+\subsection{Struttura della funzione e profilo energetico}
+
+In Serverledge, ogni funzione è rappresentata dalla struttura 
+\texttt{Function}, estesa in questo lavoro con i campi necessari al 
+supporto delle varianti energetiche. I campi rilevanti per il sistema 
+proposto sono i seguenti:
+
+\begin{itemize}
+    \item \texttt{LogicalName}: identificatore condiviso da tutte le 
+    varianti appartenenti alla stessa funzione logica. Costituisce 
+    il riferimento con cui il client invoca la funzione, 
+    indipendentemente dalla variante che verrà selezionata a runtime.
+
+    \item \texttt{VariantID}: identificatore univoco della specifica 
+    variante all'interno del gruppo logico (ad esempio \texttt{base}, 
+    \texttt{light}, \texttt{c}).
+
+    \item \texttt{EnergyProfile}: struttura che mantiene la stima 
+    energetica della variante, composta da due campi:
+    \begin{itemize}
+        \item \texttt{ColdStartJoule}: energia stimata per l'avvio a 
+        freddo del container, comprensiva dell'inizializzazione del 
+        runtime;
+        \item \texttt{InvocationJoule}: energia media stimata per una 
+        singola invocazione della funzione
+    \end{itemize}
+    \item \texttt{AllowApprox}: flag booleano che indica se la funzione 
+    logica ammette l'utilizzo di varianti approssimate. La sua 
+    attivazione è condizione necessaria affinché lo scheduler 
+    energy-aware possa considerare varianti con accuratezza ridotta.
+\end{itemize}
+
+\input{src/subsubsection/chapter3/section2/01-DeterminazioneProfiliEnergeticiIniziali}

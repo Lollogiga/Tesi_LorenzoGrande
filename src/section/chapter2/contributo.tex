@@ -1,0 +1,43 @@
+\section{Posizionamento del contributo}
+\label{sec:posizionamento}
+
+L'analisi della letteratura evidenzia come le soluzioni proposte per la
+gestione energetica in ambienti serverless operino prevalentemente a
+livello infrastrutturale: gli scheduler energeticamente consapevoli
+esaminati — Faashouse, E$^{2}$FIS e GreenFaaS — agiscono sulla
+selezione del nodo di esecuzione e sulla redistribuzione del carico,
+trattando ciascuna funzione come un'unità indivisibile con un profilo
+energetico fisso. Analogamente, le tecniche di power capping intervengono
+sulla potenza erogata ai componenti hardware, senza alcuna consapevolezza
+della logica applicativa delle funzioni invocate. Contributi come
+JouleGuard e \emph{Code Once, Run Green} mostrano come sia possibile
+agire direttamente sulla funzione per ridurne il consumo, introducendo
+rispettivamente il controllo del livello di approssimazione e la
+generazione di implementazioni alternative. Tuttavia, tali approcci
+determinano i profili energetici delle varianti in modo prevalentemente
+statico, senza prevedere meccanismi di aggiornamento basati sul
+comportamento reale del sistema in esecuzione.
+
+Questa limitazione è particolarmente critica in ambienti FaaS, nei quali
+il consumo energetico di una funzione non è una grandezza stabile nel
+tempo. Fattori quali la variabilità del carico concorrente sul nodo, le
+fluttuazioni termiche dell'hardware, il comportamento dei dati di input
+e lo stato degli ambienti di esecuzione possono determinare variazioni
+significative del consumo per invocazione anche a parità di implementazione.
+Affidarsi a stime statiche significa quindi operare su profili energetici
+potenzialmente disallineati rispetto alle condizioni operative correnti,
+compromettendo l'efficacia di qualsiasi meccanismo decisionale che si fonda su queste stime.
+
+Il presente lavoro si propone di colmare questo spazio, introducendo un
+control loop runtime che mantiene i profili energetici delle varianti
+di funzione continuamente aggiornati sulla base di misurazioni reali,
+e li utilizza per prendere decisioni online di selezione. Tale approccio
+consente di combinare due dimensioni attualmente non integrate nella
+letteratura esaminata: la possibilità di sfruttare il trade-off tra
+consumo energetico e accuratezza offerto da varianti alternative della
+stessa funzione, e la capacità di rispettare vincoli energetici espliciti
+definiti dall'utente per singola invocazione. Quest'ultima caratteristica
+risulta particolarmente rilevante in scenari di esecuzione su nodi edge,
+dove la disponibilità energetica può variare nel tempo e la capacità di
+operare entro un budget predefinito rappresenta un requisito operativo
+concreto, non una semplice preferenza di ottimizzazione.

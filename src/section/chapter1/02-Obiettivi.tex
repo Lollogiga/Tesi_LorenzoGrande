@@ -1,0 +1,62 @@
+\section{Contributi e obiettivi della tesi}
+\label{sec:contributi_obiettivi}
+
+L'obiettivo principale di questo lavoro non è la mera riduzione
+del consumo energetico medio di una piattaforma serverless, bensì
+la progettazione e realizzazione di un'estensione energy-aware della
+piattaforma Serverledge~\cite{Russo2023_Serverledge} in grado di
+operare sotto vincoli energetici espliciti e di adattare le decisioni
+di esecuzione in funzione di informazioni energetiche aggiornate
+a runtime.
+
+In particolare, il lavoro si propone di:
+
+\begin{itemize}
+
+  \item introdurre il concetto di \emph{funzione logica} associata
+  a un insieme di varianti implementative alternative, ciascuna
+  descritta da un profilo energetico che ne quantifica il costo
+  atteso per invocazione, il costo di cold start e, ove applicabile,
+  la stima dell'errore introdotto dall'approssimazione;
+
+  \item integrare un sistema di monitoraggio energetico a livello
+  di container basato su Kepler, strumento che stima il consumo
+  energetico a granularità di processo nei nodi Kubernetes e
+  lo esporta tramite Prometheus, consentendo la raccolta di
+  misure energetiche reali durante l'esecuzione delle funzioni;
+
+  \item progettare e implementare un meccanismo di aggiornamento
+  dinamico dei profili energetici delle varianti, realizzato tramite
+  un worker periodico che legge le misure cumulative da Kepler,
+  calcola il consumo per singola invocazione e aggiorna i profili
+  archiviati in etcd, realizzando un ciclo di feedback adattivo;
+
+  \item progettare e implementare uno scheduler energeticamente
+  consapevole, ispirato concettualmente ai meccanismi di controllo
+  basati su budget energetico proposti in letteratura, che al momento
+  dell'invocazione seleziona la variante più appropriata in funzione
+  di:
+    \begin{itemize}
+      \item il budget energetico massimo espresso dall'utente
+            (\texttt{MaxEnergyJoule});
+      \item il consenso esplicito dell'utente all'utilizzo di
+            varianti approssimate (\texttt{AllowApprox});
+      \item le stime energetiche aggiornate disponibili a runtime;
+    \end{itemize}
+  rispettando il vincolo che, in assenza di consenso esplicito,
+  vengano selezionate esclusivamente varianti esatte;
+
+  \item valutare sperimentalmente il compromesso tra consumo
+  energetico e accuratezza del risultato su un insieme di funzioni
+  rappresentative, dimostrando la fattibilità e l'efficacia
+  di un modello di esecuzione adattivo per il paradigma
+  Function-as-a-Service nel continuum Edge--Cloud.
+
+\end{itemize}
+
+Il contributo complessivo della tesi consiste nell'estensione
+di una piattaforma FaaS open-source con un meccanismo di esecuzione
+adattivo rispetto a vincoli energetici dinamici, introducendo
+un compromesso controllato tra energia consumata e accuratezza
+del risultato, condizionato al consenso esplicito dell'utente
+che effettua l'invocazione.

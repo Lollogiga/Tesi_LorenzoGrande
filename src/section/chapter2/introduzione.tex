@@ -1,0 +1,47 @@
+\section{Il monitoraggio dell’energia software}
+
+Il monitoraggio del consumo energetico a livello software rappresenta un tema di
+ricerca centrale nell’ambito dell’efficienza energetica dei sistemi informatici moderni.
+La crescente complessità delle architetture hardware e la diffusione di modelli di
+calcolo dinamici e distribuiti hanno reso sempre più difficile ottenere misure
+energetiche accurate e direttamente attribuibili alle singole componenti software.
+Questo problema risulta particolarmente rilevante nel contesto del Serverless
+Computing, dove le unità di esecuzione sono caratterizzate da invocazioni brevi,
+stateless e altamente dinamiche.
+
+Le soluzioni tradizionali di monitoraggio dell’energia si basano prevalentemente su
+misurazioni a livello hardware, che forniscono una stima del consumo complessivo di
+una macchina fisica o di specifici componenti, come CPU e memoria.
+Sebbene tali approcci offrano un’elevata precisione, la loro granularità risulta spesso
+insufficiente per analizzare il comportamento energetico delle applicazioni software,
+soprattutto in ambienti multi-tenant e containerizzati \cite{lipp2021platypus}.
+In questi scenari, il consumo energetico osservato è il risultato dell’interazione di
+più entità software concorrenti, rendendo complessa l’attribuzione dei costi energetici
+alle singole esecuzioni.
+
+Per superare queste limitazioni, negli ultimi anni sono state proposte numerose
+soluzioni di monitoraggio dell’energia software, che mirano a stimare il consumo
+energetico a livelli di granularità più fini, quali processo, container o applicazione.
+Tali approcci si basano generalmente su modelli di stima che correlano metriche
+osservabili del sistema con misure energetiche ottenute a livello hardware, come nel
+caso di PowerAPI e SmartWatts \cite{fieni:hal-02470128}.
+
+Nel contesto del Serverless Computing, il problema del monitoraggio energetico è
+ulteriormente aggravato dalla crescente diffusione di architetture cloud-edge.
+Per ridurre la latenza e migliorare la qualità del servizio, sempre più spesso la
+computazione viene spostata verso nodi edge prossimi alla sorgente dei dati, anziché
+su data center remoti \cite{Shi2016_EdgeVisionChallenges}.
+Come già accennato, tali nodi sono frequentemente caratterizzati da risorse limitate e, in molti casi,
+sono alimentati a batteria o da fonti di energia intermittenti.
+In questi scenari, l’energia disponibile diventa una risorsa critica e vincolante.
+
+Le condizioni operative dei nodi edge possono variare nel tempo in funzione dello
+stato di carica della batteria, del carico di lavoro e delle caratteristiche
+dell’hardware sottostante.
+Di conseguenza, metriche energetiche statiche o ottenute tramite profilazione offline
+risultano spesso inadeguate a rappresentare il comportamento reale delle esecuzioni.
+Diventa quindi fondamentale disporre di metriche energetiche aggiornate nel tempo,
+in grado di supportare decisioni di esecuzione soggette a vincoli energetici espliciti,
+ponendo le basi per politiche di scheduling energy-aware.
+\input{src/subsection/chapter2/MisuratoriHW}
+\input{src/subsection/chapter2/MisuratoriSw}

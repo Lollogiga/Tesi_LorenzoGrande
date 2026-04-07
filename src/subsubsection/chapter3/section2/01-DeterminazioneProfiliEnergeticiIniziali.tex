@@ -1,0 +1,95 @@
+\subsubsection{Determinazione dei profili energetici iniziali}
+
+I valori iniziali di \texttt{EnergyProfile} sono stati determinati 
+offline tramite una campagna di misurazioni preliminari condotta con 
+Kepler. La metodologia adottata tiene conto della natura delle metriche 
+esposte da Kepler: trattandosi di contatori cumulativi, l'energia 
+osservata al termine di $n$ invocazioni consecutive sullo stesso 
+container rappresenta la somma dei contributi di tutte le esecuzioni, 
+inclusa quella iniziale soggetta al cold start.
+
+Per separare i due contributi energetici si è proceduto nel modo 
+seguente. Dato un container su cui vengono eseguite $n$ invocazioni 
+consecutive, si indica con $E_{tot}$ l'energia cumulativa totale 
+rilevata da Kepler al termine dell'ultima invocazione e con $E_1$ 
+l'energia della prima invocazione, che comprende sia il costo di 
+inizializzazione del container che quello di esecuzione della funzione. 
+Le invocazioni successive, eseguite a container già attivo, sono invece 
+soggette al solo costo di esecuzione. Il costo medio di invocazione in 
+warm start è quindi stimato come:
+
+\begin{equation}
+    E_{inv} = \frac{E_{tot} - E_1}{n - 1}
+    \label{eq:inv-joule}
+\end{equation}
+
+e il costo di cold start come:
+
+\begin{equation}
+    E_{cold} = E_1 - E_{inv}
+    \label{eq:cold-joule}
+\end{equation}
+
+La ripetizione delle misurazioni su un numero statisticamente 
+significativo di invocazioni consente di attenuare la varianza 
+introdotta dal sistema operativo e dal runtime, ottenendo stime 
+robuste per entrambi i contributi. I valori così ottenuti vengono 
+codificati nel file JSON di definizione delle varianti e costituiscono 
+la stima iniziale del profilo energetico. Il \autoref{lst:fibonacci-json} 
+mostra un esempio concreto per la funzione \texttt{fibonacci}, che 
+espone tre varianti con profili energetici distinti.
+
+\begin{lstlisting}[
+    language=json,
+    caption={File di definizione delle varianti per la funzione 
+    \texttt{fibonacci}. Ciascuna variante specifica runtime, entry 
+    point, profilo energetico iniziale e modello di output.},
+    label={lst:fibonacci-json}
+]
+{
+  "variants": [
+    {
+      "id": "base",
+      "runtime": "python310",
+      "entry_point": "fibonacci.handler",
+      "src": "fibonacci.py",
+      "energy": {
+        "cold_start_joule": 0.06606,
+        "invocation_joule": 0.000731579
+      },
+      "output": { "type": "error", "error_estimate": 0.0 },
+      "is_approximate": false
+    },
+    {
+      "id": "optimization-py",
+      "runtime": "python310",
+      "entry_point": "fibonacci_o.handler",
+      "src": "fibonacci_o.py",
+      "energy": {
+        "cold_start_joule": 0.05640,
+        "invocation_joule": 0.000494737
+      },
+      "output": { "type": "error", "error_estimate": 0.0 },
+      "is_approximate": false
+    },
+    {
+      "id": "c",
+      "runtime": "native",
+      "entry_point": "fibonacci",
+      "src": "fibonacci",
+      "energy": {
+        "cold_start_joule": 0.008268422,
+        "invocation_joule": 0.000171579
+      },
+      "output": { "type": "error", "error_estimate": 0.0 },
+      "is_approximate": false
+    }
+  ]
+}
+\end{lstlisting}
+
+I valori iniziali del profilo energetico sono progressivamente 
+raffinati a runtime dal worker periodico, che aggiorna entrambi i valori sulla base delle misurazioni effettive 
+raccolte durante l'esecuzione in produzione. I risultati numerici 
+delle misurazioni preliminari per tutte le varianti sono riportati 
+nel Capitolo~\ref{cap:RisultatiSperimentali}.
