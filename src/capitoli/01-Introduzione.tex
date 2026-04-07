@@ -1,5 +1,305 @@
+% !TEX root = ../../main.tex
 \chapter{Introduzione}
 
-\input{src/section/chapter1/01-ContestoMotivazioni}
-\input{src/section/chapter1/02-Obiettivi}
-\input{src/section/chapter1/03-StrutturaTesi}
+\section{Contesto e motivazioni}
+
+Negli ultimi anni si è assistito a una progressiva trasformazione dell'architettura dei
+sistemi distribuiti: servizi e applicazioni, tradizionalmente eseguiti in data center
+centralizzati, vengono sempre più frequentemente spostati verso il bordo della rete.
+Questa tendenza, nota come \emph{edge computing}, nasce dalla necessità di ridurre la
+latenza percepita dagli utenti, supportare applicazioni real-time e limitare il traffico
+verso il cloud~\cite{Shi2016_EdgeVisionChallenges}.
+Il paradigma emergente non è più quello di un cloud monolitico, ma di un
+\emph{continuum Edge--Cloud}, in cui risorse computazionali eterogenee e
+geograficamente distribuite collaborano per soddisfare i requisiti applicativi.
+In tale contesto, l'elaborazione può essere collocata dinamicamente lungo la catena
+edge--cloud in funzione delle condizioni di rete, della disponibilità di risorse e dei
+vincoli applicativi.
+
+\paragraph{Serverless Computing e FaaS nel continuum Edge--Cloud.}
+Parallelamente all'evoluzione verso l'edge, il paradigma Serverless Computing ha
+acquisito crescente rilevanza come modello di programmazione cloud-native.
+Nel modello serverless, lo sviluppatore distribuisce codice senza occuparsi della
+gestione dell'infrastruttura sottostante, che viene completamente delegata al
+provider~\cite{VanEyk2018_ServerlessIsMore}.
+Il modello di fatturazione pay-as-you-go e la scalabilità automatica hanno
+contribuito alla sua ampia adozione nell'industria.
+
+All'interno dell'ecosistema serverless, il modello Function-as-a-Service (FaaS)
+rappresenta la forma più diffusa di esecuzione event-driven.
+In una piattaforma FaaS, l'unità fondamentale di esecuzione è una funzione stateless,
+invocata in risposta a eventi o richieste e tipicamente eseguita all'interno di container
+o ambienti isolati equivalenti.
+L'estensione del paradigma FaaS al continuum Edge--Cloud risulta particolarmente
+promettente: eseguire funzioni direttamente su nodi edge consente di ridurre la latenza
+di risposta e migliorare la qualità del servizio percepita.
+Recenti lavori hanno mostrato come architetture FaaS decentralizzate possano abilitare
+l'esecuzione distribuita di funzioni tra edge e cloud, introducendo meccanismi di
+offloading verticale e orizzontale~\cite{Russo2023_Serverledge}.
+
+% ----------------------------------------------------------------
+\subsection{L'impatto ambientale dell'elaborazione e la carbon intensity}
+
+La crescente diffusione di infrastrutture computazionali distribuite pone con urgenza
+il problema del loro impatto ambientale.
+L'elaborazione informatica è oggi responsabile di una quota significativa delle emissioni
+globali di CO\textsubscript{2}, e la crescita prevista dei carichi di lavoro — in
+particolare nel continuum edge--cloud — rende la sostenibilità energetica una
+dimensione imprescindibile nella progettazione delle piattaforme di
+esecuzione~\cite{Luo2021_EdgeSchedulingSurvey}.
+
+Tuttavia, ridurre il consumo energetico di una singola esecuzione rappresenta una
+condizione necessaria ma non sufficiente per contenere l'impatto ambientale
+complessivo.
+A parità di energia consumata, la quantità effettiva di CO\textsubscript{2} emessa
+dipende da \emph{come} quell'energia è stata prodotta, ovvero dalla composizione del
+mix energetico della rete elettrica a cui il nodo è connesso nel momento
+dell'esecuzione.
+Questa dimensione contestuale è catturata dalla \emph{carbon intensity} (CI),
+definita come la quantità di CO\textsubscript{2} emessa per ogni kilowattora prodotto
+dalla rete elettrica locale.
+
+Per dare la misura del fenomeno, secondo l'International Energy Agency la carbon
+intensity media globale della generazione elettrica si attestava nel 2024 a
+445~g~CO\textsubscript{2}/kWh~\cite{IEA2025_Electricity}, un valore che riflette
+la persistente dipendenza da fonti fossili nel mix energetico mondiale.
+Tale media nasconde tuttavia una forte eterogeneità geografica: nello stesso anno,
+la CI media dell'Unione Europea era di circa 175~g~CO\textsubscript{2}/kWh, mentre
+quella della Cina superava i 565~g~CO\textsubscript{2}/kWh~\cite{IEA2025_Electricity}.
+
+La carbon intensity è inoltre una grandezza intrinsecamente variabile nel tempo:
+muta in funzione della disponibilità di fonti rinnovabili, della domanda e degli scambi
+tra zone di rete, e presenta differenze strutturali significative tra aree geografiche
+diverse, determinate dalla composizione storica del parco di generazione
+elettrica~\cite{electricitymaps2024}.
+Ne consegue che, in una piattaforma FaaS distribuita su nodi geograficamente
+eterogenei, una stessa quantità di energia consumata può tradursi in emissioni molto
+diverse a seconda della zona e dell'istante in cui l'esecuzione ha luogo.
+
+Questa osservazione suggerisce che le decisioni di scheduling di una piattaforma FaaS
+possano — e debbano — tenere conto del segnale ambientale fornito dalla CI,
+modulando il comportamento del sistema in funzione del contesto geografico e
+temporale.
+Si apre così la questione di quali leve siano disponibili per ridurre l'impatto
+ambientale dell'esecuzione senza compromettere il servizio offerto all'utente.
+
+% ----------------------------------------------------------------
+\subsection{Approximate Computing come leva per il trade-off energia-accuratezza}
+
+Una direzione promettente per modulare il consumo energetico in funzione del contesto
+ambientale è rappresentata dal paradigma dell'\emph{Approximate Computing}, che
+consente di ridurre il costo computazionale accettando, in modo controllato, una
+diminuzione dell'accuratezza del risultato prodotto.
+In letteratura, lavori come JouleGuard~\cite{jouleguard} hanno mostrato come sia
+possibile progettare meccanismi di controllo runtime capaci di regolare dinamicamente
+il livello di approssimazione dell'esecuzione in funzione di un budget energetico,
+gestendo esplicitamente il compromesso tra efficienza energetica e qualità del risultato.
+
+Applicata al paradigma FaaS, questa idea si traduce nella possibilità di associare a
+una stessa funzione logica più \emph{varianti implementative}, caratterizzate da
+diversi profili energetici e da diversi livelli di accuratezza del risultato.
+Le varianti a consumo ridotto possono derivare da semplificazioni algoritmiche,
+da modelli più leggeri o da tecniche di approssimazione numerica, e costituiscono
+scelte progettuali controllate il cui impatto sull'accuratezza è noto e quantificabile.
+
+La disponibilità di varianti con profili diversi apre la possibilità di trasformare la
+selezione della variante da eseguire in una decisione dello scheduler, guidata dal
+contesto ambientale: in condizioni di alta carbon intensity, privilegiare una variante
+più efficiente — accettando una riduzione controllata dell'accuratezza — produce un
+beneficio ambientale concreto; in condizioni di bassa carbon intensity, la piattaforma
+può privilegiare la variante più accurata senza conseguenze ambientali significative.
+
+Affinché tale selezione sia operativamente realizzabile, sono necessari due prerequisiti.
+Il primo è la disponibilità di misurazioni energetiche affidabili e aggiornate, a
+granularità sufficientemente fine da distinguere il consumo associato alle singole
+invocazioni.
+Il secondo è un criterio decisionale che integri il segnale ambientale con il trade-off
+energia-accuratezza, determinando quale variante selezionare in funzione della carbon
+intensity corrente.
+
+% ----------------------------------------------------------------
+\subsection{Il problema della granularità nella misurazione energetica}
+
+Un prerequisito fondamentale per qualsiasi meccanismo di scheduling carbon-aware è la
+disponibilità di misure energetiche affidabili e aggiornate a granularità
+sufficientemente fine.
+Storicamente, la stima del consumo energetico nei sistemi virtualizzati è stata
+affrontata a livello di macchina fisica o di macchina virtuale, rendendo difficile
+attribuire il costo energetico a singoli componenti applicativi.
+
+Nel contesto FaaS, questa difficoltà è amplificata dalla natura fine-grained delle
+invocazioni e dalla variabilità delle condizioni runtime, quali il carico concorrente,
+le interferenze tra container e la distinzione tra esecuzioni a freddo (\emph{cold start})
+e a caldo (\emph{warm start}).
+Negli ultimi anni, strumenti di osservabilità energetica per ambienti containerizzati
+hanno reso disponibile una misurazione a granularità significativamente più fine.
+
+In particolare, Kepler (\emph{Kubernetes-based Efficient Power Level Exporter}) stima
+il consumo energetico a livello di singolo processo e container in ambienti Kubernetes,
+esportando metriche accessibili in tempo reale tramite
+Prometheus~\cite{Amaral2023_Kepler}.
+La disponibilità di misurazioni energetiche a livello di container costituisce un
+abilitatore fondamentale: consente di caratterizzare il profilo energetico delle singole
+varianti di funzione e di aggiornarlo a runtime, rendendo possibile una selezione
+informata e adattiva da parte dello scheduler.
+
+% ----------------------------------------------------------------
+\subsection{Verso uno scheduling carbon-aware}
+
+La combinazione tra (i) la crescente attenzione alla sostenibilità ambientale
+dell'elaborazione distribuita, (ii) la possibilità di associare a una funzione logica più
+varianti implementative con diversi profili energetici e di accuratezza, (iii) la
+variabilità geografica e temporale della carbon intensity e (iv) la disponibilità di
+misurazioni energetiche a granularità container-level rende oggi possibile e necessario
+progettare meccanismi di scheduling che integrino il segnale ambientale come variabile
+decisionale nativa.
+
+Un tale scheduler deve essere in grado di modulare dinamicamente il peso attribuito
+all'efficienza energetica rispetto all'accuratezza del risultato, in funzione della carbon
+intensity della zona geografica del nodo al momento dell'invocazione.
+Quando la CI è elevata — come in zone alimentate prevalentemente da fonti fossili —
+privilegiare una variante più efficiente energeticamente, anche a scapito di una
+riduzione controllata dell'accuratezza, produce un beneficio ambientale concreto.
+Quando la CI è bassa — come in zone prevalentemente rinnovabili — l'impatto
+ambientale di un'esecuzione ad alta intensità computazionale è marginale, e la
+piattaforma può privilegiare la variante più accurata senza conseguenze significative.
+
+Questa visione pone diverse sfide aperte.
+In primo luogo, occorre un modello capace di tradurre la carbon intensity corrente
+in un segnale decisionale normalizzato, che tenga conto delle specificità del regime
+energetico di ciascuna zona geografica: la stessa variazione assoluta di CI ha significati
+differenti in zone con distribuzioni storiche diverse.
+In secondo luogo, è necessario un criterio di selezione tra le varianti disponibili che
+gestisca formalmente il trade-off energia-accuratezza, evitando soluzioni dominate e
+individuando il punto operativo più appropriato in funzione del contesto ambientale.
+Infine, le stime energetiche su cui si fonda la selezione devono essere aggiornate
+a runtime per riflettere il comportamento effettivo delle varianti sul nodo corrente,
+anziché dipendere esclusivamente da profilazioni statiche soggette a deriva.
+
+Un ulteriore vincolo è di natura contrattuale: la riduzione dell'accuratezza introdotta
+dalle varianti approssimate non può essere imposta unilateralmente dalla piattaforma,
+ma richiede il consenso esplicito dell'utente che formula la richiesta di invocazione.
+Solo in presenza di tale consenso lo scheduler può attivare la selezione carbon-aware;
+in assenza, la piattaforma deve garantire il comportamento originale, preservando la
+piena compatibilità retroattiva.
+
+% ----------------------------------------------------------------
+\section{Contributi e obiettivi della tesi}
+
+L'obiettivo principale di questo lavoro è la progettazione e realizzazione di
+un'estensione carbon-aware della piattaforma
+Serverledge~\cite{Russo2023_Serverledge}, in grado di adattare dinamicamente le
+decisioni di selezione delle varianti di funzione in funzione della carbon intensity della
+zona geografica del nodo, minimizzando l'impatto ambientale dell'esecuzione senza
+rinunciare interamente all'accuratezza del risultato.
+
+Il sistema è progettato attorno al principio che il trade-off tra consumo energetico e
+qualità del risultato non debba essere risolto staticamente: è la piattaforma stessa a determinare, a
+runtime, il bilanciamento ottimale tra le due dimensioni, sulla base del contesto
+ambientale del nodo.
+
+In particolare, il lavoro si propone di:
+
+\begin{itemize}
+
+  \item \textbf{Introdurre il modello di funzione logica con varianti energetiche.}
+  Ciascuna funzione logica è associata a un insieme di varianti implementative
+  alternative, ognuna descritta da un profilo energetico che ne quantifica il costo
+  stimato per invocazione, il costo di cold start e, ove applicabile, il livello di
+  accuratezza del risultato prodotto.
+
+  \item \textbf{Integrare Kepler per il monitoraggio energetico a livello di container.}
+  Il sistema si avvale di Kepler per acquisire stime del consumo energetico a
+  granularità di processo nei nodi Kubernetes, esportate tramite Prometheus.
+  Le misurazioni sono raccolte a runtime durante l'esecuzione delle funzioni,
+  consentendo di aggiornare i profili energetici sulla base del comportamento
+  effettivamente osservato anziché di profilazioni statiche.
+
+  \item \textbf{Aggiornare dinamicamente i profili energetici delle varianti.}
+  Un meccanismo periodico calcola il consumo associato a ciascuna variante a
+  partire dalle misurazioni raccolte da Kepler e ne aggiorna il profilo energetico
+  a runtime, in modo che le stime riflettano il comportamento effettivo sul nodo
+  corrente anziché dipendere da profilazioni statiche.
+ 
+  \item \textbf{Gestire l'incertezza sulle stime iniziali tramite un meccanismo di
+  esplorazione.}
+  Per compensare l'inaccuratezza delle stime energetiche nelle fasi iniziali, il
+  sistema integra un meccanismo ispirato al principio Lower Confidence Bound
+  (LCB), che favorisce l'osservazione delle varianti meno misurate e converge
+  progressivamente verso stime affidabili al crescere dei dati disponibili.
+
+  \item \textbf{Progettare e implementare uno scheduler carbon-aware basato su frontiera
+  di Pareto.}
+  A seguito del consenso esplicito dell'utente (\texttt{AllowApprox = true}), lo
+  scheduler recupera la carbon intensity corrente della zona geografica del nodo,
+  calcola $\lambda$ tramite la sigmoide calibrata per quella zona e seleziona la
+  variante Pareto-ottimale che massimizza la funzione di scalarizzazione indotta da
+  $\lambda$ nello spazio energia-accuratezza.
+  La frontiera di Pareto è costruita a runtime sulla base dei profili energetici
+  aggiornati, garantendo che la selezione rifletta il comportamento effettivo delle
+  varianti sul nodo corrente.
+
+  \item \textbf{Valutare sperimentalmente il sistema su un insieme di funzioni
+  rappresentative.}
+  Valutare sperimentalmente il compromesso tra consumo energetico e accuratezza
+    del risultato su un insieme di funzioni rappresentative, dimostrando la fattibilità
+    e l’efficacia di un modello di esecuzione adattivo per il paradigma Function-as-a-
+    Service nel continuum Edge–Cloud
+\end{itemize}
+
+Il contributo complessivo della tesi consiste nell'estensione di una piattaforma FaaS
+open-source con un meccanismo di scheduling carbon-aware che, a fronte del consenso
+dell'utente, seleziona autonomamente la variante più appropriata in funzione del
+contesto ambientale del nodo, senza richiedere all'utente alcuna conoscenza del regime
+energetico locale.
+Il sistema introduce un trade-off controllato tra consumo energetico e accuratezza del
+risultato, modulato da un segnale ambientale geolocalizzato e adattivo, e ne valuta
+quantitativamente l'efficacia su funzioni di natura eterogenea e su zone geografiche
+con carbon intensity strutturalmente diverse.
+
+% ----------------------------------------------------------------
+\section{Struttura della tesi}
+
+Il \textbf{Capitolo~2} analizza lo stato dell'arte nelle aree rilevanti per il sistema
+proposto.
+Vengono esaminate le principali soluzioni per il monitoraggio energetico del software,
+con particolare attenzione agli strumenti capaci di operare a granularità container-level
+in ambienti Kubernetes.
+Sono poi discusse le tecniche di scheduling energy-aware per piattaforme FaaS e le
+direzioni emergenti nell'ambito dell'Approximate Computing applicato all'esecuzione
+serverless.
+Una sezione dedicata introduce il concetto di carbon intensity come metrica ambientale,
+ne descrive la variabilità geografica e temporale e ne esamina il ruolo nelle proposte
+di carbon-aware computing presenti in letteratura.
+Il capitolo si conclude con la presentazione della piattaforma Serverledge, adottata
+come base sperimentale, e con il posizionamento del contributo rispetto allo stato
+dell'arte.
+
+Il \textbf{Capitolo~3} presenta l'architettura del sistema realizzato.
+Vengono descritti: il modello di funzione logica con varianti energetiche e le famiglie
+di funzioni utilizzate nella valutazione; l'integrazione di Kepler per il monitoraggio
+dei consumi a livello di container; il meccanismo di aggiornamento adattivo dei
+profili energetici con esplorazione LCB; l'infrastruttura di raccolta e archiviazione
+delle metriche.
+ 
+Il \textbf{Capitolo~4} descrive la progettazione dello scheduler carbon-aware.
+Vengono presentati: la procedura di calibrazione della sigmoide logistica per zona
+geografica a partire dai dati storici di carbon intensity; la costruzione della frontiera
+di Pareto nello spazio energia-accuratezza; la logica di scalarizzazione tramite
+$\lambda$ e il criterio di selezione della variante; il ruolo del consenso esplicito
+dell'utente nel processo decisionale.
+
+Il \textbf{Capitolo~5} riporta i risultati della valutazione sperimentale.
+Dopo la presentazione della configurazione sperimentale e delle analisi preliminari
+di profilazione e calibrazione, vengono discussi i cinque esperimenti principali:
+il comportamento della selezione lungo la frontiera di Pareto al variare di $\lambda$;
+la risposta dello scheduler al variare della carbon intensity per zona geografica;
+il risparmio energetico rispetto alla baseline always-accurate su workload multi-zona;
+la convergenza del meccanismo di esplorazione a fronte di stime iniziali errate;
+la sensibilità al parametro $\beta$ di controllo dell'esplorazione.
+Per ciascun esperimento viene quantificato il trade-off tra consumo energetico e
+accuratezza del risultato, discutendo le implicazioni delle scelte progettuali adottate.
+
+Il \textbf{Capitolo~5} raccoglie le conclusioni del lavoro, discutendo i risultati
+ottenuti in relazione agli obiettivi definiti e identificando le principali direzioni
+di sviluppo futuro.

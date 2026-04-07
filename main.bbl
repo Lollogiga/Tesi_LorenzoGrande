@@ -32,16 +32,21 @@ G.~Russo, T.~Mannucci, V.~Cardellini, and F.~Lo~Presti, ``Serverledge: Decentral
 \bibitem{Luo2021_EdgeSchedulingSurvey}
 Q.~Luo, S.~Hu, C.~Li, G.~Li, and W.~Shi, ``Resource scheduling in edge computing: A survey,'' \emph{IEEE Communications Surveys \& Tutorials}, vol.~23, no.~4, pp. 2131--2165, 2021.
 
-\bibitem{Kar2023_OffloadingFederatedSurvey}
-B.~Kar, W.~Yahya, Y.~Lin, and A.~Ali, ``Offloading using traditional optimization and machine learning in federated cloud--edge--fog systems: A survey,'' \emph{IEEE Communications Surveys \& Tutorials}, vol.~25, no.~2, pp. 1199--1226, 2023.
+\bibitem{IEA2025_Electricity}
+\BIBentryALTinterwordspacing
+{International Energy Agency}, ``Electricity 2025 -- emissions,'' 2025, consultato: aprile 2026. [Online]. Available: \url{https://www.iea.org/reports/electricity-2025/emissions}
+\BIBentrySTDinterwordspacing
+
+\bibitem{electricitymaps2024}
+{Electricity Maps}, ``Electricity maps --- historical carbon intensity data,'' \url{https://www.electricitymaps.com}, 2024, accessed: 2025.
+
+\bibitem{jouleguard}
+H.~Hoffmann, ``Jouleguard: energy guarantees for approximate applications,'' in \emph{Proceedings of the 25th Symposium on Operating Systems Principles}, ser. SOSP '15.\hskip 1em plus 0.5em minus 0.4em\relax New York, NY, USA: Association for Computing Machinery, 2015, p. 198–214.
 
 \bibitem{Amaral2023_Kepler}
 \BIBentryALTinterwordspacing
 M.~Amaral \emph{et~al.}, ``Kepler: A framework to calculate the energy consumption of containerized applications,'' in \emph{Proceedings of IEEE CLOUD 2023}, 2023. [Online]. Available: \url{https://research.ibm.com/publications/kepler-a-framework-to-calculate-the-energy-consumption-of-containerized-applications}
 \BIBentrySTDinterwordspacing
-
-\bibitem{jouleguard}
-H.~Hoffmann, ``Jouleguard: energy guarantees for approximate applications,'' in \emph{Proceedings of the 25th Symposium on Operating Systems Principles}, ser. SOSP '15.\hskip 1em plus 0.5em minus 0.4em\relax New York, NY, USA: Association for Computing Machinery, 2015, p. 198–214.
 
 \bibitem{lipp2021platypus}
 M.~Lipp, A.~Kogler, D.~Oswald, M.~Schwarz, C.~Easdon, C.~Canella, and D.~Gruss, ``{PLATYPUS: Software-based Power Side-Channel Attacks on x86},'' in \emph{2021 IEEE Symposium on Security and Privacy (SP)}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE, 2021.

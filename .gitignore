@@ -1,0 +1,45 @@
+# =====================================================
+# LaTeX build artifacts
+# =====================================================
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.synctex(busy)
+*.toc
+*.lol
+*.loa
+*.nav
+*.snm
+*.vrb
+*.idx
+*.ilg
+*.ind
+*.glg
+*.glo
+*.gls
+*.xdy
+*.acn
+*.acr
+*.alg
+
+# Output PDF (commentare se si vuole tracciare il PDF)
+# main.pdf
+
+# =====================================================
+# Editor / OS
+# =====================================================
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
