@@ -26,22 +26,24 @@ Tali approcci si basano generalmente su modelli di stima che correlano metriche
 osservabili del sistema con misure energetiche ottenute a livello hardware, come nel
 caso di PowerAPI e SmartWatts \cite{fieni:hal-02470128}.
 
-Nel contesto del Serverless Computing, il problema del monitoraggio energetico è
-ulteriormente aggravato dalla crescente diffusione di architetture cloud-edge.
-Per ridurre la latenza e migliorare la qualità del servizio, sempre più spesso la
-computazione viene spostata verso nodi edge prossimi alla sorgente dei dati, anziché
-su data center remoti \cite{Shi2016_EdgeVisionChallenges}.
-Come già accennato, tali nodi sono frequentemente caratterizzati da risorse limitate e, in molti casi,
-sono alimentati a batteria o da fonti di energia intermittenti.
-In questi scenari, l’energia disponibile diventa una risorsa critica e vincolante.
+Nel contesto del Serverless Computing, il problema del monitoraggio energetico è ulteriormente aggravato 
+dalla crescente diffusione di architetture cloud-edge. 
+Per ridurre la latenza e migliorare la qualità del servizio, 
+sempre più spesso la computazione viene spostata verso nodi edge prossimi alla sorgente dei dati, 
+anziché su data center remoti \cite{Shi2016_EdgeVisionChallenges}. 
 
-Le condizioni operative dei nodi edge possono variare nel tempo in funzione dello
-stato di carica della batteria, del carico di lavoro e delle caratteristiche
-dell’hardware sottostante.
-Di conseguenza, metriche energetiche statiche o ottenute tramite profilazione offline
+Come già accennato, tali nodi sono frequentemente caratterizzati da risorse computazionali ed energetiche significativamente più limitate.
+In questi scenari, la conoscenza del profilo energetico delle esecuzioni non è soltanto 
+un'informazione utile ai fini dell'ottimizzazione, ma diventa un prerequisito per qualsiasi 
+decisione consapevole sull'esecuzione. 
+Le condizioni operative dei nodi edge possono variare nel tempo in funzione del 
+carico di lavoro, delle caratteristiche dell'hardware sottostante e, in alcuni casi, 
+della disponibilità energetica stessa del nodo. 
+Di conseguenza, metriche energetiche statiche o ottenute tramite profilazione offline 
 risultano spesso inadeguate a rappresentare il comportamento reale delle esecuzioni.
-Diventa quindi fondamentale disporre di metriche energetiche aggiornate nel tempo,
-in grado di supportare decisioni di esecuzione soggette a vincoli energetici espliciti,
-ponendo le basi per politiche di scheduling energy-aware.
+Diventa quindi fondamentale disporre di metriche energetiche aggiornate nel tempo, 
+in grado di supportare decisioni di esecuzione che tengano conto sia del consumo energetico 
+sia della qualità del risultato prodotto, ponendo le basi per politiche di scheduling 
+capaci di gestire in modo controllato il compromesso tra queste due dimensioni.
 \input{src/subsection/chapter2/MisuratoriHW}
 \input{src/subsection/chapter2/MisuratoriSw}
