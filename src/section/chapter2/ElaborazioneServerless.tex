@@ -1,57 +1,47 @@
 \section{Elaborazione serverless sostenibile}
 
-Nel paradigma serverless, e in particolare nelle piattaforme 
-Function-as-a-Service (FaaS), il consumo energetico è strettamente 
-determinato dalla natura del modello di esecuzione: le funzioni sono 
-entità effimere, stateless e isolate in ambienti containerizzati, 
-invocate su richiesta con cicli di vita che si misurano spesso in 
-millisecondi. Tale granularità, combinata con l'elevata variabilità del 
-carico di lavoro, rende la gestione dell'energia una dimensione 
-strutturalmente più complessa rispetto ai contesti HPC o ai data center 
-tradizionali, nei quali le tecniche consolidate operano tipicamente a 
-livello di nodo fisico e su scale temporali più ampie.
+Nel paradigma serverless, e in particolare nelle piattaforme
+Function-as-a-Service (FaaS), il consumo energetico è strettamente
+legato alla natura del modello di esecuzione: le funzioni sono entità
+effimere, stateless e isolate in ambienti containerizzati, invocate su
+richiesta con cicli di vita che si misurano spesso in millisecondi.
+Tale granularità, combinata con l'elevata variabilità del carico di
+lavoro, rende la gestione dell'energia una dimensione strutturalmente
+più complessa rispetto ai contesti HPC o ai data center tradizionali,
+nei quali le tecniche consolidate operano tipicamente a livello di nodo
+fisico e su scale temporali più ampie.
 
-Allo stato dell'arte, l'efficienza energetica in ambienti serverless è 
-affrontata prevalentemente attraverso interventi a livello di 
-piattaforma, generalmente trasparenti per l'utente. Le soluzioni più 
-diffuse agiscono su tre leve principali: la pianificazione 
-energeticamente consapevole delle funzioni (\emph{energy-aware 
-scheduling}), la limitazione dinamica della potenza erogata alle risorse 
-(\emph{power capping}) e la riduzione dell'impatto energetico associato 
-ai tempi di inizializzazione degli ambienti di esecuzione (\emph{cold 
-start overhead}).
+Allo stato dell'arte, la sostenibilità energetica in ambienti serverless
+è affrontata attraverso soluzioni che si collocano a livelli diversi
+dello stack di esecuzione. Un primo insieme di approcci opera a livello
+infrastrutturale, integrando il consumo energetico tra i criteri che
+guidano le decisioni di scheduling e di allocazione delle risorse: in
+questa prospettiva, l'obiettivo è determinare \emph{dove} eseguire una
+funzione — su quale nodo o in quale data center — in modo da ridurre il
+consumo complessivo dell'infrastruttura.
 
-In questi approcci, il consumo energetico viene trattato come una 
-metrica aggiuntiva nel processo decisionale, tipicamente combinata con 
-indicatori di prestazione o di qualità del servizio. L'obiettivo è la 
-riduzione del consumo medio o complessivo del sistema, senza che vengano 
-introdotti vincoli energetici espliciti o meccanismi di garanzia formale 
-sul rispetto di un determinato budget. Questa impostazione, sebbene 
-efficace in scenari con risorse abbondanti, mostra limiti evidenti in 
-contesti caratterizzati da risorse limitate o da stringenti requisiti 
-operativi — tra cui ambienti edge — nei quali il consumo energetico non 
-può essere trattato come una variabile da ottimizzare in senso 
-best-effort, ma deve costituire un vincolo esplicito nel processo di 
-pianificazione.
+Una direzione complementare consiste nell'agire sulla funzione stessa
+piuttosto che sull'infrastruttura. Attraverso il paradigma
+dell'\emph{Approximate Computing}, è possibile associare a una medesima
+funzione logica più varianti implementative, caratterizzate da profili
+energetici e livelli di accuratezza differenti. La decisione non riguarda
+più soltanto dove eseguire la funzione, ma \emph{quale} variante della
+funzione eseguire, introducendo un trade-off esplicito tra consumo
+energetico e qualità del risultato.
 
-Una direzione complementare, ancora poco esplorata nel contesto 
-serverless, consiste nell'agire sulla funzione stessa piuttosto che 
-sull'infrastruttura: attraverso il paradigma dell'\emph{Approximate 
-Computing}, è possibile generare varianti della medesima funzione che 
-riducono il consumo energetico accettando, in modo controllato, una 
-diminuzione dell'accuratezza del risultato. Tale approccio sposta il 
-problema dalla gestione delle risorse alla progettazione della logica 
-applicativa, aprendo la strada a modelli di controllo runtime in grado 
-di selezionare dinamicamente il livello di approssimazione più adeguato 
-in funzione del budget energetico disponibile.
+Più recentemente, un ulteriore filone di ricerca ha introdotto la
+\emph{carbon intensity} della rete elettrica come segnale di contesto
+per guidare le decisioni di esecuzione. In questi approcci, denominati
+\emph{carbon-aware}, il criterio di ottimizzazione si estende dal solo
+consumo energetico all'impatto ambientale complessivo, tenendo conto
+della composizione del mix energetico disponibile al momento
+dell'invocazione.
 
-Nei paragrafi successivi vengono analizzati i principali contributi 
-proposti in letteratura, seguendo una progressione che va dagli 
-interventi infrastrutturali — scheduling energy-aware e power capping — 
-verso meccanismi di controllo applicativo basati su vincoli energetici 
-espliciti, delineando il contesto nel quale si inserisce il contributo 
-della presente tesi.
+Nei paragrafi successivi vengono analizzati i principali contributi
+proposti in ciascuna di queste direzioni, delineando il contesto nel
+quale si colloca il contributo della presente tesi.
 
 \input{src/subsection/chapter2/scheduling}
-\input{src/subsection/chapter2/powercapping}
+%\input{src/subsection/chapter2/powercapping}
 \input{src/subsection/chapter2/ApproximateComputing}
+%\input{src/subsection/chapter2/CarbonAware}
