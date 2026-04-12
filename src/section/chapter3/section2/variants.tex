@@ -1,15 +1,462 @@
+% --------------------------------------------------------------------------
 \section{Il modello di funzione logica con varianti}
-\label{sec:variant-model}
-
-Il supporto all'esecuzione energeticamente consapevole richiede che il 
-sistema possa rappresentare, per una stessa funzione, implementazioni 
-alternative con diversi profili di consumo e accuratezza. A tal fine è 
-stato introdotto il concetto di \emph{funzione logica con varianti}: 
-un'astrazione che raggruppa sotto un unico identificatore logico più 
-implementazioni della stessa funzione, ciascuna caratterizzata da un 
-proprio profilo energetico e da un modello di output che ne quantifica 
+\label{sec:modello-varianti}
+% --------------------------------------------------------------------------
+ 
+Il supporto all'esecuzione energeticamente consapevole richiede che il
+sistema possa rappresentare, per una stessa funzione, implementazioni
+alternative con diversi profili di consumo energetico e livello di accuratezza. 
+A tal fine è stato introdotto il concetto di \emph{funzione logica con varianti}:
+un'astrazione che raggruppa sotto un unico identificatore logico più
+implementazioni della stessa funzione, ciascuna caratterizzata da un
+proprio profilo energetico e da un modello di output che ne quantifica
 l'accuratezza.
+ 
+ 
+\subsection{Struttura della funzione e profilo energetico}
+\label{subsec:struttura-funzione}
+ 
+In Serverledge, ogni funzione è rappresentata dalla struttura
+\texttt{Function}, estesa in questo lavoro con i campi necessari al
+supporto delle varianti energetiche. I campi rilevanti per il sistema
+proposto sono i seguenti:
+ 
+\begin{itemize}
+    \item \texttt{LogicalName}: identificatore condiviso da tutte le
+    varianti appartenenti alla stessa funzione logica. Costituisce il
+    riferimento con cui il client invoca la funzione, indipendentemente
+    dalla variante che verrà selezionata a runtime. La registrazione
+    delle varianti avviene su consenso esplicito dell'utente in fase di
+    creazione della funzione;
+ 
+    \item \texttt{VariantID}: identificatore univoco della specifica
+    variante all'interno del gruppo logico;
+ 
+    \item \texttt{EnergyProfile}: struttura che mantiene la stima
+    energetica della variante, composta da due campi:
+    \begin{itemize}
+        \item \texttt{ColdStartJoule}: energia stimata per l'avvio a
+        freddo del container, comprensiva dell'inizializzazione del
+        runtime;
+        \item \texttt{InvocationJoule}: energia media stimata per una
+        singola invocazione della funzione in warm start.
+    \end{itemize}
+ 
+    \item \texttt{OutputModel}: struttura che descrive la qualità
+    dell'output della variante, utilizzata dallo scheduler per il
+    confronto tra varianti in termini di accuratezza. Il suo contenuto è
+    descritto in dettaglio nella Sezione~\ref{sec:output-model}.
+\end{itemize}
+ 
+ 
+\subsubsection{Determinazione dei profili energetici iniziali}
+\label{subsubsec:profili-iniziali}
+ 
+I valori iniziali di \texttt{EnergyProfile} sono stati determinati
+offline tramite una campagna di misurazioni preliminari condotta con
+Kepler. La metodologia adottata tiene conto della natura delle metriche
+esposte da Kepler: trattandosi di contatori cumulativi, l'energia
+osservata al termine di $n$ invocazioni consecutive sullo stesso
+container rappresenta la somma dei contributi di tutte le esecuzioni,
+inclusa quella iniziale soggetta al cold start.
+ 
+Per separare i due contributi energetici si è proceduto nel modo
+seguente. Dato un container su cui vengono eseguite $n$ invocazioni
+consecutive, si indica con $E_{tot}$ l'energia cumulativa totale
+rilevata da Kepler al termine dell'ultima invocazione e con $E_1$
+l'energia della prima invocazione, che comprende sia il costo di
+inizializzazione del container che quello di esecuzione della funzione.
+Le invocazioni successive, eseguite a container già attivo, sono invece
+soggette al solo costo di esecuzione. Il costo medio di invocazione in
+warm start è quindi stimato come:
+\begin{equation}
+    E_{inv} = \frac{E_{tot} - E_1}{n - 1}
+    \label{eq:inv-joule}
+\end{equation}
+e il costo di cold start come:
+\begin{equation}
+    E_{cold} = E_1 - E_{inv}
+    \label{eq:cold-joule}
+\end{equation}
+ 
+La ripetizione delle misurazioni su un numero statisticamente
+significativo di invocazioni consente di attenuare la varianza
+introdotta dal sistema operativo e dal runtime, ottenendo stime robuste
+per entrambi i contributi. I valori così ottenuti vengono codificati nel
+file JSON di definizione delle varianti e costituiscono la stima
+iniziale del profilo energetico. Il~\autoref{lst:piLeibniz-json} mostra
+un esempio concreto per la funzione \texttt{PiLeibniz}, che espone tre
+varianti esatte a runtime diverso e sei varianti approssimate con numero
+di iterazioni ridotto.
+ 
+\begin{lstlisting}[
+    language=json,
+    caption={File di definizione delle varianti per la funzione
+    \texttt{PiLeibniz}. Le prime due varianti sono esatte
+    (\texttt{is\textunderscore approximate: false}) e differiscono per runtime e
+    consumo; le varianti \texttt{n1000} e \texttt{n200000} mostrano
+    gli estremi del continuum accuratezza--energia delle varianti
+    approssimate (omesse per brevità le quattro varianti intermedie).},
+    label={lst:piLeibniz-json},
+    breaklines=true
+]
+{
+  "variants": [
+    {
+      "id": "base",
+      "runtime": "python310",
+      "entry_point": "piLeibniz.handler",
+      "src": "piLeibniz.py",
+      "energy": {
+        "cold_start_joule": 0.070134,
+        "invocation_joule": 0.007823
+      },
+      "output": { "type": "error",
+                  "error_estimate": 0.0 },
+      "is_approximate": false
+    },
+    {
+      "id": "c",
+      "runtime": "native",
+      "entry_point": "piLeibniz_base",
+      "src": "piLeibniz_base",
+      "energy": {
+        "cold_start_joule": 0.008847,
+        "invocation_joule": 0.001052
+      },
+      "output": { "type": "error",
+                  "error_estimate": 0.0 },
+      "is_approximate": false
+    },
+    {
+      "id": "n1000",
+      "runtime": "python310",
+      "entry_point": "piLeibniz_n1000.handler",
+      "src": "piLeibniz_n1000.py",
+      "energy": {
+        "cold_start_joule": 0.070681,
+        "invocation_joule": 0.000196
+      },
+      "output": { "type": "error",
+                  "error_estimate": 0.001999 },
+      "is_approximate": true
+    },
+    {
+      "id": "n200000",
+      "runtime": "python310",
+      "entry_point": "piLeibniz_n200000.handler",
+      "src": "piLeibniz_n200000.py",
+      "energy": {
+        "cold_start_joule": 0.069587,
+        "invocation_joule": 0.001534
+      },
+      "output": { "type": "error",
+                  "error_estimate": 0.000010 },
+      "is_approximate": true
+    }
+  ]
+}
+\end{lstlisting}
+ 
+I valori iniziali del profilo energetico sono progressivamente raffinati
+a runtime dal worker periodico, descritto nella
+Sezione~\ref{sec:aggiornamento-ema}, sulla base delle misurazioni
+effettive raccolte durante l'esecuzione in produzione. I risultati
+numerici delle misurazioni preliminari per tutte le varianti sono
+riportati nel Capitolo~\ref{cap:RisultatiSperimentali}.
+ 
+ 
+\subsection{Il modello di output e la classificazione dell'accuratezza}
+\label{sec:output-model}
+ 
+Per consentire allo scheduler di confrontare le varianti in termini di
+accuratezza, ciascuna variante è dotata di un \texttt{OutputModel} che
+descrive la qualità del suo output. Il modello supporta due tipologie
+di classificazione, scelte in base alla natura computazionale della
+funzione:
+ 
+\begin{itemize}
+    \item \textbf{Tipo \texttt{error}}: adatto a funzioni il cui output
+    è un valore numerico misurabile. L'accuratezza è espressa tramite il
+    campo \texttt{error\_estimate}, che rappresenta l'errore relativo
+    atteso rispetto alla variante di riferimento. Una variante esatta
+    presenta \texttt{error\_estimate = 0.0}, mentre varianti
+    approssimate presentano valori positivi proporzionali alla
+    deviazione introdotta dalla semplificazione algoritmica adottata.
+ 
+    \item \textbf{Tipo \texttt{quality}}: adatto a funzioni il cui
+    output non è facilmente quantificabile con un errore numerico, come
+    classificatori o modelli di machine learning. L'accuratezza è
+    espressa tramite il campo numerico \texttt{quality\_score}
+    $\in [0,1]$, dove $1$ corrisponde all'accuratezza massima; lo
+    scheduler calcola internamente l'error score come
+    $1 - \mathtt{quality\_score}$. È supportato anche un campo
+    \texttt{quality} a livello discreto (\texttt{high}, \texttt{medium},
+    \texttt{low}), utilizzato come fallback in assenza di
+    \texttt{quality\_score} e mappato rispettivamente ai valori $0.0$,
+    $0.5$ e $1.0$.
+\end{itemize}
+ 
+Il~\autoref{lst:imageclassification-json} mostra un esempio applicativo
+del tipo \texttt{quality} per la funzione
+\texttt{ImageClassification}, in cui la variante base utilizza un
+modello ViT più accurato ma più oneroso energeticamente, mentre le
+varianti successive adottano architetture più compatte
+(EfficientNet-B0, MobileNet-V2, MobileNet-V2-Tiny) a qualità
+progressivamente ridotta.
+ 
+I valori di \texttt{quality\_score} assegnati a ciascuna variante
+corrispondono alle accuracy pubblicate sui benchmark standard del
+rispettivo dominio applicativo. Per la funzione
+\texttt{ImageClassification} sono stati utilizzati i valori di Top-1
+accuracy su ImageNet riportati dagli autori dei
+modelli~\cite{dosovitskiy2020vit, tan2019efficientnet,
+sandler2018mobilenetv2}. Per \texttt{SentimentAnalysis} i valori
+derivano dall'accuracy su SST-2~\cite{liu2019roberta, sanh2019distilbert,
+hutto2014vader}.Per \texttt{SpamDetection},
+al contrario, non esiste un benchmark universale per la rilevazione di
+spam analogo a ImageNet o SST-2: i modelli impiegati sono
+addestrati su dataset eterogenei e le loro accuracy variano
+significativamente in funzione del corpus di riferimento. I valori di
+\texttt{quality\_score} sono stati pertanto assegnati in modo ordinale, 
+riflettendo la gerarchia qualitativa
+attesa tra le architetture piuttosto che misurazioni su un singolo
+dataset standard.
+ 
+\begin{lstlisting}[
+    language=json,
+    caption={File di definizione delle varianti per la funzione
+    \texttt{ImageClassification}. Il campo \texttt{quality\_score}
+    riporta la Top-1 accuracy su ImageNet pubblicata dagli autori di
+    ciascun modello, espressa in ${[0,1]}$.},
+    label={lst:imageclassification-json}
+]
+{
+  "variants": [
+    {
+      "id": "vit-base",
+      "runtime": "python-ml",
+      "entry_point": "ImageClassification.handler",
+      "src": "ImageClassification.py",
+      "energy": { "cold_start_joule": 1.895,
+                  "invocation_joule": 1.455 },
+      "output": { "type": "quality",
+                  "quality": "high",
+                  "quality_score": 0.818 },
+      "is_approximate": false
+    },
+    {
+      "id": "efficientnet-b0",
+      "runtime": "python-ml",
+      "entry_point":
+        "ImageClassificationEfficientNetB0.handler",
+      "src":
+        "ImageClassificationEfficientNetB0.py",
+      "energy": { "cold_start_joule": 1.183,
+                  "invocation_joule": 0.418 },
+      "output": { "type": "quality",
+                  "quality": "medium-high",
+                  "quality_score": 0.771 },
+      "is_approximate": true
+    },
+    {
+      "id": "mobilenet-v2",
+      "runtime": "python-ml",
+      "entry_point":
+        "ImageClassificationLight.handler",
+      "src": "ImageClassificationLight.py",
+      "energy": { "cold_start_joule": 1.071,
+                  "invocation_joule": 0.229 },
+      "output": { "type": "quality",
+                  "quality": "medium-low",
+                  "quality_score": 0.718 },
+      "is_approximate": true
+    },
+    {
+      "id": "mobilenet-v2-tiny",
+      "runtime": "python-ml",
+      "entry_point":
+        "ImageClassificationMobileNetTiny.handler",
+      "src":
+        "ImageClassificationMobileNetTiny.py",
+      "energy": { "cold_start_joule": 0.779,
+                  "invocation_joule": 0.077 },
+      "output": { "type": "quality",
+                  "quality": "low",
+                  "quality_score": 0.603 },
+      "is_approximate": true
+    }
+  ]
+}
+\end{lstlisting}
 
-\input{src/subsection/chapter3/Sezione2/01-StrutturaFunzione}
-\input{src/subsection/chapter3/Sezione2/02-ProfiliEnergetici}
-\input{src/subsection/chapter3/Sezione2/03-SalvataggioEtcd}
+%Secondo me non va qui, ma in risultati
+\subsection{Le famiglie di funzioni utilizzate}
+\label{subsec:famiglie-funzioni}
+ 
+Le sei funzioni sono raggruppate in due famiglie in base alla natura del
+loro output e alla metrica di accuratezza impiegata.
+ 
+La prima famiglia comprende le \emph{funzioni numeriche}, il cui output
+è un valore quantificabile e l'errore è misurato come scarto relativo
+rispetto al valore esatto.
+ 
+\textbf{PiLeibniz} stima il valore di $\pi$ tramite la serie di
+Leibniz con $N$ termini fissi:
+\[
+    \frac{\pi}{4} = \sum_{k=0}^{N-1} \frac{(-1)^k}{2k+1}
+\]
+È la funzione con la frontiera di Pareto più ricca: nove varianti che
+coprono tre ordini di grandezza in energia ed errore, includendo
+implementazioni in Python, una variante compilata in C nativo (che
+dimostra il supporto del sistema a runtime eterogenei) e sei varianti
+approssimate con numero di termini decrescente.
+ 
+\textbf{LnHarmonic} stima il valore di $\ln(2)$ tramite la serie
+armonica alternante con $N$ termini:
+\[
+    \ln(2) = \sum_{k=1}^{N} \frac{(-1)^{k+1}}{k}
+\]
+La struttura è analoga a PiLeibniz: il parametro $N$ bilancia
+accuratezza e consumo energetico, con sette varianti distribuite lungo
+la frontiera.
+ 
+\textbf{MonteCarlo} stima $\pi$ tramite il metodo Monte Carlo,
+generando $N$ punti casuali nel quadrato unitario e contando quanti
+cadono nel cerchio inscritto. L'errore statistico decresce come
+$O(1/\sqrt{N})$. Tutte le sei varianti sono approssimate, poiché
+l'algoritmo è intrinsecamente stocastico, e l'intero insieme forma la
+frontiera di Pareto.
+ 
+La seconda famiglia comprende le \emph{funzioni di classificazione}
+(ML), il cui output non è numericamente confrontabile con un valore
+esatto. La qualità è espressa tramite \texttt{quality\_score}, un
+valore continuo in $[0,1]$ stimato su benchmark standard.
+ 
+\textbf{SentimentAnalysis} classifica un testo in input come positivo o
+negativo. Le quattro varianti spaziano da un modello Transformer di
+grandi dimensioni (RoBERTa, 355M parametri, quality\_score\,=\,0.95) a
+un classificatore lessicale basato su AFINN (quality\_score\,=\,0.50),
+passando per modelli intermedi (DistilBERT, BERT-tiny).
+ 
+\textbf{ImageClassification} classifica un'immagine tra 1000 categorie
+ImageNet. Le quattro varianti impiegano architetture di dimensioni
+decrescenti: da ViT-Base (86M parametri, quality\_score\,=\,0.95) a
+MobileNet-V2-Tiny (1.7M parametri, quality\_score\,=\,0.50).
+ 
+\textbf{SpamDetection} classifica un messaggio come spam o legittimo.
+Le quattro varianti comprendono modelli Transformer fine-tuned per
+spam detection fino a un classificatore euristico basato su keyword
+(quality\_score\,=\,0.50).
+ 
+La Tabella~\ref{tab:funzioni-riepilogo} riporta una sintesi delle
+caratteristiche energetiche delle sei funzioni.
+ 
+\begin{table}[t]
+    \centering
+    \small
+    \begin{tabular}{llcccc}
+        \toprule
+        \textbf{Funzione} & \textbf{Tipo} &
+        \textbf{N.\ var.} &
+        \textbf{$E_\text{min}$ (J)} &
+        \textbf{$E_\text{max}$ (J)} &
+        \textbf{Rapporto} \\
+        \midrule
+        PiLeibniz           & \texttt{error}   & 9
+            & 0.000196 & 0.007823 & $40\times$ \\
+        LnHarmonic          & \texttt{error}   & 7
+            & 0.000196 & 0.007700 & $39\times$ \\
+        MonteCarlo          & \texttt{error}   & 6
+            & 0.000147 & 0.231480 & $1574\times$ \\
+        SentimentAnalysis   & \texttt{quality} & 4
+            & 0.0024   & 0.0916   & $38\times$ \\
+        SpamDetection       & \texttt{quality} & 4
+            & 0.0020   & 0.0850   & $43\times$ \\
+        ImageClassification & \texttt{quality} & 4
+            & 0.077    & 1.455    & $19\times$ \\
+        \bottomrule
+    \end{tabular}
+    \caption{Riepilogo delle sei funzioni utilizzate negli esperimenti.
+    Per ciascuna si riportano il tipo di output, il numero di varianti,
+    l'intervallo energetico coperto e il rapporto tra il consumo della
+    variante più costosa e quello della più economica.}
+    \label{tab:funzioni-riepilogo}
+\end{table}
+ 
+ 
+\subsection{Registrazione e indicizzazione delle varianti in etcd}
+\label{sec:variant-registration}
+ 
+Le varianti di una funzione logica vengono definite tramite un file
+JSON collocato nella directory \texttt{variants/<LogicalName>/} del
+progetto. Al momento della registrazione, il sistema legge questo file
+attraverso il componente \texttt{FileSource}, prepara il codice sorgente
+di ciascuna variante in formato tar e materializza le varianti in etcd
+attraverso la funzione \texttt{CreateInternalVariants}.
+ 
+\subsubsection{Convenzione di denominazione}
+ 
+La convenzione di denominazione distingue la variante di riferimento
+dalle varianti alternative. La prima variante definita nel file JSON —
+tipicamente quella a massima accuratezza — mantiene come nome interno
+esattamente il \texttt{LogicalName}, preservando la compatibilità con le
+invocazioni che non specificano alcuna preferenza energetica. Le varianti
+successive ricevono un nome composto nella forma
+\texttt{<LogicalName>-<VariantID>}. Per la funzione logica
+\texttt{PiLeibniz} (\autoref{lst:piLeibniz-json}) ad esempio, i nomi
+interni assegnati sono:
+ 
+\begin{itemize}
+    \item \texttt{PiLeibniz} — variante base in Python
+    \item \texttt{PiLeibniz-optimization-py} — variante ottimizzata in
+    Python
+    \item \texttt{PiLeibniz-c} — variante compilata in C nativo
+    \item \texttt{PiLeibniz-n1000} — variante approssimata
+    (1\,000 iterazioni)
+    \item \texttt{PiLeibniz-n200000} — variante approssimata
+    (200\,000 iterazioni)
+    \item \ldots
+\end{itemize}
+ 
+ 
+\subsubsection{Struttura delle chiavi in etcd}
+ 
+Il sistema mantiene in etcd due livelli distinti di chiavi, ciascuno con
+una responsabilità specifica, come illustrato in
+Figura~\ref{fig:etcd-structure}.
+ 
+Il primo livello, sotto il prefisso \texttt{/function/}, contiene una
+chiave per ogni variante registrata nel sistema, indipendentemente dalla
+funzione logica di appartenenza. Il valore associato è la
+serializzazione JSON completa della struttura \texttt{Function}, che
+include il runtime, il codice sorgente, il profilo energetico corrente e
+il modello di output. È su queste chiavi che il worker periodico scrive
+gli aggiornamenti del campo \texttt{InvocationJoule} ad ogni ciclo di
+raccolta.
+ 
+Il secondo livello, sotto il prefisso
+\texttt{/index/logical/<LogicalName>/}, costituisce un indice che
+associa ciascun nome logico all'insieme delle sue varianti. La
+motivazione di questo indice è di natura prestazionale: poiché la
+selezione della variante avviene nel critical path della richiesta di
+invocazione, è necessario che lo scheduler possa recuperare rapidamente
+tutte le varianti di una funzione logica senza dover scorrere l'intero
+prefisso \texttt{/function/}, che contiene tutte le funzioni registrate
+nel sistema. Tramite l'indice, il recupero avviene con una singola query
+con prefisso su \texttt{/index/logical/<LogicalName>/}, restituendo
+esclusivamente le varianti della funzione richiesta e contenendo così la
+latenza introdotta dalla fase di selezione a runtime.
+ 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/etcd-structure.jpg}
+    \caption{Struttura delle chiavi etcd per la funzione logica
+    \texttt{PiLeibniz} con le sue varianti. Le chiavi sotto
+    \texttt{/function/} contengono i profili completi aggiornati dal
+    worker periodico. L'indice sotto \texttt{/index/logical/} consente
+    allo scheduler di recuperare efficientemente le sole varianti della
+    funzione richiesta, senza scorrere l'intero store.}
+    \label{fig:etcd-structure}
+\end{figure}
+

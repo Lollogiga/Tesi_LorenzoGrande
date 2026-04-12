@@ -40,6 +40,6 @@ I componenti avviati,  come mostrato anche in Figura~\ref{fig:infra-arch}, sono 
 Una volta avviata, l'infrastruttura opera in modo autonomo: Kepler 
 rileva i container Docker presenti sull'host e ne aggiorna le metriche 
 energetiche ad ogni ciclo di campionamento; Prometheus le raccoglie e 
-le rende interrogabili; il sistema interno di Serverledge, descritto 
-nelle sezioni successive, le legge periodicamente per aggiornare i 
-profili energetici delle varianti di funzione.
+le rende interrogabili; il sistema interno di Serverledge, descritto nelle sezioni successive,
+ le legge periodicamente — limitatamente ai container attivi da esso gestiti — per aggiornare i profili energetici 
+ delle varianti di funzione.
