@@ -1,43 +1,56 @@
 \section{Posizionamento del contributo}
 \label{sec:posizionamento}
 
-L'analisi della letteratura evidenzia come le soluzioni proposte per la
-gestione energetica in ambienti serverless operino prevalentemente a
-livello infrastrutturale: gli scheduler energeticamente consapevoli
-esaminati — Faashouse, E$^{2}$FIS e GreenFaaS — agiscono sulla
-selezione del nodo di esecuzione e sulla redistribuzione del carico,
-trattando ciascuna funzione come un'unità indivisibile con un profilo
-energetico fisso. Analogamente, le tecniche di power capping intervengono
-sulla potenza erogata ai componenti hardware, senza alcuna consapevolezza
-della logica applicativa delle funzioni invocate. Contributi come
-JouleGuard e \emph{Code Once, Run Green} mostrano come sia possibile
-agire direttamente sulla funzione per ridurne il consumo, introducendo
-rispettivamente il controllo del livello di approssimazione e la
-generazione di implementazioni alternative. Tuttavia, tali approcci
-determinano i profili energetici delle varianti in modo prevalentemente
-statico, senza prevedere meccanismi di aggiornamento basati sul
-comportamento reale del sistema in esecuzione.
+L'analisi condotta in questo capitolo ha esaminato tre famiglie di
+soluzioni per la sostenibilità energetica in ambienti serverless,
+ciascuna delle quali interviene su una dimensione specifica del
+problema.
 
-Questa limitazione è particolarmente critica in ambienti FaaS, nei quali
-il consumo energetico di una funzione non è una grandezza stabile nel
-tempo. Fattori quali la variabilità del carico concorrente sul nodo, le
-fluttuazioni termiche dell'hardware, il comportamento dei dati di input
-e lo stato degli ambienti di esecuzione possono determinare variazioni
-significative del consumo per invocazione anche a parità di implementazione.
-Affidarsi a stime statiche significa quindi operare su profili energetici
-potenzialmente disallineati rispetto alle condizioni operative correnti,
-compromettendo l'efficacia di qualsiasi meccanismo decisionale che si fonda su queste stime.
+Gli approcci di scheduling
+energy-aware~\cite{e2fis_smartcomp,greenfaas} operano sulla scelta del
+nodo di esecuzione, trattando la funzione come un'entità con profilo
+energetico invariante. I contributi riconducibili all'approximate
+computing~\cite{jouleguard,refaas} mostrano che è possibile agire sulla
+funzione stessa, generando varianti con profili energia-accuratezza
+differenziati e selezionando dinamicamente tra esse, ma determinano
+tali profili in modo prevalentemente statico e non prevedono meccanismi
+di aggiornamento basati sul comportamento reale del sistema in
+esecuzione. Gli approcci
+carbon-aware~\cite{radovanovic2022carbon,greencourier} introducono la
+carbon intensity della rete elettrica come segnale di contesto per le
+decisioni di esecuzione, ma la utilizzano esclusivamente per decidere
+\emph{dove} o \emph{quando} eseguire un carico di lavoro, senza che il
+segnale influenzi la scelta di \emph{cosa} viene eseguito.
 
-Il presente lavoro si propone di colmare questo spazio, introducendo un
-control loop runtime che mantiene i profili energetici delle varianti
-di funzione continuamente aggiornati sulla base di misurazioni reali,
-e li utilizza per prendere decisioni online di selezione. Tale approccio
-consente di combinare due dimensioni attualmente non integrate nella
-letteratura esaminata: la possibilità di sfruttare il trade-off tra
-consumo energetico e accuratezza offerto da varianti alternative della
-stessa funzione, e la capacità di rispettare vincoli energetici espliciti
-definiti dall'utente per singola invocazione. Quest'ultima caratteristica
-risulta particolarmente rilevante in scenari di esecuzione su nodi edge,
-dove la disponibilità energetica può variare nel tempo e la capacità di
-operare entro un budget predefinito rappresenta un requisito operativo
-concreto, non una semplice preferenza di ottimizzazione.
+Dall'analisi emerge che queste tre dimensioni --- la selezione tra
+varianti con diversi profili energia-accuratezza, l'adattività delle
+stime energetiche alle condizioni operative correnti, e la sensibilità
+al contesto carbonico della rete elettrica --- sono state affrontate
+separatamente, ma non sono mai state integrate in un unico meccanismo
+decisionale. In particolare, nessuno degli approcci esaminati affronta
+il problema di selezionare, al momento dell'invocazione, la variante di
+una funzione che offra il miglior compromesso tra consumo energetico e
+accuratezza del risultato in funzione dell'impatto ambientale corrente
+dell'esecuzione. Manca un meccanismo che utilizzi la carbon intensity
+non come criterio di \emph{placement} geografico o temporale, ma come
+segnale per modulare il punto operativo sul trade-off
+energia-accuratezza della funzione stessa --- spostando la selezione
+verso varianti a minor consumo quando la rete è alimentata da fonti ad
+alta intensità di carbonio, e verso varianti a maggiore accuratezza
+quando le condizioni della rete lo consentono.
+
+A ciò si aggiunge una seconda lacuna, trasversale agli approcci
+esaminati: in ambienti FaaS, il consumo energetico di una funzione non
+è una grandezza stabile nel tempo, ma varia in funzione del carico
+concorrente sul nodo, dello stato del container e delle caratteristiche
+dei dati di input. Fondare le decisioni di selezione su profili
+energetici determinati offline significa operare su stime
+potenzialmente disallineate rispetto alle condizioni operative correnti,
+con conseguenze dirette sull'efficacia del meccanismo decisionale.
+
+Il presente lavoro si propone di colmare questo spazio, integrando le
+tre dimensioni identificate in un unico sistema di scheduling che
+operi a livello di singola invocazione, selezionando tra varianti della
+stessa funzione sulla base di stime energetiche aggiornate
+continuamente e di un segnale di carbon intensity contestualizzato
+rispetto alla zona geografica di esecuzione.
