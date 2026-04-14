@@ -1,0 +1,111 @@
+% --------------------------------------------------------------------------
+\section{Esplorazione LCB per il raffinamento delle stime energetiche}
+\label{sec:esplorazione-ucb}
+% --------------------------------------------------------------------------
+ 
+Il meccanismo EMA descritto nella sezione precedente consente di
+raffinare i profili energetici a runtime, ma presenta un prerequisito
+implicito: aggiorna solo le varianti che vengono effettivamente
+eseguite. Se la stima iniziale di una variante è sovrastimata rispetto
+al suo consumo reale, lo scheduler tenderà a non selezionarla, il
+worker non raccoglierà mai campioni su di lei non permettendo la correzione dell'errore. Il problema si 
+manifesta in particolare
+nelle fasi iniziali del sistema, quando i profili offline — determinati
+su un hardware di riferimento — potrebbero non riflettere il
+comportamento reale sul nodo edge in produzione, sia per la
+\emph{dipendenza dall'hardware} (CPU, workload e condizioni termiche
+differenti), sia per la \emph{non stazionarietà} del consumo energetico
+(che varia con il carico concorrente, la temperatura del processore e
+lo stato della cache del runtime).In queste condizioni, una variante con consumo energetico sovrastimato
+tende ad essere sistematicamente penalizzata nella scalarizzazione
+Pareto e a non venire mai selezionata — impedendo al meccanismo EMA
+di raccogliere campioni reali su di lei e correggere l'errore. È
+necessario quindi introdurre un meccanismo che promuova l'esplorazione
+di varianti poco osservate, indipendentemente dalla loro stima corrente.
+ 
+\subsection{Il principio di ottimismo sotto incertezza}
+\label{subsec:ucb-principio}
+ 
+Il meccanismo adottato si basa sul principio di \emph{ottimismo sotto
+incertezza} (Optimism in the Face of Uncertainty), mutuato dalla teoria
+dei banditi multi-braccio~\cite{auer2002finite}.Tale meccanismo incentiva
+l'esplorazione di varianti sotto-campionate, raccogliendo dati reali e
+convergendo progressivamente a stime accurate.
+ 
+Per applicare il principio alla minimizzazione del consumo energetico si
+utilizza il Lower Confidence Bound (LCB), equivalente all'UCB classico:
+\begin{equation}
+    \mathrm{LCB}(i) = \mu_i^\text{EMA}
+        - \beta \cdot \frac{\sigma_i}{\sqrt{n_i^\text{eff}}}
+    \label{eq:lcb}
+\end{equation}
+dove $n_i^\text{eff} = n_i + 0.5$, con $n_i$ il numero di campioni
+InfluxDB disponibili per la variante $i$. L'addendo costante $0.5$
+evita la divisione per zero nel caso $n_i = 0$ e assicura la massima
+correzione ottimistica per varianti mai osservate. La
+Tabella~\ref{tab:lcb-simboli} descrive i simboli della formula.
+ 
+\begin{table}[t]
+    \centering
+    \small
+    \begin{tabular}{lp{9.5cm}}
+        \toprule
+        \textbf{Simbolo} & \textbf{Significato} \\
+        \midrule
+        $\mu_i^\text{EMA}$ &
+            Stima EMA dell'energia della variante $i$, letta da etcd
+            ($\alpha = 0.2$) \\
+        $\sigma_i$ &
+            Deviazione standard calcolata sui campioni InfluxDB.\\
+        $n_i^\text{eff}$ &
+            Numero effettivo di campioni: $n_i + 0.5$ \\
+        $\beta$ &
+            Parametro di esplorazione (configurabile, default 1.0) \\
+        \bottomrule
+    \end{tabular}
+    \caption{Simboli della formula LCB e relativi valori.}
+    \label{tab:lcb-simboli}
+\end{table}
+ 
+Una LCB bassa segnala che la variante è sotto-esplorata: il sistema la favorisce
+nella selezione per raccogliere dati aggiuntivi. All'aumentare di
+$n_i$, la correzione si azzera e la stima converge alla media empirica.
+ 
+ 
+\subsection{Proprietà di convergenza}
+\label{subsec:ucb-convergenza}
+ 
+La formula~\eqref{eq:lcb} gode delle seguenti proprietà asintotiche,
+che ne garantiscono il corretto bilanciamento tra esplorazione e
+sfruttamento:
+ 
+\begin{itemize}
+    \item quando $n_i$ è grande (variante ben esplorata), il termine
+    $\sigma_i / \sqrt{n_i^\text{eff}}$ tende a zero e
+    $\mathrm{LCB}(i) \to \mu_i^\text{EMA}$: il sistema sfrutta la
+    stima corrente senza alterarla;
+ 
+    \item quando $n_i = 0$ (variante mai osservata), la correzione è
+    massima ($n_i^\text{eff} = 0.5$)
+ 
+    \item $\beta = 0$ disabilita completamente l'esplorazione,
+    riducendo la formula alla sola stima EMA;
+ 
+    \item in caso di indisponibilità di InfluxDB, il sistema degrada a
+    $\mu^\text{EMA}$ senza correzione, garantendo il funzionamento
+    anche in assenza del componente esterno.
+\end{itemize}
+ 
+%Capitolo 5
+%In un contesto in cui la stima iniziale $\mu_0$ è artificialmente
+%gonfiata rispetto al valore reale $E^*$, la convergenza dell'EMA è
+%descrivibile analiticamente: con $\alpha = 0.2$, il valore della stima
+%dopo $t$ osservazioni è dato da:
+%\begin{equation}
+%    \mu^\text{EMA}(t) = E^* + (\mu_0 - E^*) \cdot (1 - \alpha)^t
+%    \label{eq:ema-convergenza}
+%\end{equation}
+%Per $\alpha = 0.2$, la stima raggiunge il 95\% della convergenza in
+%circa 15 invocazioni e si stabilizza sul valore reale in 20--25
+%invocazioni.
+ 

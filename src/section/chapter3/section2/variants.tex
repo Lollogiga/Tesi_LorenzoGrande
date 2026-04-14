@@ -94,9 +94,7 @@ di iterazioni ridotto.
     caption={File di definizione delle varianti per la funzione
     \texttt{PiLeibniz}. Le prime due varianti sono esatte
     (\texttt{is\textunderscore approximate: false}) e differiscono per runtime e
-    consumo; le varianti \texttt{n1000} e \texttt{n200000} mostrano
-    gli estremi del continuum accuratezza--energia delle varianti
-    approssimate (omesse per brevità le quattro varianti intermedie).},
+    consumo. (omesse per brevità le quattro varianti intermedie).},
     label={lst:piLeibniz-json},
     breaklines=true
 ]
@@ -188,13 +186,7 @@ funzione:
     output non è facilmente quantificabile con un errore numerico, come
     classificatori o modelli di machine learning. L'accuratezza è
     espressa tramite il campo numerico \texttt{quality\_score}
-    $\in [0,1]$, dove $1$ corrisponde all'accuratezza massima; lo
-    scheduler calcola internamente l'error score come
-    $1 - \mathtt{quality\_score}$. È supportato anche un campo
-    \texttt{quality} a livello discreto (\texttt{high}, \texttt{medium},
-    \texttt{low}), utilizzato come fallback in assenza di
-    \texttt{quality\_score} e mappato rispettivamente ai valori $0.0$,
-    $0.5$ e $1.0$.
+    $\in [0,1]$, dove $1$ corrisponde all'accuratezza massima;
 \end{itemize}
  
 Il~\autoref{lst:imageclassification-json} mostra un esempio applicativo
@@ -205,23 +197,24 @@ varianti successive adottano architetture più compatte
 (EfficientNet-B0, MobileNet-V2, MobileNet-V2-Tiny) a qualità
 progressivamente ridotta.
  
-I valori di \texttt{quality\_score} assegnati a ciascuna variante
-corrispondono alle accuracy pubblicate sui benchmark standard del
-rispettivo dominio applicativo. Per la funzione
-\texttt{ImageClassification} sono stati utilizzati i valori di Top-1
-accuracy su ImageNet riportati dagli autori dei
-modelli~\cite{dosovitskiy2020vit, tan2019efficientnet,
-sandler2018mobilenetv2}. Per \texttt{SentimentAnalysis} i valori
-derivano dall'accuracy su SST-2~\cite{liu2019roberta, sanh2019distilbert,
-hutto2014vader}.Per \texttt{SpamDetection},
-al contrario, non esiste un benchmark universale per la rilevazione di
-spam analogo a ImageNet o SST-2: i modelli impiegati sono
-addestrati su dataset eterogenei e le loro accuracy variano
-significativamente in funzione del corpus di riferimento. I valori di
-\texttt{quality\_score} sono stati pertanto assegnati in modo ordinale, 
-riflettendo la gerarchia qualitativa
-attesa tra le architetture piuttosto che misurazioni su un singolo
-dataset standard.
+%Da inserire quando si parlerà degli esperimenti
+%I valori di \texttt{quality\_score} assegnati a ciascuna variante
+%corrispondono alle accuracy pubblicate sui benchmark standard del
+%rispettivo dominio applicativo. Per la funzione
+%\texttt{ImageClassification} sono stati utilizzati i valori di Top-1
+%accuracy su ImageNet riportati dagli autori dei
+%modelli~\cite{dosovitskiy2020vit, tan2019efficientnet,
+%sandler2018mobilenetv2}. Per \texttt{SentimentAnalysis} i valori
+%derivano dall'accuracy su SST-2~\cite{liu2019roberta, sanh2019distilbert,
+%hutto2014vader}.Per \texttt{SpamDetection},
+%al contrario, non esiste un benchmark universale per la rilevazione di
+%spam analogo a ImageNet o SST-2: i modelli impiegati sono
+%addestrati su dataset eterogenei e le loro accuracy variano
+%significativamente in funzione del corpus di riferimento. I valori di
+%\texttt{quality\_score} sono stati pertanto assegnati in modo ordinale, 
+%riflettendo la gerarchia qualitativa
+%attesa tra le architetture piuttosto che misurazioni su un singolo
+%dataset standard.
  
 \begin{lstlisting}[
     language=json,
@@ -290,173 +283,143 @@ dataset standard.
 }
 \end{lstlisting}
 
-%Secondo me non va qui, ma in risultati
-\subsection{Le famiglie di funzioni utilizzate}
-\label{subsec:famiglie-funzioni}
- 
-Le sei funzioni sono raggruppate in due famiglie in base alla natura del
-loro output e alla metrica di accuratezza impiegata.
- 
-La prima famiglia comprende le \emph{funzioni numeriche}, il cui output
-è un valore quantificabile e l'errore è misurato come scarto relativo
-rispetto al valore esatto.
- 
-\textbf{PiLeibniz} stima il valore di $\pi$ tramite la serie di
-Leibniz con $N$ termini fissi:
-\[
-    \frac{\pi}{4} = \sum_{k=0}^{N-1} \frac{(-1)^k}{2k+1}
-\]
-È la funzione con la frontiera di Pareto più ricca: nove varianti che
-coprono tre ordini di grandezza in energia ed errore, includendo
-implementazioni in Python, una variante compilata in C nativo (che
-dimostra il supporto del sistema a runtime eterogenei) e sei varianti
-approssimate con numero di termini decrescente.
- 
-\textbf{LnHarmonic} stima il valore di $\ln(2)$ tramite la serie
-armonica alternante con $N$ termini:
-\[
-    \ln(2) = \sum_{k=1}^{N} \frac{(-1)^{k+1}}{k}
-\]
-La struttura è analoga a PiLeibniz: il parametro $N$ bilancia
-accuratezza e consumo energetico, con sette varianti distribuite lungo
-la frontiera.
- 
-\textbf{MonteCarlo} stima $\pi$ tramite il metodo Monte Carlo,
-generando $N$ punti casuali nel quadrato unitario e contando quanti
-cadono nel cerchio inscritto. L'errore statistico decresce come
-$O(1/\sqrt{N})$. Tutte le sei varianti sono approssimate, poiché
-l'algoritmo è intrinsecamente stocastico, e l'intero insieme forma la
-frontiera di Pareto.
- 
-La seconda famiglia comprende le \emph{funzioni di classificazione}
-(ML), il cui output non è numericamente confrontabile con un valore
-esatto. La qualità è espressa tramite \texttt{quality\_score}, un
-valore continuo in $[0,1]$ stimato su benchmark standard.
- 
-\textbf{SentimentAnalysis} classifica un testo in input come positivo o
-negativo. Le quattro varianti spaziano da un modello Transformer di
-grandi dimensioni (RoBERTa, 355M parametri, quality\_score\,=\,0.95) a
-un classificatore lessicale basato su AFINN (quality\_score\,=\,0.50),
-passando per modelli intermedi (DistilBERT, BERT-tiny).
- 
-\textbf{ImageClassification} classifica un'immagine tra 1000 categorie
-ImageNet. Le quattro varianti impiegano architetture di dimensioni
-decrescenti: da ViT-Base (86M parametri, quality\_score\,=\,0.95) a
-MobileNet-V2-Tiny (1.7M parametri, quality\_score\,=\,0.50).
- 
-\textbf{SpamDetection} classifica un messaggio come spam o legittimo.
-Le quattro varianti comprendono modelli Transformer fine-tuned per
-spam detection fino a un classificatore euristico basato su keyword
-(quality\_score\,=\,0.50).
- 
-La Tabella~\ref{tab:funzioni-riepilogo} riporta una sintesi delle
-caratteristiche energetiche delle sei funzioni.
- 
-\begin{table}[t]
-    \centering
-    \small
-    \begin{tabular}{llcccc}
-        \toprule
-        \textbf{Funzione} & \textbf{Tipo} &
-        \textbf{N.\ var.} &
-        \textbf{$E_\text{min}$ (J)} &
-        \textbf{$E_\text{max}$ (J)} &
-        \textbf{Rapporto} \\
-        \midrule
-        PiLeibniz           & \texttt{error}   & 9
-            & 0.000196 & 0.007823 & $40\times$ \\
-        LnHarmonic          & \texttt{error}   & 7
-            & 0.000196 & 0.007700 & $39\times$ \\
-        MonteCarlo          & \texttt{error}   & 6
-            & 0.000147 & 0.231480 & $1574\times$ \\
-        SentimentAnalysis   & \texttt{quality} & 4
-            & 0.0024   & 0.0916   & $38\times$ \\
-        SpamDetection       & \texttt{quality} & 4
-            & 0.0020   & 0.0850   & $43\times$ \\
-        ImageClassification & \texttt{quality} & 4
-            & 0.077    & 1.455    & $19\times$ \\
-        \bottomrule
-    \end{tabular}
-    \caption{Riepilogo delle sei funzioni utilizzate negli esperimenti.
-    Per ciascuna si riportano il tipo di output, il numero di varianti,
-    l'intervallo energetico coperto e il rapporto tra il consumo della
-    variante più costosa e quello della più economica.}
-    \label{tab:funzioni-riepilogo}
-\end{table}
+%%Secondo me non va qui, ma in risultati
+%\subsection{Le famiglie di funzioni utilizzate}
+%\label{subsec:famiglie-funzioni}
+% 
+%Le sei funzioni sono raggruppate in due famiglie in base alla natura del
+%loro output e alla metrica di accuratezza impiegata.
+% 
+%La prima famiglia comprende le \emph{funzioni numeriche}, il cui output
+%è un valore quantificabile e l'errore è misurato come scarto relativo
+%rispetto al valore esatto.
+% 
+%\textbf{PiLeibniz} stima il valore di $\pi$ tramite la serie di
+%Leibniz con $N$ termini fissi:
+%\[
+%    \frac{\pi}{4} = \sum_{k=0}^{N-1} \frac{(-1)^k}{2k+1}
+%\]
+%È la funzione con la frontiera di Pareto più ricca: nove varianti che
+%coprono tre ordini di grandezza in energia ed errore, includendo
+%implementazioni in Python, una variante compilata in C nativo (che
+%dimostra il supporto del sistema a runtime eterogenei) e sei varianti
+%approssimate con numero di termini decrescente.
+% 
+%\textbf{LnHarmonic} stima il valore di $\ln(2)$ tramite la serie
+%armonica alternante con $N$ termini:
+%\[
+%    \ln(2) = \sum_{k=1}^{N} \frac{(-1)^{k+1}}{k}
+%\]
+%La struttura è analoga a PiLeibniz: il parametro $N$ bilancia
+%accuratezza e consumo energetico, con sette varianti distribuite lungo
+%la frontiera.
+% 
+%\textbf{MonteCarlo} stima $\pi$ tramite il metodo Monte Carlo,
+%generando $N$ punti casuali nel quadrato unitario e contando quanti
+%cadono nel cerchio inscritto. L'errore statistico decresce come
+%$O(1/\sqrt{N})$. Tutte le sei varianti sono approssimate, poiché
+%l'algoritmo è intrinsecamente stocastico, e l'intero insieme forma la
+%frontiera di Pareto.
+% 
+%La seconda famiglia comprende le \emph{funzioni di classificazione}
+%(ML), il cui output non è numericamente confrontabile con un valore
+%esatto. La qualità è espressa tramite \texttt{quality\_score}, un
+%valore continuo in $[0,1]$ stimato su benchmark standard.
+% 
+%\textbf{SentimentAnalysis} classifica un testo in input come positivo o
+%negativo. Le quattro varianti spaziano da un modello Transformer di
+%grandi dimensioni (RoBERTa, 355M parametri, quality\_score\,=\,0.95) a
+%un classificatore lessicale basato su AFINN (quality\_score\,=\,0.50),
+%passando per modelli intermedi (DistilBERT, BERT-tiny).
+% 
+%\textbf{ImageClassification} classifica un'immagine tra 1000 categorie
+%ImageNet. Le quattro varianti impiegano architetture di dimensioni
+%decrescenti: da ViT-Base (86M parametri, quality\_score\,=\,0.95) a
+%MobileNet-V2-Tiny (1.7M parametri, quality\_score\,=\,0.50).
+% 
+%\textbf{SpamDetection} classifica un messaggio come spam o legittimo.
+%Le quattro varianti comprendono modelli Transformer fine-tuned per
+%spam detection fino a un classificatore euristico basato su keyword
+%(quality\_score\,=\,0.50).
+% 
+%La Tabella~\ref{tab:funzioni-riepilogo} riporta una sintesi delle
+%caratteristiche energetiche delle sei funzioni.
+% 
+%\begin{table}[t]
+%    \centering
+%    \small
+%    \begin{tabular}{llcccc}
+%        \toprule
+%        \textbf{Funzione} & \textbf{Tipo} &
+%        \textbf{N.\ var.} &
+%        \textbf{$E_\text{min}$ (J)} &
+%        \textbf{$E_\text{max}$ (J)} &
+%        \textbf{Rapporto} \\
+%        \midrule
+%        PiLeibniz           & \texttt{error}   & 9
+%            & 0.000196 & 0.007823 & $40\times$ \\
+%        LnHarmonic          & \texttt{error}   & 7
+%            & 0.000196 & 0.007700 & $39\times$ \\
+%        MonteCarlo          & \texttt{error}   & 6
+%            & 0.000147 & 0.231480 & $1574\times$ \\
+%        SentimentAnalysis   & \texttt{quality} & 4
+%            & 0.0024   & 0.0916   & $38\times$ \\
+%        SpamDetection       & \texttt{quality} & 4
+%            & 0.0020   & 0.0850   & $43\times$ \\
+%        ImageClassification & \texttt{quality} & 4
+%            & 0.077    & 1.455    & $19\times$ \\
+%        \bottomrule
+%    \end{tabular}
+%    \caption{Riepilogo delle sei funzioni utilizzate negli esperimenti.
+%    Per ciascuna si riportano il tipo di output, il numero di varianti,
+%    l'intervallo energetico coperto e il rapporto tra il consumo della
+%    variante più costosa e quello della più economica.}
+%    \label{tab:funzioni-riepilogo}
+%\end{table}
  
  
 \subsection{Registrazione e indicizzazione delle varianti in etcd}
 \label{sec:variant-registration}
- 
+
 Le varianti di una funzione logica vengono definite tramite un file
 JSON collocato nella directory \texttt{variants/<LogicalName>/} del
 progetto. Al momento della registrazione, il sistema legge questo file
 attraverso il componente \texttt{FileSource}, prepara il codice sorgente
 di ciascuna variante in formato tar e materializza le varianti in etcd
 attraverso la funzione \texttt{CreateInternalVariants}.
- 
+
 \subsubsection{Convenzione di denominazione}
- 
-La convenzione di denominazione distingue la variante di riferimento
-dalle varianti alternative. La prima variante definita nel file JSON —
-tipicamente quella a massima accuratezza — mantiene come nome interno
-esattamente il \texttt{LogicalName}, preservando la compatibilità con le
-invocazioni che non specificano alcuna preferenza energetica. Le varianti
-successive ricevono un nome composto nella forma
-\texttt{<LogicalName>-<VariantID>}. Per la funzione logica
-\texttt{PiLeibniz} (\autoref{lst:piLeibniz-json}) ad esempio, i nomi
-interni assegnati sono:
- 
-\begin{itemize}
-    \item \texttt{PiLeibniz} — variante base in Python
-    \item \texttt{PiLeibniz-optimization-py} — variante ottimizzata in
-    Python
-    \item \texttt{PiLeibniz-c} — variante compilata in C nativo
-    \item \texttt{PiLeibniz-n1000} — variante approssimata
-    (1\,000 iterazioni)
-    \item \texttt{PiLeibniz-n200000} — variante approssimata
-    (200\,000 iterazioni)
-    \item \ldots
-\end{itemize}
- 
- 
+
+La prima variante definita nel file JSON — tipicamente quella a massima
+accuratezza — mantiene come nome interno esattamente il
+\texttt{LogicalName}, preservando la compatibilità con le invocazioni che
+non specificano alcuna preferenza energetica. Le varianti successive
+ricevono un nome nella forma \texttt{<LogicalName>-<VariantID>}. Per la
+funzione \texttt{PiLeibniz} (\autoref{lst:piLeibniz-json}), ad esempio,
+i nomi interni assegnati sono \texttt{PiLeibniz}, \texttt{PiLeibniz-optimization-py},
+\texttt{PiLeibniz-c}, \texttt{PiLeibniz-n1000}, e così via.
+
 \subsubsection{Struttura delle chiavi in etcd}
- 
-Il sistema mantiene in etcd due livelli distinti di chiavi, ciascuno con
-una responsabilità specifica, come illustrato in
-Figura~\ref{fig:etcd-structure}.
- 
-Il primo livello, sotto il prefisso \texttt{/function/}, contiene una
-chiave per ogni variante registrata nel sistema, indipendentemente dalla
-funzione logica di appartenenza. Il valore associato è la
-serializzazione JSON completa della struttura \texttt{Function}, che
-include il runtime, il codice sorgente, il profilo energetico corrente e
-il modello di output. È su queste chiavi che il worker periodico scrive
-gli aggiornamenti del campo \texttt{InvocationJoule} ad ogni ciclo di
-raccolta.
- 
-Il secondo livello, sotto il prefisso
-\texttt{/index/logical/<LogicalName>/}, costituisce un indice che
-associa ciascun nome logico all'insieme delle sue varianti. La
-motivazione di questo indice è di natura prestazionale: poiché la
-selezione della variante avviene nel critical path della richiesta di
-invocazione, è necessario che lo scheduler possa recuperare rapidamente
-tutte le varianti di una funzione logica senza dover scorrere l'intero
-prefisso \texttt{/function/}, che contiene tutte le funzioni registrate
-nel sistema. Tramite l'indice, il recupero avviene con una singola query
-con prefisso su \texttt{/index/logical/<LogicalName>/}, restituendo
-esclusivamente le varianti della funzione richiesta e contenendo così la
-latenza introdotta dalla fase di selezione a runtime.
- 
+
+Il sistema mantiene in etcd due livelli distinti di chiavi, come
+illustrato in Figura~\ref{fig:etcd-structure}. Il prefisso
+\texttt{/function/} contiene una chiave per ogni variante registrata,
+il cui valore è la serializzazione JSON completa della struttura
+\texttt{Function} — runtime, codice sorgente, profilo energetico
+(\texttt{ColdStartJoule} e \texttt{InvocationJoule}) e modello di
+output. Il prefisso \texttt{/index/logical/<LogicalName>/} costituisce
+invece un indice che, tramite una singola query a prefisso, consente
+allo scheduler di recuperare tutte le varianti di una funzione logica
+senza scorrere l'intero \texttt{/function/} contenendo in tal modo la latenza 
+introdotta dalla selezione dela variante nel path della richiesta di invocazione.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{figures/etcd-structure.jpg}
     \caption{Struttura delle chiavi etcd per la funzione logica
-    \texttt{PiLeibniz} con le sue varianti. Le chiavi sotto
-    \texttt{/function/} contengono i profili completi aggiornati dal
-    worker periodico. L'indice sotto \texttt{/index/logical/} consente
-    allo scheduler di recuperare efficientemente le sole varianti della
-    funzione richiesta, senza scorrere l'intero store.}
+    \texttt{PiLeibniz}. Le chiavi sotto \texttt{/function/} contengono
+    i profili completi; l'indice sotto \texttt{/index/logical/} consente
+    la lookup efficiente delle sole varianti richieste.}
     \label{fig:etcd-structure}
 \end{figure}
 

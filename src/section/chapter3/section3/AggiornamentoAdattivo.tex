@@ -11,22 +11,19 @@ container è influenzato da fattori mutevoli quali il carico del nodo,
 le interferenze tra istanze concorrenti e le variazioni dinamiche della
 frequenza di CPU.
 
-La soluzione proposta adotta invece un \emph{feedback loop} periodico che
-trasforma il profilo energetico in una grandezza adattiva, aggiornata
-continuamente in funzione del contesto di esecuzione. Il componente
-responsabile di tale meccanismo è un worker di raccolta eseguito in
-background, che costituisce il nucleo del controllo retroazionato del
-sistema. La Figura~\ref{fig:worker-architecture} illustra il flusso
-completo di acquisizione, elaborazione e persistenza dei campioni
-energetici.
+La soluzione adottata è un \emph{feedback loop} periodico che trasforma
+il profilo energetico in una grandezza adattiva, aggiornata continuamente
+in funzione del contesto di esecuzione. Il componente responsabile è un
+worker di raccolta eseguito in background, illustrato in
+Figura~\ref{fig:worker-architecture}.
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=\textwidth]{figures/Worker.png}
     \caption{Schema del feedback loop energetico. Il worker periodico
     legge le metriche cumulative da Kepler tramite Prometheus e il numero
-    di invocazioni dal livello di esecuzione, calcola i delta, applica
-    un filtro EMA e aggiorna il profilo persistito in etcd, archiviando
+    di invocazioni dal contatore locale, calcola i delta, applica un
+    filtro EMA e aggiorna il profilo persistito in etcd, archiviando
     contestualmente i campioni in InfluxDB.}
     \label{fig:worker-architecture}
 \end{figure}
@@ -37,36 +34,33 @@ energetici.
 
 Per attribuire correttamente il consumo energetico alle singole varianti,
 il sistema deve mantenere una corrispondenza stabile tra i container
-Docker attivi e le funzioni in esecuzione. A tal fine è stato introdotto
-un registro in memoria, denominato \texttt{ContainerRegistry}, che
-associa a ciascun container una struttura \texttt{ContainerState}
-contenente i seguenti campi:
+Docker attivi e le funzioni in esecuzione. A tal fine il package
+\texttt{energy} mantiene un registro in memoria che associa a ciascun
+container una struttura \texttt{ContainerState} contenente:
 
 \begin{itemize}
     \item l'identificatore del container (\texttt{ContainerID});
-    \item il nome della variante (\texttt{FunctionName}), il relativo
-    \texttt{LogicalName} e il \texttt{VariantID} che la identifica
-    univocamente nella funzione logica;
+    \item il nome interno della variante (\texttt{FunctionName}), il
+    \texttt{LogicalName} e il \texttt{VariantID};
     \item i valori di baseline dell'energia cumulativa e del numero di
-    invocazioni, impiegati per il calcolo dei delta incrementali;
+    invocazioni (\texttt{LastJoule}, \texttt{LastInvocations}),
+    impiegati per il calcolo dei delta incrementali;
     \item gli accumulatori \texttt{PendingEnergyJ} e
     \texttt{PendingInvocations}, necessari per gestire il disallineamento
     temporale tra metriche energetiche e contatori locali.
 \end{itemize}
 
-La registrazione di un container avviene sia in fase di creazione del
-runtime sia, in modo difensivo, al momento dell'invocazione, così da
-gestire correttamente il caso di \emph{warm start}, in cui il container
-è già attivo ma non ancora registrato. Il processo è tale per cui, se un
-container è già presente nel registry, il mapping container-variante
-non viene modificato, garantendo coerenza durante l'intero ciclo di vita
-del container.
+La registrazione avviene sia alla creazione del container sia, in modo
+difensivo, al momento dell'invocazione, così da gestire correttamente il
+caso di \emph{warm start}. Se un container è già presente nel registro,
+la sua identità (mapping container-variante) non viene modificata,
+garantendo coerenza per l'intero ciclo di vita del container.
 
 Parallelamente, viene mantenuto un contatore atomico di invocazioni per
-container, incrementato al completamento di ogni richiesta. L'impiego
-di operazioni atomiche evita l'introduzione di meccanismi di lock nel
-\emph{critical path} dello scheduler, preservando le prestazioni anche
-in presenza di elevata concorrenza.
+container, incrementato al completamento di ogni richiesta. L'impiego di
+operazioni atomiche mantiene questo aggiornamento fuori dal
+\emph{critical path} dello scheduler senza introdurre lock.
+
 
 
 \subsection{Il worker periodico di raccolta}
@@ -172,26 +166,18 @@ etcd, rendendolo immediatamente disponibile allo scheduler per le
 decisioni di selezione successive.
 
 
+
 \subsection{Archiviazione su InfluxDB}
 \label{subsec:influxdb}
 
-Contestualmente all'aggiornamento del profilo in etcd, ogni campione
-viene archiviato in InfluxDB come punto della \emph{measurement}
-\texttt{energy\_sample}. Ogni punto include tag identificativi del
-container e della variante, nonché il campo \texttt{invocation\_joule}
-espresso in Joule.
+Contestualmente all'aggiornamento in etcd, ogni campione viene archiviato
+in InfluxDB come punto della \emph{measurement} \texttt{energy\_sample},
+con tag \texttt{container\_id}, \texttt{logical\_name},
+\texttt{function\_name}, \texttt{variant\_id} e campo
+\texttt{invocation\_joule}.
 
-La separazione tra etcd e InfluxDB riflette la doppia funzione che il
-dato energetico riveste nel sistema:
-
-\begin{itemize}
-    \item etcd supporta il \emph{presente}: fornisce allo scheduler la
-    stima corrente con latenza minima, ottimizzando il percorso decisionale
-    in fase di selezione della variante;
-    \item InfluxDB preserva il \emph{passato}: mantiene la serie storica
-    dei campioni energetici, abilitando analisi sperimentali e visualizzazioni grafiche.
-\end{itemize}
-
-Questa architettura a doppio livello consente di disaccoppiare le
-esigenze operative dello scheduler — latenza e consistenza a runtime —
-dalle esigenze analitiche della fase sperimentale.
+La separazione tra i due store riflette le loro funzioni distinte: etcd
+fornisce allo scheduler la stima corrente con latenza minima; InfluxDB
+preserva la serie storica dei campioni, che costituisce la base
+statistica per il meccanismo di esplorazione descritto nella
+Sezione~\ref{sec:esplorazione-ucb}.
