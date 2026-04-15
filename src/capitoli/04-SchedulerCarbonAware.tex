@@ -1,2 +1,400 @@
-\chapter{Scheduler Carbon-Aware}
+% ============================================================
+%  Capitolo 4 — Lo scheduler carbon-aware
+% ============================================================
+
+\chapter{Lo scheduler carbon-aware}
 \label{cap:scheduler}
+
+Il Capitolo~\ref{cap:ProgettazioneRealizzazione} ha descritto
+l'architettura del sistema, il modello di funzione logica con varianti
+e i meccanismi di aggiornamento adattivo dei profili energetici e di
+esplorazione LCB. Il presente capitolo introduce il componente
+decisionale che costituisce il nucleo dell'estensione proposta: lo
+scheduler carbon-aware.
+
+Lo scheduler traduce il segnale ambientale --- la carbon intensity della
+zona geografica del nodo al momento dell'invocazione --- in una decisione
+di selezione della variante da eseguire. La logica decisionale si
+articola in tre fasi: la normalizzazione della carbon intensity corrente
+in un peso $\lambda \in (0,1)$ mediante una sigmoide calibrata per zona
+(\S\,\ref{sec:sigmoide}); la costruzione della frontiera di Pareto nello
+spazio energia-errore (\S\,\ref{sec:pareto}); la selezione della
+variante Pareto-ottimale tramite scalarizzazione lineare pesata da
+$\lambda$ (\S\,\ref{sec:scalarizzazione}).
+
+
+% ============================================================
+\section{La carbon intensity come segnale decisionale}
+\label{sec:sigmoide}
+% ============================================================
+
+La carbon intensity (CI) esprime la quantità di
+CO\textsubscript{2}~equivalente emessa per ogni kilowattora prodotto
+dalla rete elettrica locale, misurata in
+g\,CO\textsubscript{2}eq/kWh. Questo valore riflette la composizione
+del mix energetico di una zona geografica in un dato istante: una rete
+alimentata prevalentemente da fonti rinnovabili presenta valori di CI
+ridotti, mentre una rete dipendente da combustibili fossili mostra
+valori elevati.
+
+Nel contesto di questo lavoro, la CI viene utilizzata come segnale
+per derivare il parametro di trade-off $\lambda \in (0,1)$ che governa
+la selezione della variante (Sezione~\ref{sec:pareto}): quando
+l'energia disponibile è a bassa intensità carbonica, il sistema può
+privilegiare l'accuratezza del risultato senza un costo ambientale
+significativo; quando la rete è carbon-intensive, è preferibile
+ridurre i consumi a scapito dell'accuratezza.
+
+Tuttavia, il valore assoluto della CI non è sufficiente per prendere
+questa decisione: una CI di 100\,g\,CO\textsubscript{2}/kWh
+rappresenta un picco anomalo per la Norvegia, ma è del tutto ordinaria
+per la Spagna. Stabilire se l'energia è più o meno ``green'' in un
+dato momento richiede quindi un riferimento contestuale, ovvero la
+distribuzione storica della CI per la zona geografica considerata.
+
+È necessario pertanto un modello di normalizzazione che trasformi la
+CI corrente in un peso $\lambda \in (0,1)$ relativo al contesto storico
+della zona. La semantica adottata è la seguente:
+%
+\begin{itemize}
+    \item $\lambda \to 1$: la CI corrente è bassa rispetto alla
+    distribuzione storica della zona (rete elettrica relativamente
+    \emph{pulita}); il sistema privilegia l'accuratezza del risultato;
+    \item $\lambda \to 0$: la CI corrente è elevata (rete
+    \emph{sporca}); il sistema privilegia l'efficienza energetica.
+\end{itemize}
+
+% ------------------------------------------------------------
+\subsection{La funzione sigmoide calibrata per zona}
+\label{sec:sigmoide:calibrazione}
+% ------------------------------------------------------------
+
+Per tradurre la CI corrente in un valore di $\lambda$ relativo al
+contesto storico della zona, si adotta una funzione sigmoide logistica
+nella forma:
+%
+\begin{equation}
+    \lambda(\mathrm{CI}) \;=\;
+        \frac{1}
+             {1 + \exp\!\left(k \cdot
+                 \dfrac{\mathrm{CI} - \mu_z}{s_z}\right)}
+    \label{eq:sigmoide}
+\end{equation}
+%
+dove $\mu_z$ è la media storica della CI per la zona geografica~$z$
+(punto di simmetria in cui $\lambda = 0{,}5$), $s_z$ è un fattore di
+scala derivato dalla dispersione storica locale, e $k > 0$ è un
+parametro di pendenza che controlla la velocità di transizione.
+La scelta di questa famiglia di funzioni è motivata da tre proprietà
+desiderabili nel contesto dello scheduling:
+%
+\begin{itemize}
+    \item \textbf{Monotonicità decrescente}: $\lambda$ decresce
+    monotonicamente al crescere di CI, associando in modo coerente
+    condizioni di rete più carbon-intensive a un peso maggiore
+    sull'efficienza energetica.
+
+    \item \textbf{Saturazione}: $\lambda$ tende asintoticamente a~$1$
+    per CI basse e a~$0$ per CI alte.
+
+    \item \textbf{Sensibilità contestuale}: i parametri $\mu_z$ e $s_z$
+    sono calibrati a partire dalla distribuzione storica della CI nella
+    zona $z$, permettendo alla sigmoide di adattarsi al contesto locale.
+    In questo modo, il valore di $\lambda$ esprime una misura relativa
+    rispetto alla norma locale, rendendo confrontabili le decisioni di
+    scheduling tra aree geografiche diverse, anche quando i livelli
+    assoluti di carbon intensity differiscono significativamente.
+\end{itemize}
+
+\medskip
+\noindent\textbf{Calibrazione dei parametri.}
+I parametri $\mu_z$, $s_z$ e $k$ sono stimati a partire dai
+dati storici di carbon intensity per ciascuna zona. La procedura
+è la seguente:
+%
+\begin{enumerate}
+    \item $\mu_z$ è posto pari alla \emph{media} storica della CI per
+    la zona, garantendo $\lambda(\mu_z) = 0{,}5$, ovvero che il punto
+    di bilanciamento neutro corrisponda al valore tipico della zona;
+
+    \item $s_z$ è ricavato dal quinto e novantacinquesimo percentile
+    della distribuzione storica:
+    %
+    \begin{equation}
+        s_z \;=\;
+            \frac{\mathrm{CI}_{95} - \mathrm{CI}_5}
+                {2\,\ln\!\left(\frac{1-\alpha}{\alpha}\right)}
+        \label{eq:s_calibrazione}
+    \end{equation}
+    %
+    con $\alpha = 0{,}01$. L'utilizzo dei percentili estremi consente
+    di catturare l'intervallo di variabilità tipica della CI nella zona,
+    trascurando i valori anomali. In particolare, il 90\,\% centrale
+    della distribuzione storica viene mappato nell'intervallo
+    $[\alpha,\, 1-\alpha]$ di $\lambda$, garantendo che la funzione
+    sia sufficientemente sensibile alle variazioni reali della CI,
+    senza risultare distorta dalla presenza di outlier.
+
+    \item $k$ è un parametro di pendenza configurabile per zona:
+    valori più alti producono una transizione più netta attorno a
+    $\mu_z$, valori più bassi una risposta più graduale.
+\end{enumerate}
+
+\medskip
+\noindent\textbf{Calcolo a runtime.}
+
+\begin{algorithm}[H]
+\caption{Calcolo del peso $\lambda$ dalla carbon intensity corrente}
+\label{alg:lambda}
+\begin{algorithmic}[1]
+\Require zona geografica $z$, soglia di fallback $\lambda_0 = 0{,}5$
+\Ensure $\lambda \in (0, 1)$
+
+\State $\mathrm{CI} \leftarrow \textsc{GetCarbonIntensity}(z)$
+    \Comment{API ElectricityMaps}
+\If{$\mathrm{CI}$ non disponibile}
+    \State \Return $\lambda_0$
+\EndIf
+
+\State $\mu_z \leftarrow \textsc{GetMean}(z)$
+\State $s_z \leftarrow \dfrac{\mathrm{CI}_{95}(z) - \mathrm{CI}_5(z)}
+                              {2\,\ln\!\left(\dfrac{1-\alpha}{\alpha}\right)}$
+\State $k \leftarrow \textsc{GetSlopeParam}(z)$
+
+\State \Return $\dfrac{1}{1 + \exp\!\left(k \cdot \dfrac{\mathrm{CI} - \mu_z}{s_z}\right)}$
+\end{algorithmic}
+\end{algorithm}
+
+
+Al momento dell'invocazione, lo scheduler recupera la CI
+corrente tramite l'API di ElectricityMaps~\cite{electricitymaps2024}
+, legge i parametri della zona, e calcola $\lambda$ secondo
+l'Equazione~\eqref{eq:sigmoide}, come descritto nell'algoritmo \autoref{alg:lambda}. In caso di indisponibilità dell'API,
+il sistema degrada a $\lambda = 0{,}5$ (bilanciamento neutro tra
+accuratezza ed efficienza energetica).
+
+% ============================================================
+\section{La frontiera di Pareto nello spazio energia-errore}
+\label{sec:pareto}
+% ============================================================
+
+L'insieme delle varianti registrate per una funzione logica definisce
+uno spazio di soluzioni bidimensionale caratterizzato dal consumo
+energetico stimato $E(v)$ e dal punteggio di errore
+$\mathit{Err}(v)$, descritto nella
+Sezione~\ref{sec:modello-varianti}. Poiché tra queste due grandezze
+esiste un trade-off strutturale, la selezione ottimale non può
+minimizzarne simultaneamente entrambe.
+
+Il sistema restringe quindi la selezione alle sole varianti
+\emph{Pareto-ottimali}: quelle per cui non esiste alcuna alternativa
+migliore in entrambe le dimensioni.
+
+\medskip
+\noindent\textbf{Definizione.}
+Sia $V = \{v_1, \ldots, v_n\}$ l'insieme delle varianti disponibili.
+Una variante $v_i$ è \emph{dominata} da $v_j$ se:
+%
+\begin{equation}
+    E(v_j) \leq E(v_i) \;\wedge\;
+    \mathit{Err}(v_j) \leq \mathit{Err}(v_i)
+    \;\wedge\;
+    \bigl(E(v_j) < E(v_i) \;\vee\;
+          \mathit{Err}(v_j) < \mathit{Err}(v_i)\bigr)
+    \label{eq:dominanza}
+\end{equation}
+
+La frontiera di Pareto $\mathcal{P} \subseteq V$ è l'insieme delle
+varianti non dominate:
+%
+\begin{equation}
+    \mathcal{P} = \bigl\{\, v \in V \;\big|\;
+        \nexists\, v' \in V : v' \text{ domina } v \,\bigr\}
+    \label{eq:pareto}
+\end{equation}
+
+Geometricamente, $\mathcal{P}$ costituisce il fronte
+inferiore-sinistro della nuvola di punti nello spazio
+$(E,\,\mathit{Err})$: ogni variante sulla frontiera rappresenta un
+compromesso efficiente, nel senso che ridurre una delle due grandezze
+implica necessariamente aumentare l'altra.
+
+\medskip
+\noindent\textbf{Costruzione.}
+La frontiera è costruita a runtime immediatamente prima di ogni
+selezione, a partire dai profili energetici correnti. Come coordinata
+energetica viene utilizzata la stima LCB descritta nella
+Sezione~\ref{sec:esplorazione-ucb}, in modo che le varianti
+sotto-campionate beneficino del bonus di esplorazione anche ai fini
+del posizionamento sulla frontiera.
+
+L'algoritmo ordina le varianti per energia crescente e percorre la
+lista mantenendo il minimo errore osservato: una variante è
+Pareto-ottimale se e solo se il suo errore è strettamente inferiore al
+minimo corrente. La complessità risultante è $O(n \log n)$, dominata
+dall'ordinamento.
+
+
+% ============================================================
+\section{Scalarizzazione e selezione della variante}
+\label{sec:scalarizzazione}
+% ============================================================
+
+La frontiera di Pareto individua l'insieme dei compromessi ammissibili,
+ma non determina quale scegliere: la selezione dipende dall'importanza
+relativa delle due dimensioni, codificata dal peso $\lambda$.
+
+\subsection{Normalizzazione e funzione obiettivo}
+\label{sec:scalarizzazione:funzione}
+
+Per rendere le due dimensioni confrontabili, energia ed errore sono
+normalizzati nell'intervallo $[0,1]$ rispetto al minimo e al massimo
+osservati sulla frontiera~$\mathcal{P}$:
+%
+\begin{align}
+    \hat{E}(v) &= \frac{E(v) - E_{\min}}{E_{\max} - E_{\min}}
+    \label{eq:norm_energy} \\[4pt]
+    \widehat{\mathit{Err}}(v) &=
+        \frac{\mathit{Err}(v) - \mathit{Err}_{\min}}
+             {\mathit{Err}_{\max} - \mathit{Err}_{\min}}
+    \label{eq:norm_error}
+\end{align}
+
+La funzione di scalarizzazione lineare è definita come:
+%
+\begin{equation}
+    S(v,\,\lambda) \;=\;
+        (1 - \lambda)\,\hat{E}(v) \;+\;
+        \lambda\,\widehat{\mathit{Err}}(v)
+    \label{eq:scalarizzazione}
+\end{equation}
+
+La variante selezionata $v^*$ è quella che minimizza $S$ sulla
+frontiera:
+%
+\begin{equation}
+    v^* = \arg\min_{v \in \mathcal{P}}\; S(v,\,\lambda)
+    \label{eq:selezione_carbon}
+\end{equation}
+
+\medskip
+\noindent\textbf{Interpretazione dei casi limite.}
+Quando $\lambda = 1$ (rete pulita, CI bassa) la funzione si riduce a
+$S = \widehat{\mathit{Err}}(v)$: il sistema seleziona la variante più
+accurata. Quando $\lambda = 0$ (rete sporca, CI alta) si ha
+$S = \hat{E}(v)$: il sistema seleziona la variante a consumo minimo.
+Per valori intermedi la selezione bilancia le due dimensioni in modo
+continuo e proporzionale al segnale ambientale.
+
+Per costruzione, $v^*$ appartiene sempre alla frontiera di Pareto ed è
+quindi non dominata: nessuna alternativa è contemporaneamente più
+efficiente e più accurata.
+
+
+% ============================================================
+\section{Formalizzazione della logica decisionale}
+\label{sec:carbon:algoritmo}
+% ============================================================
+
+La logica complessiva dello scheduler carbon-aware è formalizzata
+nell'Algoritmo~\ref{alg:carbon-select}, che integra le fasi descritte
+nelle sezioni precedenti.
+
+\begin{algorithm}[htbp]
+\caption{\textsc{SelectParetoVariant}: selezione carbon-aware}
+\label{alg:carbon-select}
+\begin{algorithmic}[1]
+\Function{SelectParetoVariant}{$r$ : \texttt{Request}}
+    \State $\textit{base} \gets r.\texttt{Fun}$
+    \State $V \gets \Call{GetFunctionsByLogicalName}
+                        {\textit{base}.\texttt{LogicalName}}$
+    \If{$V = \emptyset$}
+        \State \Return $(\textit{base},\;
+               \text{``fallback-base''})$
+    \EndIf
+    \State
+    \State \Comment{Valutazione delle varianti (energia LCB + errore)}
+    \State $\textit{Eval} \gets [\,]$
+    \For{$v \in V$}
+        \State $\textit{warm} \gets \Call{HasWarmContainer}{v}$
+        \State $E(v) \gets \Call{EnergyLCB}{v,\;\textit{warm},
+                   \;\beta,\;\texttt{minSamples}}$
+        \State $\mathit{Err}(v) \gets \Call{ErrorScore}{v}$
+        \State $\textit{Eval}.\textsc{Append}(v,\;E(v),
+                   \;\mathit{Err}(v))$
+    \EndFor
+    \State
+    \State \Comment{Frontiera di Pareto --- $O(n \log n)$}
+    \State $\mathcal{P} \gets \Call{ParetoFilter}{\textit{Eval}}$
+    \If{$|\mathcal{P}| = 1$}
+        \State \Return $(\mathcal{P}[0],\;
+               \text{``pareto-singleton''})$
+    \EndIf
+    \State
+    \State \Comment{Calcolo di $\lambda$ dalla CI corrente}
+    \State $\mathrm{CI} \gets \Call{GetCarbonIntensity}
+                   {r.\texttt{Zone}}$
+    \State $(\mu_z,\, s_z,\, k) \gets \Call{GetSigmoidParams}
+                   {r.\texttt{Zone}}$
+    \State $\lambda \gets \dfrac{1}{1 + \exp\!\bigl(
+               k\,(\mathrm{CI} - \mu_z)\,/\,s_z\bigr)}$
+    \State
+    \State \Comment{Normalizzazione e scalarizzazione}
+    \State $E_{\min},\; E_{\max} \gets \Call{MinMax}
+               {[\,E(v) : v \in \mathcal{P}\,]}$
+    \State $\mathit{Err}_{\min},\; \mathit{Err}_{\max} \gets
+           \Call{MinMax}
+               {[\,\mathit{Err}(v) : v \in \mathcal{P}\,]}$
+    \State $v^* \gets \displaystyle\arg\min_{v \in \mathcal{P}}\;
+           \bigl[(1-\lambda)\,\hat{E}(v) +
+                  \lambda\,\widehat{\mathit{Err}}(v)\bigr]$
+    \State \Return $(v^*,\; \text{``pareto-scalarisation''})$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+L'algoritmo evidenzia la separazione tra le fasi di raccolta dei
+profili, costruzione della frontiera, calcolo di $\lambda$ e
+scalarizzazione. La struttura modulare consente di sostituire ciascun
+componente indipendentemente: ad esempio, il modello di normalizzazione
+della CI potrebbe essere sostituito con un modello non parametrico senza
+modificare la logica di selezione.
+
+La stima energetica utilizzata nella fase di valutazione incorpora il
+meccanismo LCB descritto nella Sezione~\ref{sec:esplorazione-ucb}: le
+varianti sotto-campionate ricevono una stima ottimisticamente ridotta,
+che ne favorisce la selezione e l'accumulo di osservazioni reali.
+Le chiamate \textsc{GetCarbonIntensity} e \textsc{GetSigmoidParams}
+operano su dati in memoria locale (la CI è aggiornata in background
+ogni 15~minuti), evitando latenze di rete nel percorso critico della
+richiesta.
+
+
+% ============================================================
+\section{Discussione delle scelte progettuali}
+\label{sec:carbon:discussione}
+% ============================================================
+
+Un approccio alternativo alla scalarizzazione continua avrebbe potuto
+adottare una soglia sulla CI: al di sopra di un livello predefinito,
+selezionare sempre la variante a consumo minimo; al di sotto, quella a
+errore minimo. Tale schema, pur essendo più semplice, è privo di
+continuità: variazioni minime della CI intorno alla soglia producono
+transizioni brusche nella selezione. La scalarizzazione con $\lambda$
+continuo produce invece una transizione fluida, proprietà desiderabile
+nei contesti in cui la CI varia lentamente nel tempo, come nei profili
+giornalieri delle reti elettriche.
+
+La calibrazione della sigmoide sulla distribuzione storica locale,
+anziché su una scala assoluta, riflette il fatto che il giudizio su una
+condizione di CI \emph{alta} o \emph{bassa} è intrinsecamente
+contestuale. Ciò introduce una dipendenza dalla qualità dei dati
+storici: zone con distribuzioni non rappresentative possono determinare
+calibrazioni sub-ottimali. L'impatto di questa limitazione è valutato
+nel Capitolo~\ref{cap:RisultatiSperimentali}.
+
+Infine, la funzione di scalarizzazione~\eqref{eq:scalarizzazione} è
+generalizzabile a forme non lineari --- quali la scalarizzazione di
+Chebyshev o la media $p$-pesata --- senza modifiche all'architettura,
+poiché la normalizzazione sulla frontiera Pareto-ottimale garantisce in
+ogni caso la non-dominanza della soluzione selezionata.
