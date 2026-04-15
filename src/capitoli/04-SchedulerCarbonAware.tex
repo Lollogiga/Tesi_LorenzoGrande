@@ -178,17 +178,20 @@ accuratezza ed efficienza energetica).
 \label{sec:pareto}
 % ============================================================
 
-L'insieme delle varianti registrate per una funzione logica definisce
-uno spazio di soluzioni bidimensionale caratterizzato dal consumo
-energetico stimato $E(v)$ e dal punteggio di errore
-$\mathit{Err}(v)$, descritto nella
-Sezione~\ref{sec:modello-varianti}. Poiché tra queste due grandezze
-esiste un trade-off strutturale, la selezione ottimale non può
-minimizzarne simultaneamente entrambe.
-
-Il sistema restringe quindi la selezione alle sole varianti
-\emph{Pareto-ottimali}: quelle per cui non esiste alcuna alternativa
-migliore in entrambe le dimensioni.
+Il valore di $\lambda$ derivato nella sezione precedente costituisce
+il segnale che guida la selezione della variante da eseguire: un
+$\lambda$ prossimo a~$1$ orienta lo scheduler verso le varianti più
+accurate, mentre un $\lambda$ prossimo a~$0$ privilegia quelle a
+minore consumo energetico. Tuttavia, prima di applicare tale peso,
+è necessario determinare l'insieme di varianti su cui operare.
+Non tutte le varianti disponibili rappresentano scelte razionali:
+alcune sono dominate da altre, ovvero esistono alternative che
+consumano meno energia \emph{e} producono un errore inferiore.
+Includere tali varianti nella selezione introdurrebbe ridondanza
+senza apportare benefici decisionali.
+Il sistema restringe quindi il dominio di scelta alle sole varianti
+\emph{Pareto-ottimali}, ovvero quelle per cui non esiste alcuna
+alternativa migliore in entrambe le dimensioni simultaneamente.
 
 \medskip
 \noindent\textbf{Definizione.}
@@ -213,26 +216,51 @@ varianti non dominate:
     \label{eq:pareto}
 \end{equation}
 
-Geometricamente, $\mathcal{P}$ costituisce il fronte
-inferiore-sinistro della nuvola di punti nello spazio
-$(E,\,\mathit{Err})$: ogni variante sulla frontiera rappresenta un
-compromesso efficiente, nel senso che ridurre una delle due grandezze
-implica necessariamente aumentare l'altra.
+Ogni variante sulla frontiera rappresenta un compromesso efficiente:
+ridurre una delle due grandezze implica necessariamente aumentare
+l'altra. È su questo insieme ridotto che $\lambda$ esercita la
+propria funzione di selezione..
 
 \medskip
 \noindent\textbf{Costruzione.}
 La frontiera è costruita a runtime immediatamente prima di ogni
-selezione, a partire dai profili energetici correnti. Come coordinata
-energetica viene utilizzata la stima LCB descritta nella
-Sezione~\ref{sec:esplorazione-ucb}, in modo che le varianti
-sotto-campionate beneficino del bonus di esplorazione anche ai fini
-del posizionamento sulla frontiera.
+selezione, a partire dai profili energetici correnti. La scelta di
+ricostruire la frontiera a ogni invocazione, anziché mantenerla
+precalcolata, è motivata dal fatto che i profili energetici sono
+aggiornati dinamicamente: nella fase iniziale, quando le misurazioni
+sono ancora scarse, la frontiera evolve a ogni invocazione in funzione
+delle nuove osservazioni raccolte. Man mano che le stime energetiche
+convergono  la frontiera si stabilizza, e le ricostruzioni successive producono
+risultati sostanzialmente invarianti.Il costo computazionale della ricostruzione a runtime è quindi
+giustificato nella fase esplorativa e diventa trascurabile a regime,
+quando la frontiera è ormai stabile.
 
-L'algoritmo ordina le varianti per energia crescente e percorre la
-lista mantenendo il minimo errore osservato: una variante è
-Pareto-ottimale se e solo se il suo errore è strettamente inferiore al
-minimo corrente. La complessità risultante è $O(n \log n)$, dominata
-dall'ordinamento.
+Come coordinata energetica non viene utilizzata la stima EMA grezza,
+bensì la stima LCB descritta nella Sezione~\ref{sec:esplorazione-ucb}.
+Questa scelta è intenzionale: il termine di esplorazione abbassa
+la stima energetica delle varianti sotto-campionate, rendendole
+apparentemente più convenienti.
+Di conseguenza, tali varianti tendono a posizionarsi più
+favorevolmente sulla frontiera e a essere selezionate più
+frequentemente, accumulando osservazioni reali che affinano
+progressivamente la stima EMA.
+L'esplorazione non è quindi un meccanismo separato dalla selezione,
+ma è integrata nella costruzione stessa della frontiera: ogni
+invocazione rappresenta simultaneamente una decisione di scheduling
+e un'opportunità di apprendimento.
+
+%\medskip
+%\noindent\textbf{Caso degenere.}
+%Quando una singola variante minimizza simultaneamente energia ed
+%errore — situazione che si verifica tipicamente in scenario cold
+%start, dove il costo di avvio domina l'energia di invocazione e
+%rende una sola variante ottima su entrambe le dimensioni — la
+%frontiera degenera a un singolo punto. Il problema multi-obiettivo
+%perde la sua natura di compromesso e si riduce a una scelta
+%deterministica, indipendente dal valore di $\lambda$. Il sistema
+%rileva questo caso e restituisce direttamente la variante non dominata,
+%senza procedere alla scalarizzazione.
+
 
 
 % ============================================================
@@ -240,16 +268,22 @@ dall'ordinamento.
 \label{sec:scalarizzazione}
 % ============================================================
 
-La frontiera di Pareto individua l'insieme dei compromessi ammissibili,
-ma non determina quale scegliere: la selezione dipende dall'importanza
-relativa delle due dimensioni, codificata dal peso $\lambda$.
+Una volta costruita la frontiera $\mathcal{P}$, il problema si riduce
+alla scelta del compromesso più appropriato dato il contesto
+ambientale corrente. La selezione è realizzata tramite una
+funzione di scalarizzazione lineare pesata da $\lambda$, che collassa
+le due dimensioni in un unico punteggio confrontabile.
 
+% ------------------------------------------------------------
 \subsection{Normalizzazione e funzione obiettivo}
 \label{sec:scalarizzazione:funzione}
+% ------------------------------------------------------------
 
-Per rendere le due dimensioni confrontabili, energia ed errore sono
-normalizzati nell'intervallo $[0,1]$ rispetto al minimo e al massimo
-osservati sulla frontiera~$\mathcal{P}$:
+Energia ed errore sono grandezze eterogenee, espresse in unità di
+misura diverse e potenzialmente caratterizzate da ordini di grandezza
+differenti. Per renderle confrontabili, entrambe vengono normalizzate
+nell'intervallo $[0,1]$ rispetto al minimo e al massimo osservati
+sulla frontiera $\mathcal{P}$:
 %
 \begin{align}
     \hat{E}(v) &= \frac{E(v) - E_{\min}}{E_{\max} - E_{\min}}
@@ -260,7 +294,10 @@ osservati sulla frontiera~$\mathcal{P}$:
     \label{eq:norm_error}
 \end{align}
 
-La funzione di scalarizzazione lineare è definita come:
+La normalizzazione è calcolata esclusivamente sulle varianti
+Pareto-ottimali, in modo che i valori estremi della scala
+corrispondano sempre ai casi limite effettivamente raggiungibili
+lungo la frontiera. La funzione di scalarizzazione lineare è quindi:
 %
 \begin{equation}
     S(v,\,\lambda) \;=\;
@@ -277,18 +314,57 @@ frontiera:
     \label{eq:selezione_carbon}
 \end{equation}
 
-\medskip
-\noindent\textbf{Interpretazione dei casi limite.}
-Quando $\lambda = 1$ (rete pulita, CI bassa) la funzione si riduce a
-$S = \widehat{\mathit{Err}}(v)$: il sistema seleziona la variante più
-accurata. Quando $\lambda = 0$ (rete sporca, CI alta) si ha
-$S = \hat{E}(v)$: il sistema seleziona la variante a consumo minimo.
-Per valori intermedi la selezione bilancia le due dimensioni in modo
+Per costruzione, $v^*$ appartiene sempre a $\mathcal{P}$ ed è quindi
+non dominata: nessuna alternativa è contemporaneamente più efficiente
+e più accurata. I casi limite sono immediati: per $\lambda = 1$ la
+funzione si riduce a $S = \widehat{\mathit{Err}}(v)$ e viene
+selezionata la variante più accurata; per $\lambda = 0$ si ha
+$S = \hat{E}(v)$ e viene selezionata quella a consumo minimo. Per
+valori intermedi la selezione bilancia le due dimensioni in modo
 continuo e proporzionale al segnale ambientale.
 
-Per costruzione, $v^*$ appartiene sempre alla frontiera di Pareto ed è
-quindi non dominata: nessuna alternativa è contemporaneamente più
-efficiente e più accurata.
+% ------------------------------------------------------------
+\subsection{Analisi delle soglie di transizione}
+\label{sec:scalarizzazione:soglie}
+% ------------------------------------------------------------
+
+La linearità della funzione di scalarizzazione consente di
+identificare analiticamente i valori di $\lambda$ in corrispondenza
+dei quali la variante selezionata cambia. Sviluppando
+l'Equazione~\eqref{eq:scalarizzazione} si ottiene:
+%
+\begin{equation}
+    S_i(\lambda) \;=\; \hat{E}_i \;+\;
+        \lambda\,\bigl(\widehat{\mathit{Err}}_i - \hat{E}_i\bigr)
+    \label{eq:score_lineare}
+\end{equation}
+
+Per ogni variante $v_i \in \mathcal{P}$, lo score è una funzione
+lineare in $\lambda$. Nel piano $(\lambda, S)$, ciascuna variante è
+rappresentata da una retta e lo scheduler seleziona, per ogni valore
+di $\lambda$, la variante associata alla retta con valore minimo.
+
+I punti di transizione corrispondono alle intersezioni tra queste
+rette. Uguagliando gli score di due varianti $v_i$ e $v_j$ si ottiene:
+%
+\begin{equation}
+    \lambda_{ij} \;=\;
+        \frac{\hat{E}_j - \hat{E}_i}
+             {(\hat{E}_j - \hat{E}_i) +
+              (\widehat{\mathit{Err}}_i - \widehat{\mathit{Err}}_j)}
+    \label{eq:soglia}
+\end{equation}
+
+Per $\lambda < \lambda_{ij}$ è preferita la variante a minore energia,
+mentre per $\lambda > \lambda_{ij}$ quella a minore errore.
+
+Ne segue che la variante selezionata varia a tratti costanti al variare
+di $\lambda$, dando luogo a un andamento a gradini: tra due soglie
+consecutive la scelta rimane invariata, mentre al superamento di una
+soglia si verifica una transizione verso una variante più accurata.
+All'aumentare di $\lambda$, la selezione si sposta progressivamente
+lungo la frontiera di Pareto, dalle varianti a minimo consumo verso
+quelle a minima imprecisione.
 
 
 % ============================================================
@@ -298,9 +374,12 @@ efficiente e più accurata.
 
 La logica complessiva dello scheduler carbon-aware è formalizzata
 nell'Algoritmo~\ref{alg:carbon-select}, che integra le fasi descritte
-nelle sezioni precedenti.
+nelle sezioni precedenti: valutazione delle varianti con stima LCB,
+costruzione della frontiera di Pareto, acquisizione del segnale
+ambientale tramite l'Algoritmo~\ref{alg:lambda} e scalarizzazione
+finale.
 
-\begin{algorithm}[htbp]
+\begin{algorithm}[H]
 \caption{\textsc{SelectParetoVariant}: selezione carbon-aware}
 \label{alg:carbon-select}
 \begin{algorithmic}[1]
@@ -318,7 +397,7 @@ nelle sezioni precedenti.
     \For{$v \in V$}
         \State $\textit{warm} \gets \Call{HasWarmContainer}{v}$
         \State $E(v) \gets \Call{EnergyLCB}{v,\;\textit{warm},
-                   \;\beta,\;\texttt{minSamples}}$
+                   \;\beta,\;k}$
         \State $\mathit{Err}(v) \gets \Call{ErrorScore}{v}$
         \State $\textit{Eval}.\textsc{Append}(v,\;E(v),
                    \;\mathit{Err}(v))$
@@ -331,13 +410,9 @@ nelle sezioni precedenti.
                \text{``pareto-singleton''})$
     \EndIf
     \State
-    \State \Comment{Calcolo di $\lambda$ dalla CI corrente}
-    \State $\mathrm{CI} \gets \Call{GetCarbonIntensity}
-                   {r.\texttt{Zone}}$
-    \State $(\mu_z,\, s_z,\, k) \gets \Call{GetSigmoidParams}
-                   {r.\texttt{Zone}}$
-    \State $\lambda \gets \dfrac{1}{1 + \exp\!\bigl(
-               k\,(\mathrm{CI} - \mu_z)\,/\,s_z\bigr)}$
+    \State \Comment{Peso $\lambda$ dalla CI corrente ---
+               Algoritmo~\ref{alg:lambda}}
+    \State $\lambda \gets \Call{GetLambda}{r.\texttt{Zone}}$
     \State
     \State \Comment{Normalizzazione e scalarizzazione}
     \State $E_{\min},\; E_{\max} \gets \Call{MinMax}
@@ -353,21 +428,16 @@ nelle sezioni precedenti.
 \end{algorithmic}
 \end{algorithm}
 
-L'algoritmo evidenzia la separazione tra le fasi di raccolta dei
-profili, costruzione della frontiera, calcolo di $\lambda$ e
-scalarizzazione. La struttura modulare consente di sostituire ciascun
-componente indipendentemente: ad esempio, il modello di normalizzazione
-della CI potrebbe essere sostituito con un modello non parametrico senza
-modificare la logica di selezione.
-
-La stima energetica utilizzata nella fase di valutazione incorpora il
-meccanismo LCB descritto nella Sezione~\ref{sec:esplorazione-ucb}: le
-varianti sotto-campionate ricevono una stima ottimisticamente ridotta,
-che ne favorisce la selezione e l'accumulo di osservazioni reali.
-Le chiamate \textsc{GetCarbonIntensity} e \textsc{GetSigmoidParams}
-operano su dati in memoria locale (la CI è aggiornata in background
-ogni 15~minuti), evitando latenze di rete nel percorso critico della
-richiesta.
+L'algoritmo evidenzia la separazione netta tra le quattro fasi:
+valutazione dei profili con stima ottimistica, costruzione della
+frontiera, acquisizione del segnale ambientale e scalarizzazione.
+La struttura modulare consente di sostituire ciascun componente
+indipendentemente dagli altri: il modello di normalizzazione della CI,
+la funzione di scalarizzazione e il criterio di dominanza di Pareto
+sono tutti intercambiabili senza modificare l'architettura complessiva.
+La chiamata \textsc{GetLambda} opera su dati mantenuti in memoria
+locale — la CI è aggiornata in background ogni 15~minuti — evitando
+latenze di rete nel percorso critico della richiesta.
 
 
 % ============================================================
@@ -375,10 +445,10 @@ richiesta.
 \label{sec:carbon:discussione}
 % ============================================================
 
-Un approccio alternativo alla scalarizzazione continua avrebbe potuto
-adottare una soglia sulla CI: al di sopra di un livello predefinito,
-selezionare sempre la variante a consumo minimo; al di sotto, quella a
-errore minimo. Tale schema, pur essendo più semplice, è privo di
+Un approccio alternativo alla scalarizzazione continua potrebbe
+prevedere l'uso di una soglia sulla CI: al di sopra di un livello
+predefinito selezionare sempre la variante a consumo minimo, al di
+sotto quella a errore minimo. Tale schema, pur essendo più semplice, è privo di
 continuità: variazioni minime della CI intorno alla soglia producono
 transizioni brusche nella selezione. La scalarizzazione con $\lambda$
 continuo produce invece una transizione fluida, proprietà desiderabile
@@ -386,15 +456,9 @@ nei contesti in cui la CI varia lentamente nel tempo, come nei profili
 giornalieri delle reti elettriche.
 
 La calibrazione della sigmoide sulla distribuzione storica locale,
-anziché su una scala assoluta, riflette il fatto che il giudizio su una
-condizione di CI \emph{alta} o \emph{bassa} è intrinsecamente
-contestuale. Ciò introduce una dipendenza dalla qualità dei dati
-storici: zone con distribuzioni non rappresentative possono determinare
-calibrazioni sub-ottimali. L'impatto di questa limitazione è valutato
-nel Capitolo~\ref{cap:RisultatiSperimentali}.
-
-Infine, la funzione di scalarizzazione~\eqref{eq:scalarizzazione} è
-generalizzabile a forme non lineari --- quali la scalarizzazione di
-Chebyshev o la media $p$-pesata --- senza modifiche all'architettura,
-poiché la normalizzazione sulla frontiera Pareto-ottimale garantisce in
-ogni caso la non-dominanza della soluzione selezionata.
+anziché su una scala assoluta, riflette il fatto che il giudizio su
+una condizione di CI \emph{alta} o \emph{bassa} è intrinsecamente
+contestuale. CCiò introduce una dipendenza dalla qualità dei dati storici:
+distribuzioni non rappresentative possono portare a calibrazioni
+sub-ottimali. L'impatto di questa limitazione è valutato nel
+Capitolo~\ref{cap:RisultatiSperimentali}.
