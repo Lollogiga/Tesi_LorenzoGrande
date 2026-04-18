@@ -14,11 +14,10 @@ effettivamente eseguito al fine di ottenere un profilo energetico
 più favorevole.
 
 Il paradigma dell'\emph{Approximate Computing} fornisce il fondamento
-teorico per questa direzione. L'idea centrale è che molte computazioni
-ammettono risultati con diversi livelli di accuratezza, e che la
-riduzione controllata della precisione del risultato può tradursi in una
-diminuzione significativa del consumo di risorse computazionali e,
-di conseguenza, energetiche. Questo principio è stato ampiamente
+teorico per questa direzione. L'idea centrale è che molte computazioni ammettono risultati
+approssimati, e che accettare una riduzione controllata della precisione
+può tradursi in un consumo di risorse computazionali --- e quindi
+energetiche --- significativamente inferiore. Questo principio è stato ampiamente
 studiato in contesti HPC e di calcolo scientifico, dove tecniche
 quali la \emph{loop perforation} (eliminazione selettiva di iterazioni
 in cicli computazionali), la riduzione della precisione numerica e la
@@ -34,7 +33,7 @@ livello di accuratezza del risultato. Le varianti possono differire per
 molteplici aspetti: la complessità dell'algoritmo impiegato (ad esempio,
 un modello di machine learning con un numero ridotto di parametri
 rispetto alla versione completa), il numero di iterazioni o campioni
-utilizzati nel calcolo, il linguaggio di programmazione e il runtime di
+utilizzati nel calcolo, il linguaggio di programmazione, e di conseguenza il runtime di
 esecuzione, o la granularità dei dati elaborati. L'elemento comune è che
 tutte le varianti risolvono lo stesso problema funzionale --- producono
 un risultato semanticamente equivalente per lo stesso input --- ma con

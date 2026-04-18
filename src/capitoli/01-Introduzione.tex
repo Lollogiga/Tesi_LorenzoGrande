@@ -67,14 +67,13 @@ Tale media nasconde tuttavia una forte eterogeneità geografica: nello stesso an
 la CI media dell'Unione Europea era di circa 175~g~CO\textsubscript{2}/kWh, mentre
 quella della Cina superava i 565~g~CO\textsubscript{2}/kWh~\cite{IEA2025_Electricity}.
 
-La carbon intensity è inoltre una grandezza intrinsecamente variabile nel tempo:
-muta in funzione della disponibilità di fonti rinnovabili, della domanda e degli scambi
-tra zone di rete, e presenta differenze strutturali significative tra aree geografiche
-diverse, determinate dalla composizione storica del parco di generazione
-elettrica~\cite{electricitymaps2024}.
-Ne consegue che, in una piattaforma FaaS distribuita su nodi geograficamente
-eterogenei, una stessa quantità di energia consumata può tradursi in emissioni molto
-diverse a seconda della zona e dell'istante in cui l'esecuzione ha luogo.
+La carbon intensity è inoltre una grandezza intrinsecamente 
+variabile nel tempo: muta in funzione della disponibilità 
+di fonti rinnovabili, della domanda e degli scambi tra zone di 
+rete~\cite{electricitymaps2024}.
+ Ne consegue che, in una piattaforma FaaS distribuita su nodi geograficamente eterogenei,
+  una stessa quantità di energia consumata può tradursi in emissioni molto diverse 
+  a seconda della zona e dell'istante in cui l'esecuzione ha luogo.
 
 Questa osservazione suggerisce che le decisioni di scheduling di una piattaforma FaaS
 possano — e debbano — tenere conto del segnale ambientale fornito dalla CI,
@@ -104,10 +103,12 @@ scelte progettuali controllate il cui impatto sull'accuratezza è noto e quantif
 
 La disponibilità di varianti con profili diversi apre la possibilità di trasformare la
 selezione della variante da eseguire in una decisione dello scheduler, guidata dal
-contesto ambientale: in condizioni di alta carbon intensity, privilegiare una variante
-più efficiente — accettando una riduzione controllata dell'accuratezza — produce un
-beneficio ambientale concreto; in condizioni di bassa carbon intensity, la piattaforma
-può privilegiare la variante più accurata senza conseguenze ambientali significative.
+contesto ambientale: in condizioni di alta carbon intensity, 
+privilegiare una variante più efficiente — accettando una riduzione 
+controllata dell'accuratezza — produrrebbe un beneficio ambientale concreto; 
+in condizioni di bassa carbon intensity, 
+arebbe invece possibile privilegiare la variante più accurata senza 
+conseguenze ambientali significative.
 
 Affinché tale selezione sia operativamente realizzabile, sono necessari due prerequisiti.
 Il primo è la disponibilità di misurazioni energetiche affidabili e aggiornate, a
@@ -171,7 +172,7 @@ energetico di ciascuna zona geografica: la stessa variazione assoluta di CI ha s
 differenti in zone con distribuzioni storiche diverse.
 In secondo luogo, è necessario un criterio di selezione tra le varianti disponibili che
 gestisca formalmente il trade-off energia-accuratezza, evitando soluzioni dominate e
-individuando il punto operativo più appropriato in funzione del contesto ambientale.
+individuando il miglior compromesso in funzione del contesto ambientale.
 Infine, le stime energetiche su cui si fonda la selezione devono essere aggiornate
 a runtime per riflettere il comportamento effettivo delle varianti sul nodo corrente,
 anziché dipendere esclusivamente da profilazioni statiche soggette a deriva.
@@ -208,18 +209,13 @@ In particolare, il lavoro si propone di:
   stimato per invocazione, il costo di cold start e, ove applicabile, il livello di
   accuratezza del risultato prodotto.
 
-  \item \textbf{Integrare Kepler per il monitoraggio energetico a livello di container.}
-  Il sistema si avvale di Kepler per acquisire stime del consumo energetico a
-  granularità di processo nei nodi Kubernetes, esportate tramite Prometheus.
-  Le misurazioni sono raccolte a runtime durante l'esecuzione delle funzioni,
-  consentendo di aggiornare i profili energetici sulla base del comportamento
-  effettivamente osservato anziché di profilazioni statiche.
-
-  \item \textbf{Aggiornare dinamicamente i profili energetici delle varianti.}
-  Un meccanismo periodico calcola il consumo associato a ciascuna variante a
-  partire dalle misurazioni raccolte da Kepler e ne aggiorna il profilo energetico
-  a runtime, in modo che le stime riflettano il comportamento effettivo sul nodo
-  corrente anziché dipendere da profilazioni statiche.
+  \item \textbf{Integrare Kepler per il monitoraggio energetico e l'aggiornamento adattivo dei profili.}
+  Il sistema si avvale di Kepler per acquisire stime del consumo energetico 
+  a granularità di container nei nodi Kubernetes, 
+  esportate tramite Prometheus. 
+  Le misurazioni sono raccolte a runtime durante l'esecuzione delle funzioni e 
+  alimentano un meccanismo periodico che aggiorna i profili energetici delle varianti tramite media mobile esponenziale, in modo che le stime riflettano 
+  il comportamento effettivo sul nodo corrente anziché dipendere da profilazioni statiche.
  
   \item \textbf{Gestire l'incertezza sulle stime iniziali tramite un meccanismo di
   esplorazione.}
@@ -230,13 +226,12 @@ In particolare, il lavoro si propone di:
 
   \item \textbf{Progettare e implementare uno scheduler carbon-aware basato su frontiera
   di Pareto.}
-  A seguito del consenso esplicito dell'utente, lo
-  scheduler recupera la carbon intensity corrente della zona geografica del nodo,
-  calcola $\lambda$ tramite la sigmoide calibrata per quella zona e seleziona la
-  variante Pareto-ottimale che massimizza la funzione di scalarizzazione indotta da
-  $\lambda$ nello spazio energia-accuratezza.
-  La frontiera di Pareto è costruita a runtime sulla base dei profili energetici
-  aggiornati, garantendo che la selezione rifletta il comportamento effettivo delle
+  A seguito del consenso esplicito dell'utente, 
+  lo scheduler recupera la carbon intensity corrente della zona geografica del nodo 
+  e seleziona, tra le varianti Pareto-ottimali, quella che offre il miglior compromesso 
+  tra consumo energetico e accuratezza in funzione del contesto ambientale corrente. 
+  La frontiera di Pareto è costruita a runtime sulla base dei profili energetici 
+  aggiornati, garantendo che la selezione rifletta il comportamento effettivo delle 
   varianti sul nodo corrente.
 
   \item \textbf{Valutare sperimentalmente il sistema su un insieme di funzioni
@@ -257,49 +252,14 @@ risultato, modulato da un segnale ambientale geolocalizzato e adattivo, e ne val
 quantitativamente l'efficacia su funzioni di natura eterogenea e su zone geografiche
 con carbon intensity strutturalmente diverse.
 
-% ----------------------------------------------------------------
 \section{Struttura della tesi}
 
-Il \textbf{Capitolo~2} analizza lo stato dell'arte nelle aree rilevanti per il sistema
-proposto.
-Vengono esaminate le principali soluzioni per il monitoraggio energetico del software,
-con particolare attenzione agli strumenti capaci di operare a granularità container-level
-in ambienti Kubernetes.
-Sono poi discusse le tecniche di scheduling energy-aware per piattaforme FaaS e le
-direzioni emergenti nell'ambito dell'Approximate Computing applicato all'esecuzione
-serverless.
-Una sezione dedicata introduce il concetto di carbon intensity come metrica ambientale,
-ne descrive la variabilità geografica e temporale e ne esamina il ruolo nelle proposte
-di carbon-aware computing presenti in letteratura.
-Il capitolo si conclude con la presentazione della piattaforma Serverledge, adottata
-come base sperimentale, e con il posizionamento del contributo rispetto allo stato
-dell'arte.
+Il capitolo seguente, \textbf{Stato dell'arte}, analizzerà le principali soluzioni proposte in letteratura per la sostenibilità energetica nel Serverless Computing, a partire dagli strumenti di monitoraggio del consumo energetico del software fino alle tecniche di scheduling energy-aware, all'Approximate Computing e alle proposte di carbon-aware computing. Verrà inoltre introdotta la piattaforma Serverledge, adottata come base sperimentale per lo sviluppo del sistema, e sarà discusso il posizionamento del contributo rispetto allo stato dell'arte.
 
-Il \textbf{Capitolo~3} presenta l'architettura del sistema realizzato.
-Vengono descritti: il modello di funzione logica con varianti energetiche e le famiglie
-di funzioni utilizzate nella valutazione; l'integrazione di Kepler per il monitoraggio
-dei consumi a livello di container; il meccanismo di aggiornamento adattivo dei
-profili energetici con esplorazione LCB; l'infrastruttura di raccolta e archiviazione
-delle metriche.
- 
-Il \textbf{Capitolo~4} descrive la progettazione dello scheduler carbon-aware.
-Vengono presentati: la procedura di calibrazione della sigmoide logistica per zona
-geografica a partire dai dati storici di carbon intensity; la costruzione della frontiera
-di Pareto nello spazio energia-accuratezza; la logica di scalarizzazione tramite
-$\lambda$ e il criterio di selezione della variante; il ruolo del consenso esplicito
-dell'utente nel processo decisionale.
+Nel capitolo \textbf{Architettura del Sistema} verrà descritto il sistema realizzato: il modello di funzione logica con varianti energetiche, l'integrazione di Kepler per il monitoraggio dei consumi a livello di container, il meccanismo di aggiornamento adattivo dei profili energetici tramite media mobile esponenziale e il meccanismo di esplorazione LCB per il raffinamento delle stime nelle fasi iniziali.
 
-Il \textbf{Capitolo~5} riporta i risultati della valutazione sperimentale.
-Dopo la presentazione della configurazione sperimentale e delle analisi preliminari
-di profilazione e calibrazione, vengono discussi i cinque esperimenti principali:
-il comportamento della selezione lungo la frontiera di Pareto al variare di $\lambda$;
-la risposta dello scheduler al variare della carbon intensity per zona geografica;
-il risparmio energetico rispetto alla baseline always-accurate su workload multi-zona;
-la convergenza del meccanismo di esplorazione a fronte di stime iniziali errate;
-la sensibilità al parametro $\beta$ di controllo dell'esplorazione.
-Per ciascun esperimento viene quantificato il trade-off tra consumo energetico e
-accuratezza del risultato, discutendo le implicazioni delle scelte progettuali adottate.
+Nel capitolo \textbf{Scheduler Carbon-Aware} sarà presentata la logica decisionale del sistema: la calibrazione della sigmoide per zona geografica, la costruzione della frontiera di Pareto nello spazio energia-accuratezza e il criterio di selezione della variante in funzione della carbon intensity corrente.
 
-Il \textbf{Capitolo~5} raccoglie le conclusioni del lavoro, discutendo i risultati
-ottenuti in relazione agli obiettivi definiti e identificando le principali direzioni
-di sviluppo futuro.
+Nel capitolo \textbf{Risultati Sperimentali} saranno riportati e discussi i risultati della valutazione sperimentale, quantificando il trade-off tra consumo energetico e accuratezza del risultato al variare della carbon intensity, della zona geografica e delle condizioni iniziali di stima.
+
+Nell'ultimo capitolo, \textbf{Conclusioni e Sviluppi Futuri}, verranno discussi i risultati ottenuti in relazione agli obiettivi definiti e identificate le principali direzioni di ricerca futura nell'ambito della sostenibilità nel Serverless Computing.
