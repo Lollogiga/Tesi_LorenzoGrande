@@ -27,8 +27,7 @@ di varianti poco osservate, indipendentemente dalla loro stima corrente.
 \label{subsec:ucb-principio}
  
 Il meccanismo adottato si basa sul principio di \emph{ottimismo sotto
-incertezza} (Optimism in the Face of Uncertainty), mutuato dalla teoria
-dei banditi multi-braccio~\cite{auer2002finite}.Tale meccanismo incentiva
+incertezza} (Optimism in the Face of Uncertainty)~\cite{auer2002finite}.Tale meccanismo incentiva
 l'esplorazione di varianti sotto-campionate, raccogliendo dati reali e
 convergendo progressivamente a stime accurate.
  
@@ -109,3 +108,15 @@ sfruttamento:
 %circa 15 invocazioni e si stabilizza sul valore reale in 20--25
 %invocazioni.
  
+\vspace{1em}
+
+Le componenti descritte in questo capitolo costituiscono l'infrastruttura
+su cui si fonda la schedulazione carbon-aware: il modello di funzione
+logica con varianti fornisce lo spazio decisionale, Kepler ne misura i
+consumi a runtime, il worker periodico aggiorna i profili energetici
+tramite filtro EMA e il meccanismo LCB garantisce che anche le varianti
+sotto-campionate vengano esplorate nelle fasi iniziali. Il capitolo
+seguente descrive come questi elementi vengano integrati nello scheduler
+carbon-aware, che li utilizza per selezionare, a ogni invocazione, la
+variante più appropriata in funzione della carbon intensity della zona
+geografica del nodo.

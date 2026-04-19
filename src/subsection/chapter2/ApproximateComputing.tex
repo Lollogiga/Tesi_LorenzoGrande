@@ -33,10 +33,10 @@ livello di accuratezza del risultato. Le varianti possono differire per
 molteplici aspetti: la complessità dell'algoritmo impiegato (ad esempio,
 un modello di machine learning con un numero ridotto di parametri
 rispetto alla versione completa), il numero di iterazioni o campioni
-utilizzati nel calcolo, il linguaggio di programmazione, e di conseguenza il runtime di
-esecuzione, o la granularità dei dati elaborati. L'elemento comune è che
-tutte le varianti risolvono lo stesso problema funzionale --- producono
-un risultato semanticamente equivalente per lo stesso input --- ma con
+utilizzati nel calcolo, il linguaggio di programmazione --- e di conseguenza il runtime di
+esecuzione --- o la granularità dei dati elaborati. L'elemento comune è che
+tutte le varianti risolvono lo stesso problema funzionale: producono
+un risultato semanticamente equivalente per lo stesso input ma con
 costi computazionali ed energetici differenti, e con livelli di
 accuratezza potenzialmente diversi.
 
@@ -63,7 +63,6 @@ meccanismo di controllo runtime che regola il livello di
 approssimazione in funzione di un vincolo energetico esplicito.
 
 % ── Code Once, Run Green ──────────────────────────────────────────────
-
 \subsubsection{Generazione automatica di varianti energeticamente efficienti}
 \label{subsubsec:code_once_run_green}
 
@@ -78,14 +77,14 @@ delle funzioni in modo trasparente per lo sviluppatore.
 \emph{Code Once, Run Green}~\cite{refaas} esplora questa possibilità
 proponendo ReFaaS, un servizio integrato nella piattaforma serverless
 Fission che traduce automaticamente funzioni da un linguaggio di
-programmazione a un altro utilizzando modelli linguistici di grandi dimensioni (LLM). L'obiettivo
-è generare una versione funzionalmente equivalente della funzione
-originale, ma eseguita su un runtime con un profilo energetico più
-favorevole. La motivazione alla base dell'approccio risiede nella
-significativa variabilità del consumo energetico tra linguaggi di
-programmazione differenti, documentata in letteratura con differenze che
-possono raggiungere un ordine di grandezza a parità di funzionalità
-implementata~\cite{refaas}.
+programmazione a un altro utilizzando modelli linguistici di grandi
+dimensioni (LLM). L'obiettivo è generare una versione funzionalmente
+equivalente della funzione originale, ma eseguita su un runtime con un
+profilo energetico più favorevole. La motivazione alla base
+dell'approccio risiede nella significativa variabilità del consumo
+energetico tra linguaggi di programmazione differenti, documentata in
+letteratura con differenze che possono raggiungere un ordine di
+grandezza a parità di funzionalità implementata~\cite{refaas}.
 
 \begin{figure}[htbp]
     \centering
@@ -99,16 +98,16 @@ implementata~\cite{refaas}.
 
 Come illustrato in Figura~\ref{fig:refaas_pipeline}, la traduzione
 avviene in fase di build attraverso una pipeline iterativa strutturata
-in tre fasi: traduzione del codice tramite LLM, compilazione e
-verifica della correttezza mediante test black-box sugli stessi input
-della funzione originale. In caso di errori di compilazione o di
-discrepanze nei risultati, la pipeline prevede passaggi di recupero che
-reinviano il codice al modello linguistico con il messaggio di errore,
-consentendo tentativi iterativi di correzione fino a un numero massimo
-predefinito. Se la traduzione ha successo e la funzione tradotta supera
-tutti i test, il nuovo artefatto sostituisce quello originale nel ciclo
-di esecuzione della piattaforma; in caso contrario, la funzione
-originale viene mantenuta senza alcuna interruzione del servizio.
+in tre fasi: traduzione del codice tramite LLM, compilazione e verifica
+della correttezza mediante test black-box sugli stessi input della
+funzione originale. In caso di errori di compilazione o di discrepanze
+nei risultati, la pipeline prevede passaggi di recupero che reinviano il
+codice al modello linguistico con il messaggio di errore, consentendo
+tentativi iterativi di correzione fino a un numero massimo predefinito.
+Se la traduzione ha successo e la funzione tradotta supera tutti i test,
+il nuovo artefatto sostituisce quello originale nel ciclo di esecuzione
+della piattaforma; in caso contrario, la funzione originale viene
+mantenuta senza alcuna interruzione del servizio.
 
 I risultati sperimentali riportati dagli autori mostrano che le funzioni
 tradotte con successo possono ridurre il consumo energetico per
@@ -127,12 +126,7 @@ diverse, può presentare profili energetici significativamente differenti
 a parità di correttezza funzionale. Questo principio è alla base del
 concetto di \emph{variante} utilizzato nei sistemi che, come quello
 descritto nella presente tesi, associano a una funzione logica un
-insieme di implementazioni alternative tra cui selezionare a runtime. Le
-varianti possono derivare non soltanto dalla traduzione verso un
-linguaggio diverso, ma anche da semplificazioni algoritmiche, dalla
-sostituzione di modelli di machine learning con versioni più leggere, o
-dalla riduzione del numero di iterazioni o campioni computazionali ---
-tutte strategie riconducibili al paradigma dell'approximate computing.
+insieme di implementazioni alternative tra cui selezionare a runtime.
 
 È opportuno osservare, tuttavia, che in \emph{Code Once, Run Green} la
 decisione su quale variante eseguire è determinata staticamente, in fase
@@ -140,11 +134,7 @@ di build: se la traduzione ha successo, la funzione tradotta sostituisce
 permanentemente quella originale. Non è previsto alcun meccanismo di
 selezione dinamica che consenta al sistema di scegliere tra la variante
 originale e quella tradotta in funzione delle condizioni operative
-correnti. Il profilo energetico della variante selezionata è
-determinato una volta per tutte al momento della traduzione, senza
-possibilità di adattamento successivo.
-
-% ── JouleGuard ─────────────────────────────────────────────────────────
+correnti.
 
 \subsubsection{Controllo runtime del trade-off energia-accuratezza}
 \label{subsubsec:jouleguard}
@@ -160,19 +150,19 @@ una quantità massima di energia che il sistema può consumare per unità
 di lavoro --- e il sistema deve rispettare tale budget massimizzando
 al contempo l'accuratezza del risultato prodotto.
 
-L’intuizione fondamentale di JouleGuard consiste nel decomporre 
-il problema di ottimizzazione in due sotto-problemi coordinati. 
-Il primo, denominato \emph{System Energy Optimizer} (SEO), 
-ha il compito di individuare la configurazione di sistema — 
-intesa come combinazione di risorse hardware, 
-quali frequenza del processore, numero di core attivi 
-e impostazioni del sottosistema di memoria — che massimizza 
-l’efficienza energetica, definita come il rapporto tra lavoro 
-svolto ed energia consumata. A tal fine, il SEO impiega medie mobili 
-esponenziali ponderate (EWMA) per stimare l’efficienza delle diverse 
-configurazioni sulla base delle misurazioni raccolte a runtime, 
-bilanciando in modo adattivo l’esplorazione di configurazioni 
-meno osservate con lo sfruttamento della configurazione attualmente 
+L'intuizione fondamentale di JouleGuard consiste nel decomporre
+il problema di ottimizzazione in due sotto-problemi coordinati.
+Il primo, denominato \emph{System Energy Optimizer} (SEO),
+ha il compito di individuare la configurazione di sistema ---
+intesa come combinazione di risorse hardware,
+quali frequenza del processore, numero di core attivi
+e impostazioni del sottosistema di memoria --- che massimizza
+l'efficienza energetica, definita come il rapporto tra lavoro
+svolto ed energia consumata. A tal fine, il SEO impiega medie mobili
+esponenziali ponderate (EWMA) per stimare l'efficienza delle diverse
+configurazioni sulla base delle misurazioni raccolte a runtime,
+bilanciando in modo adattivo l'esplorazione di configurazioni
+meno osservate con lo sfruttamento della configurazione attualmente
 più efficiente.
 
 \begin{figure}[htbp]
@@ -201,15 +191,13 @@ prestazione e potenza della configurazione di sistema selezionata, e
 l'AAO utilizza queste informazioni per determinare il livello di
 approssimazione appropriato.
 
-La selezione della configurazione applicativa avviene sulla frontiera
-Pareto-ottimale delle configurazioni disponibili, ordinata per
-accuratezza e prestazioni. JouleGuard seleziona la configurazione con
-la massima accuratezza tra quelle che forniscono prestazioni
-sufficienti a rispettare il budget energetico. Questo meccanismo non
-richiede una quantificazione precisa dell'accuratezza delle
-configurazioni, ma soltanto un ordinamento totale: è sufficiente sapere
-che una configurazione è più accurata di un'altra, senza necessità di
-assegnare valori numerici assoluti alla qualità del risultato.
+JouleGuard seleziona la configurazione con la massima accuratezza tra
+quelle che forniscono prestazioni sufficienti a rispettare il budget
+energetico. Questo meccanismo non richiede una quantificazione precisa
+dell'accuratezza delle configurazioni, ma soltanto un ordinamento
+totale: è sufficiente sapere che una configurazione è più accurata di
+un'altra, senza necessità di assegnare valori numerici assoluti alla
+qualità del risultato.
 
 I risultati sperimentali riportati dagli autori, condotti su tre
 piattaforme hardware (mobile, tablet, server) con otto applicazioni
@@ -223,15 +211,12 @@ carico applicativo, aumentando automaticamente l'accuratezza quando le
 condizioni lo consentono.
 
 Dal punto di vista concettuale, JouleGuard stabilisce diversi principi
-rilevanti nell'ambito dell'elaborazione serverless sostenibile.
-Innanzitutto, dimostra che il trade-off tra consumo energetico e
-accuratezza del risultato può essere gestito in modo formale e adattivo
-attraverso un ciclo di controllo runtime, con garanzie di convergenza.
-In secondo luogo, introduce l'uso di medie mobili esponenziali per la
-stima delle grandezze operative a partire da misurazioni raccolte
-durante l'esecuzione. Infine, mostra che la selezione sulla frontiera
-Pareto delle configurazioni disponibili consente di affrontare il
-problema della scelta multi-obiettivo in modo sistematico.
+rilevanti nell'ambito dell'elaborazione serverless sostenibile:
+dimostra che il trade-off tra consumo energetico e accuratezza del
+risultato può essere gestito in modo formale e adattivo attraverso un
+ciclo di controllo runtime, e introduce l'uso di medie mobili
+esponenziali per la stima delle grandezze operative a partire da
+misurazioni raccolte durante l'esecuzione.
 
 È opportuno osservare, tuttavia, che JouleGuard opera su
 un'applicazione singola, con configurazioni di approssimazione
@@ -246,22 +231,10 @@ consumo per invocazione può variare in funzione del carico concorrente,
 dello stato del container e delle caratteristiche dei dati di input,
 questa assunzione di stazionarietà dei profili energetici costituisce
 un elemento da considerare.
-% ── Osservazioni conclusive ────────────────────────────────────────────
 
 \vspace{0.5em}
 
-Nel complesso, i due contributi analizzati in questa sottosezione
-affrontano il problema della sostenibilità energetica da prospettive
-complementari. \emph{Code Once, Run Green} dimostra che la stessa
-funzione logica può esistere in più implementazioni con profili
-energetici significativamente diversi a parità di correttezza
-funzionale. JouleGuard mostra che, dato un insieme di configurazioni
-con profili energia-accuratezza differenziati, la selezione della
-configurazione più appropriata può avvenire dinamicamente a runtime
-attraverso un ciclo di controllo formale, con garanzie di convergenza
-verso un obiettivo energetico prefissato.
-
-In entrambi i casi, la decisione è guidata da grandezze interne al
+In entrambi i casi esaminati, la decisione è guidata da grandezze interne al
 sistema: il budget energetico dell'utente in JouleGuard, il profilo
 di consumo del runtime in \emph{Code Once, Run Green}. Nessuno dei
 due approcci incorpora segnali di contesto esterni che riflettano le

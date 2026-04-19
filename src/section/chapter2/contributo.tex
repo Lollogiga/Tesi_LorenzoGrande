@@ -1,35 +1,16 @@
 \section{Posizionamento del contributo}
 \label{sec:posizionamento}
 
-L'analisi condotta in questo capitolo ha esaminato tre famiglie di
-soluzioni per la sostenibilità energetica in ambienti serverless,
-ciascuna delle quali interviene su una dimensione specifica del
-problema.
+Le tre famiglie di soluzioni analizzate in questo capitolo ---
+scheduling energy-aware, approximate computing e carbon-aware computing
+--- operano su dimensioni distinte del problema: la scelta del contesto
+di esecuzione, la modulazione della logica applicativa e la sensibilità
+al segnale ambientale. Tuttavia, nessuno degli approcci esaminati le
+integra in un unico meccanismo decisionale.
 
-Gli approcci di scheduling
-energy-aware~\cite{e2fis_smartcomp,greenfaas} operano sulla scelta del
-nodo di esecuzione, trattando la funzione come un'entità con profilo
-energetico invariante. I contributi riconducibili all'approximate
-computing~\cite{jouleguard,refaas} mostrano che è possibile agire sulla
-funzione stessa, generando varianti con profili energia-accuratezza
-differenziati e selezionando dinamicamente tra esse, ma determinano
-tali profili in modo prevalentemente statico e non prevedono meccanismi
-di aggiornamento basati sul comportamento reale del sistema in
-esecuzione. Gli approcci
-carbon-aware~\cite{radovanovic2022carbon,greencourier} introducono la
-carbon intensity della rete elettrica come segnale di contesto per le
-decisioni di esecuzione, ma la utilizzano esclusivamente per decidere
-\emph{dove} o \emph{quando} eseguire un carico di lavoro, senza che il
-segnale influenzi la scelta di \emph{cosa} viene eseguito.
-
-Dall'analisi emerge che queste tre dimensioni --- la selezione tra
-varianti con diversi profili energia-accuratezza, l'adattività delle
-stime energetiche alle condizioni operative correnti, e la sensibilità
-al contesto carbonico della rete elettrica --- sono state affrontate
-separatamente, ma non sono mai state integrate in un unico meccanismo
-decisionale. In particolare, nessuno degli approcci esaminati affronta
-il problema di selezionare, al momento dell'invocazione, la variante di
-una funzione che offra il miglior compromesso tra consumo energetico e
+In particolare, nessuno degli approcci esaminati affronta il problema
+di selezionare, al momento dell'invocazione, la variante di una
+funzione che offra il miglior compromesso tra consumo energetico e
 accuratezza del risultato in funzione dell'impatto ambientale corrente
 dell'esecuzione. Manca un meccanismo che utilizzi la carbon intensity
 non come criterio di \emph{placement} geografico o temporale, ma come

@@ -57,11 +57,7 @@ la sua identità (mapping container-variante) non viene modificata,
 garantendo coerenza per l'intero ciclo di vita del container.
 
 Parallelamente, viene mantenuto un contatore atomico di invocazioni per
-container, incrementato al completamento di ogni richiesta. L'impiego di
-operazioni atomiche mantiene questo aggiornamento fuori dal
-\emph{critical path} dello scheduler senza introdurre lock.
-
-
+container, incrementato al completamento di ogni richiesta.
 
 \subsection{Il worker periodico di raccolta}
 \label{subsec:worker-periodico}
@@ -91,7 +87,7 @@ Vengono quindi calcolati i delta rispetto all'osservazione precedente:
 
 La presenza di valori negativi segnala un reset del container o del
 contatore — condizione possibile ad esempio in seguito a un riavvio
-dell'istanza — e comporta la reinizializzazione della baseline senza
+dell'istanza — e comporta la reinizializzazione delle variabili senza
 produzione di campioni, evitando attribuzioni energetiche errate.
 
 

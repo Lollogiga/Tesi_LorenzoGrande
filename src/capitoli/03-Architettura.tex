@@ -1,22 +1,16 @@
 \chapter{Architettura del Sistema}
 \label{cap:ProgettazioneRealizzazione}
 
-\emph{In questo capitolo vengono descritte le scelte architetturali 
-adottate per estendere la piattaforma Serverledge con le componenti 
-necessarie a una schedulazione carbon-aware. Viene dapprima introdotta 
-l'integrazione di Kepler per la misurazione dei consumi energetici a 
-livello di container, insieme all'infrastruttura di monitoraggio che 
-ne supporta il funzionamento. Si descrive quindi il modello di 
-funzione logica con varianti, l'astrazione che consente di 
-rappresentare, per una stessa funzione, implementazioni alternative 
-con diversi profili di consumo e accuratezza. Viene successivamente 
-illustrato il meccanismo di aggiornamento adattivo dei profili 
-energetici, basato su un feedback loop periodico con media mobile 
-esponenziale. Infine, si presenta il meccanismo di esplorazione 
-Upper Confidence Bound, che consente al sistema di raffinare le stime 
-energetiche a runtime, superando i limiti della profilazione offline statica. 
-Lo scheduler che utilizza queste componenti per la selezione 
-carbon-aware delle varianti è oggetto del Capitolo~\ref{cap:scheduler}.}
+\emph{In questo capitolo verranno descritte le scelte architetturali
+adottate per estendere la piattaforma Serverledge con le componenti
+necessarie a una schedulazione carbon-aware. Verranno presentati il
+modello di funzione logica con varianti, l'integrazione di Kepler per
+il monitoraggio dei consumi a livello di container, il meccanismo di
+aggiornamento adattivo dei profili energetici tramite media mobile
+esponenziale e il meccanismo di esplorazione LCB per il raffinamento
+delle stime nelle fasi iniziali. Lo scheduler che utilizza queste
+componenti per la selezione carbon-aware delle varianti è oggetto del
+Capitolo~\ref{cap:scheduler}.}
 \input{src/section/chapter3/section1/UtilizzoKepler}
 \input{src/section/chapter3/section2/variants}
 \input{src/section/chapter3/section3/AggiornamentoAdattivo}

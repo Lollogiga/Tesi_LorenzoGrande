@@ -5,11 +5,14 @@ L'avvio dell'infrastruttura di monitoraggio è gestito dallo script
 i servizi necessari al funzionamento del sistema.  
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{figures/infrastructure-diagram.jpg}
-    \caption{Architettura dell'infrastruttura di monitoraggio energetico. 
-    I componenti di monitoraggio esterni (Kepler, Prometheus, Grafana) sono 
-    separati dagli store interni (etcd, InfluxDB), con Serverledge al centro 
-    che interagisce con entrambi i livelli.}
+    \includegraphics[width=0.85\textwidth]{figures/infrastracture-diagram.png}
+    \caption{Architettura dell'infrastruttura di monitoraggio energetico e scheduling
+carbon-aware. I componenti di monitoraggio esterni (Kepler, Prometheus, Grafana)
+sono separati dagli store interni (etcd, InfluxDB), con Serverledge al centro
+che interagisce con entrambi i livelli. Lo scheduler carbon-aware integra la
+logica di selezione della variante — basata su frontiera di Pareto, scalarizzazione
+tramite $\lambda$, esplorazione LCB e consenso utente — e riceve il segnale di
+carbon intensity tramite query periodica a una sorgente esterna.}
     \label{fig:infra-arch}
 \end{figure}
 
@@ -41,5 +44,8 @@ Una volta avviata, l'infrastruttura opera in modo autonomo: Kepler
 rileva i container Docker presenti sull'host e ne aggiorna le metriche 
 energetiche ad ogni ciclo di campionamento; Prometheus le raccoglie e 
 le rende interrogabili; il sistema interno di Serverledge, descritto nelle sezioni successive,
- le legge periodicamente — limitatamente ai container attivi da esso gestiti — per aggiornare i profili energetici 
- delle varianti di funzione.
+le legge periodicamente --- limitatamente ai container attivi da esso gestiti --- per aggiornare i profili energetici 
+delle varianti di funzione. Il segnale di carbon intensity, necessario allo scheduler 
+per la selezione carbon-aware della variante, non è parte di questa infrastruttura: 
+viene acquisito dallo scheduler a runtime tramite query periodica a una 
+sorgente esterna, come descritto nella Sezione~\ref{cap:scheduler}.

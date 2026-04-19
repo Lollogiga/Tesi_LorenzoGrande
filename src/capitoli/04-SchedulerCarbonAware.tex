@@ -28,7 +28,7 @@ $\lambda$ (\S\,\ref{sec:scalarizzazione}).
 \label{sec:sigmoide}
 % ============================================================
 
-La carbon intensity (CI) esprime la quantità di
+Come già detto precedentemente, la carbon intensity (CI) esprime la quantità di
 CO\textsubscript{2}~equivalente emessa per ogni kilowattora prodotto
 dalla rete elettrica locale, misurata in
 g\,CO\textsubscript{2}eq/kWh. Questo valore riflette la composizione
@@ -109,7 +109,7 @@ desiderabili nel contesto dello scheduling:
 \medskip
 \noindent\textbf{Calibrazione dei parametri.}
 I parametri $\mu_z$, $s_z$ e $k$ sono stimati a partire dai
-dati storici di carbon intensity per ciascuna zona. La procedura
+dati storici di carbon intensity per ciascuna zona, recuperati da \cite{electricitymaps2024}. La procedura
 è la seguente:
 %
 \begin{enumerate}
@@ -219,7 +219,7 @@ varianti non dominate:
 Ogni variante sulla frontiera rappresenta un compromesso efficiente:
 ridurre una delle due grandezze implica necessariamente aumentare
 l'altra. È su questo insieme ridotto che $\lambda$ esercita la
-propria funzione di selezione..
+propria funzione di selezione.
 
 \medskip
 \noindent\textbf{Costruzione.}
@@ -365,6 +365,10 @@ soglia si verifica una transizione verso una variante più accurata.
 All'aumentare di $\lambda$, la selezione si sposta progressivamente
 lungo la frontiera di Pareto, dalle varianti a minimo consumo verso
 quelle a minima imprecisione.
+Il comportamento a gradini che ne deriva verrà illustrato 
+sperimentalmente nel Capitolo~\ref{cap:RisultatiSperimentali}, 
+dove la selezione lungo la frontiera di Pareto è analizzata 
+su funzioni rappresentative al variare di $\lambda$.
 
 
 % ============================================================
@@ -440,25 +444,24 @@ locale — la CI è aggiornata in background ogni 15~minuti — evitando
 latenze di rete nel percorso critico della richiesta.
 
 
-% ============================================================
-\section{Discussione delle scelte progettuali}
-\label{sec:carbon:discussione}
-% ============================================================
+% ── Conclusioni del capitolo ───────────────────────────────────────────
 
-Un approccio alternativo alla scalarizzazione continua potrebbe
-prevedere l'uso di una soglia sulla CI: al di sopra di un livello
-predefinito selezionare sempre la variante a consumo minimo, al di
-sotto quella a errore minimo. Tale schema, pur essendo più semplice, è privo di
-continuità: variazioni minime della CI intorno alla soglia producono
-transizioni brusche nella selezione. La scalarizzazione con $\lambda$
-continuo produce invece una transizione fluida, proprietà desiderabile
-nei contesti in cui la CI varia lentamente nel tempo, come nei profili
-giornalieri delle reti elettriche.
+\vspace{2em}
 
-La calibrazione della sigmoide sulla distribuzione storica locale,
-anziché su una scala assoluta, riflette il fatto che il giudizio su
-una condizione di CI \emph{alta} o \emph{bassa} è intrinsecamente
-contestuale. CCiò introduce una dipendenza dalla qualità dei dati storici:
-distribuzioni non rappresentative possono portare a calibrazioni
-sub-ottimali. L'impatto di questa limitazione è valutato nel
-Capitolo~\ref{cap:RisultatiSperimentali}.
+Lo scheduler carbon-aware descritto in questo capitolo integra in un
+unico meccanismo decisionale le tre dimensioni identificate nel
+Capitolo~\ref{cap:Stato dell'arte}: la selezione tra varianti con diversi
+profili energia-accuratezza, la sensibilità al contesto carbonico della
+rete elettrica e l'adattività delle stime energetiche alle condizioni
+operative correnti. La sigmoide calibrata per zona traduce la carbon
+intensity in un peso $\lambda$ contestualizzato rispetto alla
+distribuzione storica locale; la frontiera di Pareto restringe lo
+spazio decisionale alle sole varianti non dominate; la scalarizzazione
+lineare seleziona il compromesso più appropriato in funzione del
+segnale ambientale. Due casi limite della scalarizzazione --- la
+politica \emph{always-accurate} ($\lambda = 1$) e la politica
+\emph{always-efficient} ($\lambda = 0$) --- costituiranno i termini di
+confronto nella valutazione sperimentale del
+Capitolo~\ref{cap:RisultatiSperimentali}, dove verrà quantificato il
+beneficio del controllo adattivo rispetto a strategie statiche che
+ignorano il segnale ambientale.

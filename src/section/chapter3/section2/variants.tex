@@ -157,11 +157,14 @@ di iterazioni ridotto.
 \end{lstlisting}
  
 I valori iniziali del profilo energetico sono progressivamente raffinati
-a runtime dal worker periodico, descritto nella
-Sezione~\ref{sec:aggiornamento-ema}, sulla base delle misurazioni
-effettive raccolte durante l'esecuzione in produzione. I risultati
-numerici delle misurazioni preliminari per tutte le varianti sono
-riportati nel Capitolo~\ref{cap:RisultatiSperimentali}.
+a runtime attraverso due meccanismi complementari, descritti nelle
+Sezioni~\ref{sec:worker} e~\ref{sec:esplorazione-ucb}: il worker periodico
+aggiorna le stime delle varianti effettivamente eseguite tramite filtro EMA,
+mentre il meccanismo di esplorazione LCB permette di corregge le stime delle varianti
+sotto-campionate, prevenendo che una stima inizialmente errata le escluda
+permanentemente dalla selezione. I risultati numerici delle misurazioni
+preliminari per tutte le varianti sono riportati nel
+Capitolo~\ref{cap:RisultatiSperimentali}. %TODO
  
  
 \subsection{Il modello di output e la classificazione dell'accuratezza}
@@ -390,9 +393,8 @@ attraverso la funzione \texttt{CreateInternalVariants}.
 
 \subsubsection{Convenzione di denominazione}
 
-La prima variante definita nel file JSON — tipicamente quella a massima
-accuratezza — mantiene come nome interno esattamente il
-\texttt{LogicalName}, preservando la compatibilità con le invocazioni che
+La prima variante definita nel file JSON —corrispondente alla funzione di base— 
+mantiene come nome interno esattamente il \texttt{LogicalName}, preservando la compatibilità con le invocazioni che
 non specificano alcuna preferenza energetica. Le varianti successive
 ricevono un nome nella forma \texttt{<LogicalName>-<VariantID>}. Per la
 funzione \texttt{PiLeibniz} (\autoref{lst:piLeibniz-json}), ad esempio,

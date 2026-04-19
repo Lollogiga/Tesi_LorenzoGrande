@@ -30,14 +30,13 @@ tempo per ogni container attivo.
     \label{fig:kepler-arch}
 \end{figure}
 
-Come illustrato in Figura~\ref{fig:kepler-arch}, il comportamento di 
-Kepler varia in base all'ambiente di esecuzione. In ambienti bare-metal, 
-come quello utilizzato in questo lavoro, Kepler accede direttamente ai 
-contatori RAPL, ottenendo misurazioni energetiche real-time senza 
-ricorrere a modelli predittivi pre-addestrati. Questo garantisce una 
-stima più accurata rispetto agli ambienti virtualizzati, dove l'assenza 
-di accesso diretto all'hardware richiede l'uso di modelli di regressione 
-con le relative limitazioni di accuratezza.
+Come illustrato in Figura~\ref{fig:kepler-arch}, il comportamento di
+Kepler varia in base all'ambiente di esecuzione. In ambienti bare-metal,
+Kepler accede direttamente ai contatori RAPL, ottenendo misurazioni
+energetiche real-time senza ricorrere a modelli predittivi
+pre-addestrati. In ambienti virtualizzati, invece, l'assenza di accesso
+diretto all'hardware richiede l'uso di modelli di regressione,
+introducendo le relative limitazioni di accuratezza.
 
 Per accedere alle interfacce hardware necessarie, Kepler deve essere 
 eseguito con privilegi elevati sull'host: richiede accesso a 

@@ -1,6 +1,6 @@
 \subsection{Carbon-aware computing}
 \label{subsec:carbon_aware_computing}
- 
+
 Le sottosezioni precedenti hanno analizzato approcci che perseguono la
 sostenibilità energetica dell'elaborazione serverless operando su due
 leve distinte: la scelta del nodo di esecuzione (scheduling
@@ -9,30 +9,18 @@ computing). In entrambi i casi, il criterio di ottimizzazione è il
 consumo energetico in sé: l'obiettivo è ridurre i Joule consumati per
 invocazione o rispettare un budget energetico prefissato,
 indipendentemente dal momento in cui tale consumo avviene.
- 
+
 Questa impostazione non cattura una dimensione rilevante del problema:
-l'impatto ambientale di un'unità di energia consumata non è costante,
-ma dipende dalla composizione del mix energetico della rete elettrica
-nel momento e nel luogo dell'esecuzione. Un kilowattora consumato quando
-la rete è alimentata prevalentemente da fonti rinnovabili --- eolico,
-solare, idroelettrico --- produce emissioni di CO$_2$ significativamente
-inferiori rispetto allo stesso kilowattora consumato in un momento in
-cui la generazione è dominata da combustibili fossili. Questa grandezza,
-denominata \emph{carbon intensity} (CI) e tipicamente espressa in
-gCO$_2$eq/kWh, varia nel tempo in funzione delle condizioni
-meteorologiche, della domanda sulla rete e della disponibilità delle
-fonti di generazione, e varia nello spazio in funzione del mix
-energetico caratteristico di ciascuna zona geografica.
- 
-Il paradigma del \emph{carbon-aware computing} si fonda su questa
-osservazione: anziché trattare ogni kilowattora come equivalente, le
-decisioni di esecuzione possono essere modulate in funzione della carbon
-intensity corrente, con l'obiettivo di concentrare il consumo nei
-momenti o nei luoghi in cui l'energia disponibile è più pulita. In
-questo modo, il criterio di ottimizzazione si sposta dal solo consumo
-energetico all'impatto ambientale complessivo dell'esecuzione, misurato
-in termini di emissioni di CO$_2$ associate.
- 
+come discusso nella Sezione~\ref{subsec:carbon_intensity}, l'impatto
+ambientale di un'unità di energia consumata non è costante, ma dipende
+dalla carbon intensity della rete elettrica nel momento e nel luogo
+dell'esecuzione. Il paradigma del \emph{carbon-aware computing} si
+fonda su questa osservazione: anziché trattare ogni kilowattora come
+equivalente, le decisioni di esecuzione possono essere modulate in
+funzione della carbon intensity corrente, spostando il criterio di
+ottimizzazione dal solo consumo energetico all'impatto ambientale
+complessivo dell'esecuzione.
+
 In letteratura, le strategie carbon-aware sono state declinate
 attraverso due leve principali. La prima, denominata \emph{temporal
 shifting}, consiste nel posticipare l'esecuzione di carichi di lavoro
@@ -44,9 +32,9 @@ privilegiando l'esecuzione nei siti con il mix energetico più
 favorevole al momento dell'invocazione. Entrambe le strategie
 presuppongono la disponibilità di dati sulla carbon intensity in tempo
 reale o tramite previsioni a breve termine, tipicamente forniti da
-servizi specializzati quali ElectricityMaps~\cite{electricitymaps2024} o
-WattTime.
- 
+servizi specializzati quali ElectricityMaps~\cite{electricitymaps2024}
+o WattTime.
+
 Nei paragrafi seguenti vengono analizzati due contributi che
 rappresentano queste direzioni in contesti distinti: il
 \emph{Carbon-Intelligent Computing System} (CICS) di
@@ -154,10 +142,10 @@ significativamente diverso da quello delle piattaforme FaaS, dove le
 funzioni sono invocate su richiesta con requisiti di latenza stringenti.
  
 % ── GreenCourier ───────────────────────────────────────────────────────
- 
+
 \subsubsection{Spatial shifting carbon-aware per funzioni serverless}
 \label{subsubsec:greencourier}
- 
+
 Se il CICS affronta il carbon-aware computing attraverso il temporal
 shifting di workload batch in data center hyperscale,
 GreenCourier~\cite{greencourier} porta il paradigma nel contesto
@@ -167,7 +155,7 @@ sistema distribuisce le invocazioni delle funzioni tra cluster
 Kubernetes situati in regioni geografiche diverse, privilegiando
 l'esecuzione nella regione con la carbon intensity marginale più bassa
 al momento dell'invocazione.
- 
+
 Come illustrato in Figura~\ref{fig:greencourier_arch}, il framework si
 integra con la piattaforma serverless Knative e si articola in tre
 componenti principali. Il \emph{Metrics Server} raccoglie e normalizza
@@ -180,7 +168,7 @@ alla carbon efficiency della regione in cui è localizzato.
 L'infrastruttura multi-cluster, realizzata tramite Liqo, consente il
 \emph{peering} tra cluster indipendenti distribuiti geograficamente e
 l'offloading trasparente delle funzioni verso regioni remote.
- 
+
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/Greencourier architecture.png}
@@ -192,7 +180,7 @@ l'offloading trasparente delle funzioni verso regioni remote.
     regione con la carbon intensity più favorevole.}
     \label{fig:greencourier_arch}
 \end{figure}
- 
+
 Il meccanismo decisionale opera per ciascuna invocazione: quando una
 funzione viene sottomessa, lo scheduler interroga il Metrics Server per
 ottenere i punteggi di carbon intensity correnti delle regioni
@@ -201,7 +189,7 @@ più favorevole. I punteggi vengono aggiornati con una granularità di
 cinque minuti, coerente con la frequenza di aggiornamento dei dati
 forniti dalle sorgenti di carbon intensity, e mantenuti in cache locale
 per ridurre l'overhead di comunicazione durante lo scheduling.
- 
+
 I risultati sperimentali, condotti su Google Kubernetes Engine con
 cluster distribuiti tra Spagna, Francia, Belgio e Paesi Bassi e
 utilizzando tracce di invocazione reali da Azure Functions, mostrano che
@@ -212,7 +200,7 @@ prossimità geografica. Questo risultato è ottenuto al costo di un
 incremento medio del 10,26\% nei tempi di risposta delle funzioni,
 dovuto all'esecuzione in regioni geograficamente più distanti ma con
 carbon intensity più favorevole.
- 
+
 Dal punto di vista della relazione con il contesto analizzato in questo
 capitolo, GreenCourier è il primo lavoro che applica il paradigma
 carbon-aware specificamente allo scheduling di funzioni serverless. A
@@ -220,31 +208,19 @@ differenza del CICS, che opera su workload batch con flessibilità
 temporale, GreenCourier gestisce invocazioni on-demand con requisiti di
 risposta immediata, dimostrando che il spatial shifting carbon-aware è
 applicabile anche in contesti con vincoli di latenza.
- 
-Tuttavia, analogamente a quanto osservato per gli approcci di
-scheduling energy-aware analizzati nella
-Sottosezione~\ref{subsec:energy_aware_scheduling}, la decisione
-carbon-aware di GreenCourier riguarda esclusivamente \emph{dove}
-eseguire la funzione --- in quale regione geografica --- senza
-intervenire su \emph{cosa} viene eseguito. La funzione è trattata come
-un'entità atomica con un profilo computazionale invariante: lo scheduler
-seleziona la regione con il minor impatto carbonico, ma non può
-modulare il consumo energetico dell'invocazione stessa. In altri
-termini, il segnale di carbon intensity guida la scelta del contesto di
-esecuzione, ma non viene utilizzato per orientare la selezione tra
-varianti della funzione con profili energia-accuratezza differenziati.
- 
+
 % ── Osservazioni conclusive ────────────────────────────────────────────
- 
+
 \vspace{0.5em}
- 
+
 I due contributi analizzati in questa sottosezione introducono la carbon
 intensity della rete elettrica come segnale di contesto per le decisioni
-di esecuzione, estendendo il criterio di ottimizzazione dal solo
-consumo energetico all'impatto ambientale complessivo.
- 
-Entrambi gli approcci condividono tuttavia una caratteristica comune con
-le famiglie di soluzioni esaminate nelle sottosezioni precedenti: la
-carbon intensity viene utilizzata per decidere \emph{dove} o
-\emph{quando} eseguire un carico di lavoro, ma la funzione eseguita
-rimane invariante rispetto alle condizioni della rete elettrica.
+di esecuzione, estendendo il criterio di ottimizzazione dal solo consumo
+energetico all'impatto ambientale complessivo. Entrambi gli approcci
+condividono tuttavia una caratteristica comune con le famiglie di
+soluzioni esaminate nelle sottosezioni precedenti: la carbon intensity
+viene utilizzata per decidere \emph{dove} o \emph{quando} eseguire un
+carico di lavoro, ma la funzione eseguita rimane invariante rispetto
+alle condizioni della rete elettrica, senza che il segnale ambientale
+orienti la selezione tra varianti con profili energia-accuratezza
+differenziati.
