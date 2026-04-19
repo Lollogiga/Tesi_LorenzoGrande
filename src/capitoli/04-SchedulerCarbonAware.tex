@@ -5,23 +5,14 @@
 \chapter{Lo scheduler carbon-aware}
 \label{cap:scheduler}
 
-Il Capitolo~\ref{cap:ProgettazioneRealizzazione} ha descritto
-l'architettura del sistema, il modello di funzione logica con varianti
-e i meccanismi di aggiornamento adattivo dei profili energetici e di
-esplorazione LCB. Il presente capitolo introduce il componente
-decisionale che costituisce il nucleo dell'estensione proposta: lo
-scheduler carbon-aware.
-
-Lo scheduler traduce il segnale ambientale --- la carbon intensity della
-zona geografica del nodo al momento dell'invocazione --- in una decisione
-di selezione della variante da eseguire. La logica decisionale si
-articola in tre fasi: la normalizzazione della carbon intensity corrente
-in un peso $\lambda \in (0,1)$ mediante una sigmoide calibrata per zona
-(\S\,\ref{sec:sigmoide}); la costruzione della frontiera di Pareto nello
-spazio energia-errore (\S\,\ref{sec:pareto}); la selezione della
-variante Pareto-ottimale tramite scalarizzazione lineare pesata da
-$\lambda$ (\S\,\ref{sec:scalarizzazione}).
-
+\emph{In questo capitolo verrà descritto lo scheduler carbon-aware,
+il componente decisionale che costituisce il nucleo dell'estensione
+proposta. Verranno presentati il meccanismo di normalizzazione della
+carbon intensity in un peso decisionale contestualizzato per zona
+geografica, la costruzione della frontiera di Pareto nello spazio
+energia-accuratezza e la logica di scalarizzazione che seleziona,
+a ogni invocazione, la variante più appropriata in funzione del
+segnale ambientale corrente.}
 
 % ============================================================
 \section{La carbon intensity come segnale decisionale}
