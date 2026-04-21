@@ -8,17 +8,17 @@ raffinare i profili energetici a runtime, ma presenta un prerequisito
 implicito: aggiorna solo le varianti che vengono effettivamente
 eseguite. Se la stima iniziale di una variante è sovrastimata rispetto
 al suo consumo reale, lo scheduler tenderà a non selezionarla, il
-worker non raccoglierà mai campioni su di lei non permettendo la correzione dell'errore. Il problema si 
+worker non raccoglierà mai campioni su di essa, impedendo la correzione dell'errore. Il problema si 
 manifesta in particolare
-nelle fasi iniziali del sistema, quando i profili offline — determinati
-su un hardware di riferimento — potrebbero non riflettere il
+nelle fasi iniziali del sistema, quando i profili offline (determinati
+su un hardware di riferimento) potrebbero non riflettere il
 comportamento reale sul nodo edge in produzione, sia per la
 \emph{dipendenza dall'hardware} (CPU, workload e condizioni termiche
 differenti), sia per la \emph{non stazionarietà} del consumo energetico
 (che varia con il carico concorrente, la temperatura del processore e
 lo stato della cache del runtime).In queste condizioni, una variante con consumo energetico sovrastimato
 tende ad essere sistematicamente penalizzata nella scalarizzazione
-Pareto e a non venire mai selezionata — impedendo al meccanismo EMA
+Pareto e a non venire mai selezionata, impedendo al meccanismo EMA
 di raccogliere campioni reali su di lei e correggere l'errore. È
 necessario quindi introdurre un meccanismo che promuova l'esplorazione
 di varianti poco osservate, indipendentemente dalla loro stima corrente.

@@ -221,8 +221,7 @@ precalcolata, è motivata dal fatto che i profili energetici sono
 aggiornati dinamicamente: nella fase iniziale, quando le misurazioni
 sono ancora scarse, la frontiera evolve a ogni invocazione in funzione
 delle nuove osservazioni raccolte. Man mano che le stime energetiche
-convergono  la frontiera si stabilizza, e le ricostruzioni successive producono
-risultati sostanzialmente invarianti.Il costo computazionale della ricostruzione a runtime è quindi
+convergono, la frontiera si stabilizza, e le ricostruzioni successive producono risultati sostanzialmente invarianti. Il costo computazionale della ricostruzione a runtime è quindi
 giustificato nella fase esplorativa e diventa trascurabile a regime,
 quando la frontiera è ormai stabile.
 
@@ -431,7 +430,7 @@ indipendentemente dagli altri: il modello di normalizzazione della CI,
 la funzione di scalarizzazione e il criterio di dominanza di Pareto
 sono tutti intercambiabili senza modificare l'architettura complessiva.
 La chiamata \textsc{GetLambda} opera su dati mantenuti in memoria
-locale — la CI è aggiornata in background ogni 15~minuti — evitando
+locale (la CI è aggiornata in background ogni 15~minuti) evitando
 latenze di rete nel percorso critico della richiesta.
 
 
@@ -440,7 +439,7 @@ latenze di rete nel percorso critico della richiesta.
 \vspace{2em}
 
 Lo scheduler carbon-aware descritto in questo capitolo integra in un
-unico meccanismo decisionale le tre dimensioni identificate nel
+unico meccanismo decisionale le tre famiglie di soluzioni identificate nel
 Capitolo~\ref{cap:Stato dell'arte}: la selezione tra varianti con diversi
 profili energia-accuratezza, la sensibilità al contesto carbonico della
 rete elettrica e l'adattività delle stime energetiche alle condizioni

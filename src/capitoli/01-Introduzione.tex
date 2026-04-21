@@ -44,8 +44,8 @@ offloading verticale e orizzontale~\cite{Russo2023_Serverledge}.
 La crescente diffusione di infrastrutture computazionali distribuite pone con urgenza
 il problema del loro impatto ambientale.
 L'elaborazione informatica è oggi responsabile di una quota significativa delle emissioni
-globali di CO\textsubscript{2}, e la crescita prevista dei carichi di lavoro — in
-particolare nel continuum edge--cloud — rende la sostenibilità energetica una
+globali di CO\textsubscript{2}, e la crescita prevista dei carichi di lavoro, in
+particolare nel continuum edge--cloud, rende la sostenibilità energetica una
 dimensione imprescindibile nella progettazione delle piattaforme di
 esecuzione~\cite{Luo2021_EdgeSchedulingSurvey}.
 
@@ -77,7 +77,7 @@ rete~\cite{electricitymaps2024}.
   a seconda della zona e dell'istante in cui l'esecuzione ha luogo.
 
 Questa osservazione suggerisce che le decisioni di scheduling di una piattaforma FaaS
-possano — e debbano — tenere conto del segnale ambientale fornito dalla CI,
+possano, e debbano, tenere conto del segnale ambientale fornito dalla CI,
 modulando il comportamento del sistema in funzione del contesto geografico e
 temporale.
 Si apre così la questione di quali leve siano disponibili per ridurre l'impatto
@@ -108,7 +108,7 @@ contesto ambientale: in condizioni di alta carbon intensity,
 privilegiare una variante più efficiente — accettando una riduzione 
 controllata dell'accuratezza — produrrebbe un beneficio ambientale concreto; 
 in condizioni di bassa carbon intensity, 
-arebbe invece possibile privilegiare la variante più accurata senza 
+sarebbe invece possibile privilegiare la variante più accurata senza
 conseguenze ambientali significative.
 
 Affinché tale selezione sia operativamente realizzabile, sono necessari due prerequisiti.
@@ -159,7 +159,7 @@ decisionale nativa.
 Un tale scheduler deve essere in grado di modulare dinamicamente il peso attribuito
 all'efficienza energetica rispetto all'accuratezza del risultato, in funzione della carbon
 intensity della zona geografica del nodo al momento dell'invocazione.
-Quando la CI è elevata — come in zone alimentate prevalentemente da fonti fossili —
+Quando la CI è elevata, come in zone alimentate prevalentemente da fonti fossili, 
 privilegiare una variante più efficiente energeticamente, anche a scapito di una
 riduzione controllata dell'accuratezza, produce un beneficio ambientale concreto.
 Quando la CI è bassa — come in zone prevalentemente rinnovabili — l'impatto
@@ -237,10 +237,9 @@ In particolare, il lavoro si propone di:
 
   \item \textbf{Valutare sperimentalmente il sistema su un insieme di funzioni
   rappresentative.}
-  Valutare sperimentalmente il compromesso tra consumo energetico e accuratezza
+  Quantificare il compromesso tra consumo energetico e accuratezza
     del risultato su un insieme di funzioni rappresentative, dimostrando la fattibilità
-    e l’efficacia di un modello di esecuzione adattivo per il paradigma Function-as-a-
-    Service nel continuum Edge–Cloud
+    e l'efficacia di un modello di esecuzione adattivo per il paradigma Function-as-a-Service nel continuum Edge–Cloud
 \end{itemize}
 
 Il contributo complessivo della tesi consiste nell'estensione di una piattaforma FaaS
