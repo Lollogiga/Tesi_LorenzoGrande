@@ -80,7 +80,12 @@ disponibili e l'intervallo di energia di invocazione per ciascuna
 funzione. Le Figure~\ref{fig:pileibniz-energy-error}
 e~\ref{fig:sentiment-energy-quality} mostrano due casi rappresentativi,
 uno per famiglia, mettendo in relazione il costo energetico con la misura
-di qualità usata dallo scheduler.
+di qualità usata dallo scheduler. A partire da questi profili, la
+frontiera di Pareto e le soglie di selezione lungo l'asse $\lambda$ sono
+proprietà della funzione e delle sue varianti, indipendenti dallo specifico
+esperimento. Ciò che cambia tra gli esperimenti è il modo in cui la carbon
+intensity viene trasformata nel valore corrente di $\lambda$, e quindi la
+regione della frontiera effettivamente attraversata durante l'esecuzione.
 
 \begin{table}[H]
     \centering
@@ -124,6 +129,47 @@ di qualità usata dallo scheduler.
              qualità diminuisce per salti discreti, riflettendo la natura
              architetturalmente distinta delle varianti ML.}
     \label{fig:sentiment-energy-quality}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.98\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/validation/PiLeibniz-ParetoSetup.png}
+        \caption{PiLeibniz}
+    \end{subfigure}
+    \vspace{0.4cm}
+    \begin{subfigure}{0.98\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/validation/SentimentAnalysis-ParetoSetup.png}
+        \caption{SentimentAnalysis}
+    \end{subfigure}
+    \caption{Frontiere di Pareto per le due funzioni rappresentative.
+             Le varianti dominate non vengono considerate dallo scheduler;
+             i punti non dominati definiscono i soli candidati selezionabili
+             tramite scalarizzazione.}
+    \label{fig:pareto-setup}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.98\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/validation/PiLeibniz-LambdaToVariant.png}
+        \caption{PiLeibniz}
+    \end{subfigure}
+    \vspace{0.4cm}
+    \begin{subfigure}{0.98\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/validation/SentimentAnalysis-LambdaToVariant.png}
+        \caption{SentimentAnalysis}
+    \end{subfigure}
+    \caption{Regioni di selezione delle varianti al variare di $\lambda$.
+             Le soglie verticali derivano dai profili energia--qualità delle
+             varianti Pareto-ottimali; nei diversi esperimenti cambia la
+             traiettoria dei valori di $\lambda$, non questa mappa di
+             selezione.}
+    \label{fig:lambda-to-variant-setup}
 \end{figure}
 
 % -----------------------------------------------------------
@@ -176,8 +222,7 @@ $\mathrm{CI}(r)$ è la carbon intensity corrente in
 gCO\textsubscript{2}eq/kWh. Il fattore $3{,}6 \cdot 10^6$ converte
 l'energia da joule a kWh, poiché $1~\mathrm{kWh}=3{,}6 \cdot 10^6~\mathrm{J}$.
 La terza metrica è il tempo medio di esecuzione per invocazione, espresso
-in millisecondi. La quarta, impiegata in particolare nell'Esperimento~1,
-è la distribuzione percentuale delle varianti selezionate.
+in millisecondi. La quarta, infine, è la distribuzione percentuale delle varianti selezionate.
 
 \paragraph{Zone e dati di carbon intensity.}
 Le zone geografiche considerate sono Francia (FR), Spagna (ES), Italia
@@ -227,15 +272,14 @@ invocazioni viene riletta da file e ogni richiesta viene valutata rispetto
 alla CI associata al passo temporale corrente. Questo approccio isola il
 comportamento decisionale dello scheduler da eventuali variazioni del
 carico e consente di confrontare due diverse calibrazioni del segnale
-carbon-aware. L'Esperimento~1 adotta un riferimento europeo comune, utile
-per leggere tutte le zone sulla stessa scala e rendere direttamente
-confrontabili le scelte prodotte in reti elettriche diverse.
-L'Esperimento~2 utilizza invece una calibrazione locale, più aderente a un
-deployment reale, in cui la CI corrente viene interpretata rispetto alla
-distribuzione storica della zona. L'Esperimento~3 adotta infine un modello
-a tempo continuo, con richieste che arrivano secondo un profilo di carico
-variabile, al fine di valutare la stabilità del sistema e l'overhead della
-selezione a runtime.
+carbon-aware. L'Esperimento~1 mantiene fissa la funzione sigmoide per tutte
+le zone: le tracce di CI restano diverse, ma vengono trasformate in
+$\lambda$ tramite la stessa mappa decisionale. L'Esperimento~2 utilizza
+invece una calibrazione locale, più aderente a un deployment reale, in cui
+la CI corrente viene interpretata rispetto alla distribuzione storica della
+zona. L'Esperimento~3 adotta infine un modello a tempo continuo, con
+richieste che arrivano secondo un profilo di carico variabile, al fine di
+valutare la stabilità del sistema e l'overhead della selezione a runtime.
 
 % -----------------------------------------------------------
 \section{Esperimento 1: calibrazione europea della carbon intensity}
@@ -245,14 +289,13 @@ selezione a runtime.
 \subsection{Obiettivo}
 \label{subsec:esperimento1-obiettivo}
 
-Il primo esperimento valuta lo scheduler quando il segnale di carbon
-intensity viene normalizzato rispetto a un riferimento europeo comune. In
-questa configurazione tutte le zone condividono la stessa funzione
-$\lambda(\mathrm{CI})$: una medesima CI assoluta produce quindi lo stesso
-peso energia--qualità, indipendentemente dalla zona in cui viene osservata.
-L'obiettivo è analizzare il comportamento di uno scheduler carbon-aware
-europeo, in cui le reti elettriche vengono confrontate su una scala
-uniforme.
+Il primo esperimento considera una politica carbon-aware in cui la funzione
+sigmoide è fissata una sola volta a livello europeo. Le zone mantengono le
+proprie tracce di carbon intensity, che possono avere valori e distribuzioni
+molto diversi; ciò che resta invariato è la funzione che converte ciascun
+valore di CI nel parametro $\lambda$. L'esperimento serve quindi a osservare
+come cambiano le scelte dello scheduler quando segnali carbonici diversi
+vengono interpretati tramite la stessa mappa decisionale.
 
 \subsection{Configurazione}
 \label{subsec:esperimento1-configurazione}
@@ -260,9 +303,10 @@ uniforme.
 La normalizzazione del segnale di carbon intensity utilizza una sigmoide
 calibrata su un riferimento europeo comune, con punto medio fissato al
 valore medio europeo. In questo modo la medesima funzione
-$\lambda(\mathrm{CI})$ viene applicata a tutte le zone e le differenze
-osservate dipendono dalla posizione delle rispettive tracce di CI rispetto
-alla scala europea. La Figura~\ref{fig:sigmoid-overlay} mostra la sigmoide
+$\lambda(\mathrm{CI})$ viene applicata a tutte le zone, pur in presenza di
+tracce di CI differenti. Le differenze osservate dipendono quindi dai
+valori di CI propri di ciascuna zona e dalla loro posizione rispetto alla
+sigmoide comune. La Figura~\ref{fig:sigmoid-overlay} mostra la sigmoide
 europea e la collocazione delle zone lungo l'asse decisionale.
 
 \begin{figure}[H]
@@ -283,20 +327,39 @@ regimi \emph{always-accurate}, \emph{always-energy} e carbon-aware:
 \subsection{Risultati}
 \label{subsec:esperimento1-risultati}
 
-La metrica principale dell'esperimento è la distribuzione delle varianti
-selezionate. La Figura~\ref{fig:variant-distribution-exp1} riporta, per
-ciascuna funzione, la composizione percentuale delle varianti scelte dallo
-scheduler con calibrazione europea nelle cinque zone, ordinate per CI media
-crescente.
+Un primo indicatore del comportamento dello scheduler è la distribuzione
+delle varianti selezionate. Le Figure~\ref{fig:variant-distribution-numeric-exp1}
+e~\ref{fig:variant-distribution-ml-exp1} riportano, per ciascuna funzione,
+la composizione percentuale delle varianti scelte dallo scheduler con
+calibrazione europea nelle cinque zone, ordinate per CI media crescente.
 
-\begin{figure}[H]
+\begin{figure}[p]
     \centering
-    \includegraphics[width=0.98\textwidth]{figures/validation/01_variant_distribution_PiLeibniz.png}
-    \caption{Distribuzione delle varianti selezionate per PiLeibniz al
-             variare della zona. Al crescere della CI media, la quota
-             delle varianti più accurate si riduce progressivamente a
-             favore di varianti a minore consumo energetico.}
-    \label{fig:variant-distribution-exp1}
+    \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_LnHarmonic.png}
+    \vspace{0.2cm}
+    \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_MonteCarlo.png}
+    \vspace{0.2cm}
+    \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_PiLeibniz.png}
+    \caption{Distribuzione delle varianti selezionate per le funzioni
+             numeriche nell'Esperimento~1. Al crescere della CI media, la
+             quota delle varianti più accurate si riduce a favore di
+             varianti a minore consumo, con una granularità che dipende
+             dalla frontiera di Pareto della singola funzione.}
+    \label{fig:variant-distribution-numeric-exp1}
+\end{figure}
+
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_SentimentAnalysis.png}
+    \vspace{0.2cm}
+    \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_ImageClassification.png}
+    \vspace{0.2cm}
+    \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_SpamDetection.png}
+    \caption{Distribuzione delle varianti selezionate per le funzioni ML
+             nell'Esperimento~1. Le transizioni tra varianti sono più
+             discrete rispetto alle funzioni numeriche, poiché ciascuna
+             variante corrisponde a un modello architetturalmente distinto.}
+    \label{fig:variant-distribution-ml-exp1}
 \end{figure}
 
 \paragraph{Funzioni numeriche.}
@@ -316,19 +379,10 @@ e dell'8\%. PiLeibniz presenta la frontiera più articolata: la variante
 nativa in C domina in Francia, ma già in Spagna vengono selezionate anche
 \texttt{n10000}, \texttt{n5000} e \texttt{n1000}. Questo comportamento è
 coerente con la struttura della frontiera di Pareto della funzione,
-illustrata in Figura~\ref{fig:pareto-pileibniz-exp1}: diverse varianti
+illustrata in Figura~\ref{fig:pareto-setup}, e con le soglie di
+selezione mostrate in Figura~\ref{fig:lambda-to-variant-setup}: diverse varianti
 approssimate offrono scambi energia--errore non dominati e possono quindi
 risultare ottimali per intervalli distinti di $\lambda$.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{figures/validation/PiLeibniz-CurvaPareto.png}
-    \caption{Frontiera di Pareto di PiLeibniz nello scenario warm.
-             Le varianti dominate non vengono considerate dallo scheduler.
-             La densità dei punti non dominati determina la granularità
-             con cui è possibile modulare il trade-off energia--qualità.}
-    \label{fig:pareto-pileibniz-exp1}
-\end{figure}
 
 \paragraph{Funzioni ML.}
 Per le funzioni ML le transizioni sono meno continue, poiché il numero di
@@ -345,60 +399,253 @@ SpamDetection presenta invece una transizione più netta: RoBERTa-spam
 classificatore keyword diventa esclusivo in Polonia.
 
 \paragraph{Trade-off aggregato.}
-La Figura~\ref{fig:tradeoff-exp1} riassume l'effetto aggregato della
-selezione mostrando energia media e qualità media per zona. Per MonteCarlo
-l'energia media passa da 19.4~mJ in Francia a 1.4~mJ in Polonia, con
-qualità media da 0.995 a 0.986. Per ImageClassification l'energia scende
-da 294~mJ a 16~mJ, mentre la qualità media passa da 0.82 a 0.61. Il caso
-di SpamDetection è il più rilevante dal punto di vista qualitativo: in
-Polonia il classificatore keyword riduce il consumo in modo significativo,
-ma porta la qualità media al valore più basso tra le funzioni ML, a
-indicare che il costo del risparmio energetico non è uniforme e dipende
-dalla struttura della frontiera di Pareto della specifica funzione.
+La Figura~\ref{fig:tradeoff-representative-exp1} riassume l'effetto
+aggregato della selezione su due casi rappresentativi, uno numerico e uno
+ML, mostrando energia media e qualità media al variare della zona.
+L'energia media è calcolata come media pesata dei profili energetici delle
+varianti selezionate, quindi dipende dalla distribuzione delle scelte
+orarie e non solo dalla CI media della zona. In PiLeibniz l'energia scende
+da 1.05~mJ in Francia a 0.20~mJ in Polonia, mantenendo una perdita
+qualitativa contenuta. In SpamDetection il risparmio è più marcato, ma la
+transizione verso il classificatore keyword porta a una riduzione
+qualitativa evidente: questo caso mostra che il costo del risparmio
+energetico non è uniforme e dipende dalla struttura della frontiera di
+Pareto della specifica funzione.
 
-\begin{figure}[H]
+\begin{figure}[p]
     \centering
-    \includegraphics[width=0.98\textwidth]{figures/validation/03_tradeoff_ImageClassification.png}
-    \caption{Trade-off energia--qualità per ImageClassification nelle zone
-             considerate. La strategia carbon-aware occupa una posizione
-             intermedia tra le due baseline, la cui distanza dal punto
-             \emph{always-accurate} cresce proporzionalmente alla CI
-             media della zona.}
-    \label{fig:tradeoff-exp1}
+    \includegraphics[width=0.78\textwidth]{figures/validation/03_tradeoff_PiLeibniz.png}
+    \vspace{0.2cm}
+    \includegraphics[width=0.78\textwidth]{figures/validation/03_tradeoff_SpamDetection.png}
+    \caption{Trade-off energia--qualità per due funzioni rappresentative
+             nell'Esperimento~1. PiLeibniz mostra una riduzione progressiva
+             dell'energia con perdita qualitativa contenuta; SpamDetection
+             evidenzia invece un risparmio più netto accompagnato da un costo
+             qualitativo maggiore quando viene selezionata la variante
+             keyword.}
+    \label{fig:tradeoff-representative-exp1}
 \end{figure}
 
-Il confronto con la baseline \emph{always-accurate} quantifica il
-beneficio energetico e il costo qualitativo dello scheduler. La
-Tabella~\ref{tab:baseline-savings-exp1} riporta il risparmio energetico
-relativo $\Delta E$ e la riduzione di qualità relativa $\Delta Q$ per
-funzione e zona. Nelle funzioni numeriche il risparmio cresce con la CI
-e la perdita di qualità resta inferiore all'1\%. Nelle funzioni ML il
-risparmio può essere più ampio, ma il costo qualitativo dipende dal
-salto tra modelli adiacenti.
+Il confronto con le baseline quantifica la posizione dello scheduler tra
+due estremi: \emph{always-accurate}, che privilegia sempre la qualità, e
+\emph{always-energy}, che privilegia sempre il consumo minimo. La
+Tabella~\ref{tab:baseline-comparison-exp1} riporta, per energia e qualità,
+la variazione percentuale dello scheduler rispetto a entrambe le baseline.
+L'energia media è ricostruita dalle distribuzioni di varianti osservate e
+dai profili energetici Pareto, mentre la qualità media utilizza i
+\texttt{quality\_stats} registrati nei summary sperimentali. Un valore negativo di
+$\Delta E$ indica che lo scheduler consuma meno della baseline, mentre un
+valore positivo di $\Delta Q$ indica che ottiene una qualità media superiore.
+
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+% Tabella: variazione % dello scheduler carbon-aware rispetto alle due baseline.
+% Energia: solo invocation_joule (cold start MAI incluso).
+% Qualità: quality_score (funzioni ML) oppure 1 − error_estimate (funzioni numeriche).
+% ΔE_acc, ΔQ_acc : scarto vs always-accurate (Λ₁, massima qualità Pareto)
+% ΔE_ene, ΔQ_ene : scarto vs always-energy  (Λ₀, minima energia Pareto)
+% Valori negativi di ΔE → risparmio energetico rispetto alla baseline.
+% Valori positivi  di ΔQ → qualità superiore alla baseline.
+% ─────────────────────────────────────────────────────────────────────────────
 
 \begin{table}[H]
     \centering
-    \caption{Risparmio energetico e riduzione di qualità rispetto ad
-             \emph{always-accurate} nell'Esperimento~1.}
-    \label{tab:baseline-savings-exp1}
-    \begin{tabular}{llrrrrr}
+    \caption{Variazione percentuale dello scheduler carbon-aware rispetto
+             alle due baseline, ricalcolata usando le energie statiche
+             definite nei file JSON delle varianti, la distribuzione
+             delle varianti nei summary originali e il tempo medio
+             imputato per variante. $\Delta E_{acc}$, $\Delta T_{acc}$,
+             $\Delta Q_{acc}$: scarto rispetto ad \emph{always-accurate}
+             ($\Lambda_1$); $\Delta E_{ene}$, $\Delta T_{ene}$,
+             $\Delta Q_{ene}$: scarto rispetto ad \emph{always-energy}
+             ($\Lambda_0$). Valori negativi di $\Delta E$ e $\Delta T$
+             indicano risparmio rispetto alla baseline; valori positivi
+             di $\Delta Q$ indicano qualita superiore alla baseline.}
+    \label{tab:baseline-comparison}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{llrrrr}
         \toprule
-        Funzione & Metrica & Francia & Spagna & Italia & Germania & Polonia \\
+        Funzione & Zona
+            & $\Delta E_{acc}$ & $\Delta Q_{acc}$
+            & $\Delta E_{ene}$ & $\Delta Q_{ene}$ \\
         \midrule
-        LnHarmonic          & $\Delta E$ &   0\% &    0\% &  28\%  &  47\%  &  80\%  \\
-        LnHarmonic          & $\Delta Q$ &   0\% &    0\% & 0.01\% & 0.01\% & 0.02\% \\
-        MonteCarlo          & $\Delta E$ &   0\% &   58\% &  91\%  &  91\%  &  93\%  \\
-        MonteCarlo          & $\Delta Q$ &   0\% &  0.1\% & 0.2\%  & 0.2\%  & 0.9\%  \\
-        PiLeibniz           & $\Delta E$ &   0\% &   -1\% &  21\%  &  15\%  &  50\%  \\
-        PiLeibniz           & $\Delta Q$ &   0\% &    0\% & 0.1\%  & 0.1\%  & 0.2\%  \\
-        SentimentAnalysis   & $\Delta E$ &   0\% &  100\% &  99\%  &  99\%  &  99\%  \\
-        SentimentAnalysis   & $\Delta Q$ &   0\% &  5.3\% & 5.2\%  & 5.2\%  & 10.8\% \\
-        ImageClassification & $\Delta E$ &   0\% &    1\% &  46\%  &  60\%  &  94\%  \\
-        ImageClassification & $\Delta Q$ &   0\% &  0.1\% & 4.5\%  & 10.7\% & 25.6\% \\
-        SpamDetection       & $\Delta E$ &   0\% &    5\% &  65\%  &  73\%  &  96\%  \\
-        SpamDetection       & $\Delta Q$ &   0\% &  1.8\% & 25.2\% & 33.4\% & 47.4\% \\
+        % ── PiLeibniz ──────────────────────────────────────────────────────────
+        % Λ₁ = C-nativa  (E=0.001052 J, error=0.0)
+        % Λ₀ = n=1 000   (E=0.000196 J, error=0.001999)
+        PiLeibniz   & Francia
+            & $0.00$\%
+            & $0.00$\%
+            & \redval{$+436.73$\%}
+            & \greenval{$+0.20$\%} \\
+                    & Spagna
+            & \greenval{$-5.34$\%}
+            & \redval{$-0.0044$\%}
+            & \redval{$+408.10$\%}
+            & \greenval{$+0.20$\%} \\
+                    & Italia
+            & \greenval{$-53.62$\%}
+            & \redval{$-0.12$\%}
+            & \redval{$+148.94$\%}
+            & \greenval{$+0.08$\%} \\
+                    & Germania
+            & \greenval{$-68.34$\%}
+            & \redval{$-0.14$\%}
+            & \redval{$+69.92$\%}
+            & \greenval{$+0.06$\%} \\
+                    & Polonia
+            & \greenval{$-81.37$\%}
+            & \redval{$-0.20$\%}
+            & $0.00$\%
+            & $0.00$\% \\
+        \midrule
+        % ── LnHarmonic ─────────────────────────────────────────────────────────
+        % Λ₁ = base       (E=0.007700 J, error=0.0)
+        % Λ₀ = n=1 000    (E=0.000196 J, error=0.001440)
+        LnHarmonic  & Francia
+            & 0.00\%
+            & 0.00\%
+            & \redval{$+493.37$\%}
+            & \greenval{$+0.14$\%} \\
+                    & Spagna
+            & 0.00\%
+            & 0.00\%
+            & \redval{$+493.37$\%}
+            & \greenval{$+0.14$\%} \\
+                    & Italia
+            & \greenval{$-89.33$\%}
+            & \redval{$-0.01$\%}
+            & \redval{$+319.22$\%}
+            & \greenval{$+0.14$\%} \\
+                    & Germania
+            & \greenval{$-92.12$\%}
+            & \redval{$-0.01$\%}
+            & \redval{$+209.44$\%}
+            & \greenval{$+0.13$\%} \\
+                    & Polonia
+            & \greenval{$-94.62$\%}
+            & \redval{$-0.02$\%}
+            & \redval{$+111.35$\%}
+            & \greenval{$+0.13$\%} \\
+        \midrule
+        % ── MonteCarlo ─────────────────────────────────────────────────────────
+        % Λ₁ = n=500 000  (E=0.231480 J, error=0.00232)
+        % Λ₀ = n=1 000    (E=0.000147 J, error=0.052)
+        MonteCarlo  & Francia
+            & \greenval{$-85.44$\%}
+            & \redval{$-0.29$\%}
+            & \redval{$+22831.97$\%}
+            & \greenval{$+4.94$\%} \\
+                    & Spagna
+            & \greenval{$-90.80$\%}
+            & \redval{$-0.43$\%}
+            & \redval{$+14384.80$\%}
+            & \greenval{$+4.79$\%} \\
+                    & Italia
+            & \greenval{$-93.82$\%}
+            & \redval{$-0.50$\%}
+            & \redval{$+9633.26$\%}
+            & \greenval{$+4.71$\%} \\
+                    & Germania
+            & \greenval{$-93.82$\%}
+            & \redval{$-0.50$\%}
+            & \redval{$+9633.26$\%}
+            & \greenval{$+4.71$\%} \\
+                    & Polonia
+            & \greenval{$-95.85$\%}
+            & \redval{$-1.13$\%}
+            & \redval{$+6439.04$\%}
+            & \greenval{$+4.06$\%} \\
+        \midrule
+        % ── SentimentAnalysis ──────────────────────────────────────────────────
+        % Λ₁ = RoBERTa-large (E=0.091579 J, q=0.964)
+        % Λ₀ = VADER         (E=0.002400 J, q=0.674)
+        SentimentAnalysis & Francia
+            & $0.00$\%
+            & $0.00$\%
+            & \redval{$+3715.79$\%}
+            & \greenval{$+43.03$\%} \\
+                    & Spagna
+            & \greenval{$-57.74$\%}
+            & \redval{$-5.29$\%}
+            & \redval{$+1512.50$\%}
+            & \greenval{$+35.46$\%} \\
+                    & Italia
+            & \greenval{$-56.01$\%}
+            & \redval{$-5.13$\%}
+            & \redval{$+1578.60$\%}
+            & \greenval{$+35.69$\%} \\
+                    & Germania
+            & \greenval{$-56.59$\%}
+            & \redval{$-5.18$\%}
+            & \redval{$+1556.57$\%}
+            & \greenval{$+35.61$\%} \\
+                    & Polonia
+            & \greenval{$-66.46$\%}
+            & \redval{$-10.74$\%}
+            & \redval{$+1179.75$\%}
+            & \greenval{$+27.66$\%} \\
+        \midrule
+        % ── SpamDetection ──────────────────────────────────────────────────────
+        % Λ₁ = RoBERTa-spam (E=0.085000 J, q=0.995)
+        % Λ₀ = Keyword      (E=0.002000 J, q=0.720)
+        SpamDetection & Francia
+            & $0.00$\%
+            & $0.00$\%
+            & \redval{$+4150.00$\%}
+            & \greenval{$+38.19$\%} \\
+                    & Spagna
+            & \greenval{$-5.29$\%}
+            & \redval{$-0.27$\%}
+            & \redval{$+3925.00$\%}
+            & \greenval{$+37.82$\%} \\
+                    & Italia
+            & \greenval{$-69.01$\%}
+            & \redval{$-3.99$\%}
+            & \redval{$+1217.00$\%}
+            & \greenval{$+32.68$\%} \\
+                    & Germania
+            & \greenval{$-75.58$\%}
+            & \redval{$-15.87$\%}
+            & \redval{$+938.00$\%}
+            & \greenval{$+16.26$\%} \\
+                    & Polonia
+            & \greenval{$-97.65$\%}
+            & \redval{$-27.64$\%}
+            & $0.00$\%
+            & $0.00$\% \\
+        \midrule
+        % ── ImageClassification ────────────────────────────────────────────────
+        % Λ₁ = ViT-Base         (E=1.455263 J, q=0.818)
+        % Λ₀ = MobileNet-V2-Tiny(E=0.077000 J, q=0.603)
+        ImageClassification & Francia
+            & $0.00$\%
+            & $0.00$\%
+            & \redval{$+1789.95$\%}
+            & \greenval{$+35.66$\%} \\
+                    & Spagna
+            & \greenval{$-0.71$\%}
+            & \redval{$-0.06$\%}
+            & \redval{$+1776.48$\%}
+            & \greenval{$+35.58$\%} \\
+                    & Italia
+            & \greenval{$-47.18$\%}
+            & \redval{$-4.45$\%}
+            & \redval{$+898.35$\%}
+            & \greenval{$+29.61$\%} \\
+                    & Germania
+            & \greenval{$-60.13$\%}
+            & \redval{$-10.76$\%}
+            & \redval{$+653.44$\%}
+            & \greenval{$+21.06$\%} \\
+                    & Polonia
+            & \greenval{$-93.54$\%}
+            & \redval{$-25.26$\%}
+            & \redval{$+22.14$\%}
+            & \greenval{$+1.39$\%} \\
         \bottomrule
     \end{tabular}
+    }
 \end{table}
 
 \subsection{Interpretazione}
@@ -413,26 +660,12 @@ regioni che favoriscono il risparmio energetico. L'esperimento non definisce
 una scelta corretta in senso assoluto, ma descrive il comportamento della
 politica quando il segnale carbon-aware è interpretato su scala europea.
 
-La Figura~\ref{fig:lambda-regions-pl} rende visibile questa
-interpretazione nello spazio di $\lambda$: il range operativo della Polonia
-si sovrappone prevalentemente alle regioni in cui risultano ottimali le
-varianti a minore energia, mentre il range della Francia ricade vicino alle
-regioni di alta qualità. Le differenze tra le funzioni derivano dalla forma
-della frontiera di Pareto: quando la frontiera è densa, come per alcune
-funzioni numeriche, il passaggio tra varianti è graduale; quando è composta
-da pochi modelli distanti, come nelle funzioni ML, i salti di qualità sono
-più marcati, coerentemente con quanto osservato nella
+Le differenze tra le funzioni derivano dalla forma della frontiera di
+Pareto: quando la frontiera è densa, come per alcune funzioni numeriche,
+il passaggio tra varianti è graduale; quando è composta da pochi modelli
+distanti, come nelle funzioni ML, i salti di qualità sono più marcati,
+coerentemente con quanto osservato nella
 Sezione~\ref{subsec:funzioni-utilizzate}.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.98\textwidth]{figures/validation/08_lambda_regions_PL.png}
-    \caption{Regioni di selezione lungo l'asse $\lambda$ per la Polonia.
-             La zona opera prevalentemente in intervalli di $\lambda$
-             associati a varianti efficienti, coerentemente con la sua
-             carbon intensity media elevata.}
-    \label{fig:lambda-regions-pl}
-\end{figure}
 
 % -----------------------------------------------------------
 \section{Esperimento 2: calibrazione locale della carbon intensity}
@@ -459,36 +692,10 @@ viene rieseguita la stessa traccia nei tre regimi. Cambia la
 normalizzazione del segnale ambientale: per ogni zona $z$, la sigmoide
 utilizza la media storica locale $\mu_z$ e i percentili locali $P_5$ e
 $P_{95}$ stimati dalle serie ElectricityMaps~\cite{electricitymaps2024}.
-La Figura~\ref{fig:local-sigmoid-examples} mostra esempi di calibrazione
-locale per Francia, Italia e Polonia. La stessa CI assoluta può generare
-valori di $\lambda$ differenti in zone diverse, poiché rappresenta una
-condizione ordinaria in una rete e un'anomalia in un'altra: questo aspetto
-motiva l'adozione di una calibrazione locale rispetto a una soglia globale
-uniforme.
-
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}{0.32\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/lambda_curve_FR.png}
-        \caption{Francia (FR)}
-    \end{subfigure}
-    \begin{subfigure}{0.32\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/lambda_curve_IT.png}
-        \caption{Italia (IT)}
-    \end{subfigure}
-    \begin{subfigure}{0.32\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/lambda_curve_PL.png}
-        \caption{Polonia (PL)}
-    \end{subfigure}
-    \caption{Esempi di sigmoide calibrata sulla distribuzione locale della
-             carbon intensity. La posizione del punto di inflessione e la
-             pendenza della curva differiscono tra zone, riflettendo il
-             regime energetico caratteristico di ciascuna rete elettrica.}
-    \label{fig:local-sigmoid-examples}
-\end{figure}
+La stessa CI assoluta può generare valori di $\lambda$ differenti in zone
+diverse, poiché rappresenta una condizione ordinaria in una rete e
+un'anomalia in un'altra: questo aspetto motiva l'adozione di una
+calibrazione locale rispetto a una soglia globale uniforme.
 
 In questo esperimento l'attenzione si sposta dalle sole quote di selezione
 alle metriche aggregate: energia totale, emissioni totali e tempo medio di
@@ -521,6 +728,7 @@ quantificare il costo qualitativo che la accompagna.
 \subsection{Risultati}
 \label{subsec:esperimento2-risultati}
 
+Inserire sigmoideeeee!
 La Tabella~\ref{tab:exp2-aggregate} riporta i risultati aggregati per zona.
 Il confronto deve essere letto per colonna: \emph{always-accurate} fornisce
 il massimo livello qualitativo, \emph{always-energy} il limite inferiore
@@ -534,19 +742,19 @@ intermedia determinata dalla calibrazione locale della CI.
     \resizebox{\textwidth}{!}{%
     \begin{tabular}{llrrrrr}
         \toprule
-        Zona    & Strategia       & Energia (J) & CO\textsubscript{2} (g) & Tempo medio (ms) & Qualità media & $\Delta_{\mathrm{CO_2}}$ \\
+        Zona    & Strategia       & Energia (J) & CO\textsubscript{2} (mg) & Tempo medio (ms) & Qualità media & $\Delta_{\mathrm{CO_2}}$ \\
         \midrule
-        Francia & always-accurate & [VALORE] & [VALORE] & [VALORE] & [VALORE] & --         \\
-        Francia & always-energy   & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
-        Francia & carbon-aware    & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        Francia & always-accurate & 362.8 & 1.954  & 81.5 & 0.962 & ---     \\
+        Francia & always-energy   & 10.7  & 0.053  & 17.4 & 0.826 & 97.3\% \\
+        Francia & carbon-aware    & 113.2 & 0.338  & 42.0 & 0.932 & 82.7\% \\
         \midrule
-        Italia  & always-accurate & [VALORE] & [VALORE] & [VALORE] & [VALORE] & --         \\
-        Italia  & always-energy   & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
-        Italia  & carbon-aware    & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        Italia  & always-accurate & 210.8 & 11.519 & 57.1 & 0.962 & ---     \\
+        Italia  & always-energy   & 10.7  & 0.580  & 15.7 & 0.852 & 95.0\% \\
+        Italia  & carbon-aware    & 50.2  & 2.301  & 19.5 & 0.941 & 80.0\% \\
         \midrule
-        Polonia & always-accurate & [VALORE] & [VALORE] & [VALORE] & [VALORE] & --         \\
-        Polonia & always-energy   & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
-        Polonia & carbon-aware    & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        Polonia & always-accurate & 211.2 & 30.743 & 57.7 & 0.962 & ---     \\
+        Polonia & always-energy   & 10.7  & 1.551  & 16.9 & 0.849 & 95.0\% \\
+        Polonia & carbon-aware    & 74.3  & 9.461  & 17.5 & 0.937 & 69.2\% \\
         \bottomrule
     \end{tabular}
     }
@@ -569,12 +777,12 @@ di dimensione significativamente inferiore.
         \toprule
         Zona    & Funzione            & $\Delta E$ & $\Delta_{\mathrm{CO_2}}$ & $\Delta_Q$ \\
         \midrule
-        Francia & PiLeibniz           & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
-        Francia & ImageClassification & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
-        Italia  & PiLeibniz           & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
-        Italia  & ImageClassification & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
-        Polonia & PiLeibniz           & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
-        Polonia & ImageClassification & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
+        Francia & PiLeibniz           & $+11.8$\% & $+39.9$\% & $0.0$\% \\
+        Francia & ImageClassification & $-39.2$\% & $+1.0$\%  & $3.3$\% \\
+        Italia  & PiLeibniz           & $-25.0$\% & $-21.6$\% & $0.0$\% \\
+        Italia  & ImageClassification & $+63.6$\% & $+68.8$\% & $3.4$\% \\
+        Polonia & PiLeibniz           & $+41.7$\% & $+42.7$\% & $0.0$\% \\
+        Polonia & ImageClassification & $+40.3$\% & $+47.4$\% & $3.8$\% \\
         \bottomrule
     \end{tabular}
 \end{table}
