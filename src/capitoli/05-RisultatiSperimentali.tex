@@ -614,21 +614,6 @@ Quando la rete è molto carbon-intensive, tale punto si avvicina alla
 baseline energetica; quando la rete è poco carbon-intensive, si avvicina
 alla baseline accurata.
 
-La differenza tra funzioni numeriche e funzioni ML chiarisce inoltre il
-ruolo della granularità della frontiera di Pareto. Nelle funzioni numeriche
-le perdite di qualità restano generalmente contenute, perché esistono molte
-varianti intermedie che permettono allo scheduler di modulare finemente il
-compromesso. Nelle funzioni ML, invece, il passaggio tra modelli diversi
-produce transizioni più discrete: il risparmio energetico può essere ampio,
-ma la perdita di qualità può crescere più rapidamente quando la selezione
-si sposta verso modelli molto più leggeri.
-
-L'esperimento non definisce quindi una scelta corretta in senso assoluto,
-ma descrive il comportamento della politica quando il segnale carbon-aware
-è interpretato su scala europea. La calibrazione comune produce una
-gerarchia coerente tra le zone: a parità di funzione e profili disponibili,
-le aree con minore CI privilegiano la qualità, mentre quelle con maggiore
-CI anticipano lo spostamento verso varianti a minore consumo.
 
 
 % -----------------------------------------------------------
