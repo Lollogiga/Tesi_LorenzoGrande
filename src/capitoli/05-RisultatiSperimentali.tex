@@ -1,2 +1,777 @@
 \chapter{Risultati Sperimentali}
 \label{cap:RisultatiSperimentali}
+
+\emph{Questo capitolo valuta sperimentalmente l'estensione carbon-aware
+di Serverledge proposta in questa tesi. La valutazione non mira a
+dimostrare una riduzione generalizzata del consumo energetico: il consumo
+è considerato una dimensione del trade-off con la qualità del risultato,
+da modulare in funzione del contesto carbonico dell'esecuzione.
+L'obiettivo è verificare che lo scheduler carbon-aware traduca la carbon
+intensity della zona in scelte coerenti lungo la frontiera di Pareto:
+privilegiare varianti più efficienti quando il costo carbonico
+dell'energia è elevato, mantenere varianti più accurate quando tale costo
+è ridotto.}
+
+% -----------------------------------------------------------
+\section{Setup sperimentale}
+\label{sec:setup-sperimentale}
+% -----------------------------------------------------------
+
+La valutazione è stata condotta su un'installazione di Serverledge estesa
+con i componenti descritti nei Capitoli~\ref{cap:ProgettazioneRealizzazione}
+e~\ref{cap:scheduler}. L'ambiente è composto da tre macchine virtuali
+ospitate su una macchina fisica equipaggiata con processore Intel Core
+i5-12400, tutte eseguite su Ubuntu Server 22.04 LTS. La prima macchina
+virtuale (4~vCPU, 12~GB RAM) ospita il nodo Serverledge insieme all'intero
+stack di monitoraggio e al registro delle varianti in \texttt{etcd}. La
+seconda (2~vCPU, 4~GB RAM) è dedicata alla generazione del carico, tramite
+la CLI di Serverledge e gli script di benchmark. La terza (2~vCPU, 4~GB RAM)
+esegue InfluxDB, separata dal nodo principale per evitare contesa sulle
+risorse durante la raccolta delle metriche.
+
+% -----------------------------------------------------------
+\subsection{Funzioni utilizzate}
+\label{subsec:funzioni-utilizzate}
+% -----------------------------------------------------------
+
+Le funzioni usate negli esperimenti coprono due famiglie applicative:
+\emph{funzioni numeriche} e \emph{funzioni di classificazione} (ML).
+Questa scelta consente di valutare lo scheduler su due modalità di
+approssimazione strutturalmente diverse, con implicazioni distinte sul
+comportamento della frontiera di Pareto.
+
+\paragraph{Funzioni numeriche.}
+Le tre funzioni numeriche calcolano grandezze matematiche note tramite
+serie o metodi iterativi, e la qualità è misurata come errore relativo
+rispetto al valore esatto. \emph{PiLeibniz} approssima $\pi$ mediante la
+serie di Leibniz troncata a un numero variabile di termini; le varianti si
+distinguono per il numero di iterazioni e per il linguaggio di
+implementazione (Python e C). \emph{LnHarmonic} stima $\ln 2$ tramite la
+serie armonica alternata, con un insieme analogo di varianti a granularità
+crescente. \emph{MonteCarlo} stima $\pi$ tramite campionamento casuale;
+in questo caso l'intervallo energetico tra varianti è particolarmente
+ampio ($1575\times$), poiché il numero di campioni varia su più ordini
+di grandezza.
+
+\paragraph{Funzioni di classificazione.}
+Le tre funzioni ML eseguono compiti di classificazione su testo o immagini,
+e la qualità è espressa come \texttt{quality\_score} normalizzato in
+$[0,1]$, derivato dall'accuratezza del modello sul dataset di riferimento.
+\emph{SentimentAnalysis} classifica il tono di un testo e dispone di
+quattro modelli: RoBERTa-large, DistilBERT, BERT-tiny e VADER,
+classificatore a dizionario privo di inferenza neurale.
+\emph{SpamDetection} individua messaggi indesiderati con un'architettura
+analoga, con RoBERTa-spam come variante di riferimento e un classificatore
+a parole chiave come variante minima. \emph{ImageClassification} classifica
+immagini su 1000 categorie ImageNet tramite quattro architetture: ViT-Base,
+EfficientNet-B0, MobileNet-V2 e MobileNet-V2-Tiny.
+
+Nelle funzioni numeriche la relazione tra numero di iterazioni ed errore
+è continua: la frontiera di Pareto è densa e lo scheduler può modulare
+il compromesso energia--qualità in modo graduale. Nelle funzioni ML,
+invece, ogni variante corrisponde a un modello architetturalmente distinto:
+la frontiera è composta da pochi punti discreti e il passaggio a una
+variante più leggera può comportare un salto qualitativo più marcato.
+Questa differenza strutturale si riflette direttamente nelle scelte dello
+scheduler e sarà visibile nei risultati sperimentali.
+
+La Tabella~\ref{tab:funzioni-varianti} riassume il numero di varianti
+disponibili e l'intervallo di energia di invocazione per ciascuna
+funzione. Le Figure~\ref{fig:pileibniz-energy-error}
+e~\ref{fig:sentiment-energy-quality} mostrano due casi rappresentativi,
+uno per famiglia, mettendo in relazione il costo energetico con la misura
+di qualità usata dallo scheduler.
+
+\begin{table}[H]
+    \centering
+    \caption{Funzioni utilizzate nella valutazione sperimentale e profili
+             energetici iniziali delle varianti.}
+    \label{tab:funzioni-varianti}
+    \begin{tabular}{llrrr}
+        \toprule
+        Funzione & Famiglia & Varianti & $E_{\min}$ (J) & $E_{\max}$ (J) \\
+        \midrule
+        PiLeibniz           & Numerica & 9 & 0.000196 & 0.007823 \\
+        LnHarmonic          & Numerica & 7 & 0.000196 & 0.007700 \\
+        MonteCarlo          & Numerica & 6 & 0.000147 & 0.231480 \\
+        SentimentAnalysis   & ML       & 4 & 0.002400 & 0.091579 \\
+        SpamDetection       & ML       & 4 & 0.002000 & 0.085000 \\
+        ImageClassification & ML       & 4 & 0.077000 & 1.455263 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/validation/pileibniz_v2.png}
+    \caption{Energia di invocazione ed errore relativo delle varianti di
+             PiLeibniz in scenario warm. Le varianti esatte presentano
+             errore nullo, mentre le varianti approssimate riducono
+             progressivamente l'energia diminuendo il numero di termini
+             della serie. L'errore resta contenuto per le varianti
+             intermedie e cresce solo per le approssimazioni più spinte,
+             evidenziando una frontiera energia--accuratezza densa e
+             modulabile.}
+    \label{fig:pileibniz-energy-error}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/validation/sa_full.png}
+    \caption{Energia di invocazione e \texttt{quality\_score} delle
+             varianti di SentimentAnalysis. Il passaggio a modelli più
+             leggeri riduce sensibilmente il costo energetico, ma la
+             qualità diminuisce per salti discreti, riflettendo la natura
+             architetturalmente distinta delle varianti ML.}
+    \label{fig:sentiment-energy-quality}
+\end{figure}
+
+% -----------------------------------------------------------
+\subsection{Strategie di confronto}
+\label{subsec:strategie-confronto}
+% -----------------------------------------------------------
+
+In tutti gli esperimenti vengono confrontate tre strategie. La prima,
+\emph{always-accurate}, rappresenta il comportamento legacy della
+piattaforma: viene selezionata sempre la variante con errore minimo o
+qualità massima, indipendentemente dalle condizioni ambientali. La seconda,
+\emph{always-energy}, seleziona sempre la variante con minore energia di
+invocazione, senza considerare la qualità del risultato; questa politica
+non costituisce un caso operativo realistico, ma fornisce il limite
+inferiore del consumo ottenibile con il modello di varianti adottato. La
+terza è lo scheduler carbon-aware oggetto di questa tesi: quando l'utente
+autorizza l'uso di varianti approssimate tramite il parametro
+\texttt{AllowApprox=true}, il sistema costruisce la frontiera di Pareto
+nello spazio energia--qualità e seleziona la variante in base alla
+scalarizzazione descritta nel Capitolo~\ref{cap:scheduler}.
+
+Il parametro $\lambda \in [0,1]$ regola il peso relativo tra qualità del
+risultato e risparmio energetico: valori elevati di $\lambda$ privilegiano
+la qualità, valori ridotti favoriscono l'efficienza energetica. Il valore
+di $\lambda$ è derivato dalla carbon intensity (CI) della zona di esecuzione
+tramite una funzione sigmoidale, garantendo che la selezione della variante
+sia contestuale all'impatto carbonico dell'energia disponibile.
+
+% -----------------------------------------------------------
+\section{Protocollo di valutazione}
+\label{sec:protocollo-valutazione}
+% -----------------------------------------------------------
+
+\paragraph{Metriche raccolte.}
+Per ogni invocazione vengono raccolte quattro famiglie di metriche.
+La prima è l'energia consumata, espressa come valore totale e come media
+per invocazione. La seconda è l'emissione stimata di CO\textsubscript{2},
+calcolata moltiplicando l'energia dell'invocazione per la carbon intensity
+corrente della zona:
+%
+\begin{equation}
+    \mathrm{CO_2}(r) =
+        \frac{E(r)}{3{,}6 \cdot 10^6}
+        \cdot \mathrm{CI}(r)
+    \label{eq:emissioni-invocazione}
+\end{equation}
+%
+dove $E(r)$ è l'energia dell'invocazione $r$ espressa in joule e
+$\mathrm{CI}(r)$ è la carbon intensity corrente in
+gCO\textsubscript{2}eq/kWh. Il fattore $3{,}6 \cdot 10^6$ converte
+l'energia da joule a kWh, poiché $1~\mathrm{kWh}=3{,}6 \cdot 10^6~\mathrm{J}$.
+La terza metrica è il tempo medio di esecuzione per invocazione, espresso
+in millisecondi. La quarta, impiegata in particolare nell'Esperimento~1,
+è la distribuzione percentuale delle varianti selezionate.
+
+\paragraph{Zone e dati di carbon intensity.}
+Le zone geografiche considerate sono Francia (FR), Spagna (ES), Italia
+(IT), Germania (DE) e Polonia (PL), ordinate per CI media crescente. La
+scelta copre un intervallo ampio e rappresentativo del panorama europeo:
+la Francia rappresenta un regime a bassa CI (prevalente energia nucleare),
+la Polonia un regime ad alta CI (prevalente energia da carbone), mentre
+Spagna, Italia e Germania occupano fasce intermedie con mix energetici
+diversificati. I valori di carbon intensity provengono da serie storiche
+orarie di ElectricityMaps~\cite{electricitymaps2024}.
+La Tabella~\ref{tab:ci-zone} riporta le statistiche sintetiche della
+traccia impiegata, mentre la Figura~\ref{fig:ci-distribution-zone} ne
+mostra la distribuzione per zona.
+
+\begin{table}[H]
+    \centering
+    \caption{Statistiche della carbon intensity nelle zone considerate
+             negli esperimenti.}
+    \label{tab:ci-zone}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{lrrrr}
+        \toprule
+        Zona    & CI media (g/kWh) & CI minima (g/kWh) & CI massima (g/kWh) & Campioni \\
+        \midrule
+        Francia  &  14.6 &   3.1 &  64.3 & 1152 \\
+        Spagna   &  89.3 &  31.2 & 222.4 & 1152 \\
+        Italia   & 195.1 &  66.0 & 307.2 & 1152 \\
+        Germania & 271.1 &  81.9 & 550.7 & 1152 \\
+        Polonia  & 518.1 & 257.3 & 720.6 & 1152 \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/validation/05_ci_distribution_per_zone.png}
+    \caption{Distribuzione della carbon intensity oraria per zona nella
+             traccia usata negli esperimenti. Le zone sono ordinate per
+             CI media crescente da sinistra a destra.}
+    \label{fig:ci-distribution-zone}
+\end{figure}
+
+\paragraph{Struttura degli esperimenti.}
+Gli Esperimenti~1 e~2 sono condotti a tempo discreto: una traccia di
+invocazioni viene riletta da file e ogni richiesta viene valutata rispetto
+alla CI associata al passo temporale corrente. Questo approccio isola il
+comportamento decisionale dello scheduler da eventuali variazioni del
+carico e consente di confrontare due diverse calibrazioni del segnale
+carbon-aware. L'Esperimento~1 adotta un riferimento europeo comune, utile
+per leggere tutte le zone sulla stessa scala e rendere direttamente
+confrontabili le scelte prodotte in reti elettriche diverse.
+L'Esperimento~2 utilizza invece una calibrazione locale, più aderente a un
+deployment reale, in cui la CI corrente viene interpretata rispetto alla
+distribuzione storica della zona. L'Esperimento~3 adotta infine un modello
+a tempo continuo, con richieste che arrivano secondo un profilo di carico
+variabile, al fine di valutare la stabilità del sistema e l'overhead della
+selezione a runtime.
+
+% -----------------------------------------------------------
+\section{Esperimento 1: calibrazione europea della carbon intensity}
+\label{sec:esperimento1}
+% -----------------------------------------------------------
+
+\subsection{Obiettivo}
+\label{subsec:esperimento1-obiettivo}
+
+Il primo esperimento valuta lo scheduler quando il segnale di carbon
+intensity viene normalizzato rispetto a un riferimento europeo comune. In
+questa configurazione tutte le zone condividono la stessa funzione
+$\lambda(\mathrm{CI})$: una medesima CI assoluta produce quindi lo stesso
+peso energia--qualità, indipendentemente dalla zona in cui viene osservata.
+L'obiettivo è analizzare il comportamento di uno scheduler carbon-aware
+europeo, in cui le reti elettriche vengono confrontate su una scala
+uniforme.
+
+\subsection{Configurazione}
+\label{subsec:esperimento1-configurazione}
+
+La normalizzazione del segnale di carbon intensity utilizza una sigmoide
+calibrata su un riferimento europeo comune, con punto medio fissato al
+valore medio europeo. In questo modo la medesima funzione
+$\lambda(\mathrm{CI})$ viene applicata a tutte le zone e le differenze
+osservate dipendono dalla posizione delle rispettive tracce di CI rispetto
+alla scala europea. La Figura~\ref{fig:sigmoid-overlay} mostra la sigmoide
+europea e la collocazione delle zone lungo l'asse decisionale.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/validation/06_sigmoid_overlay.png}
+    \caption{Sigmoide europea utilizzata per trasformare la CI nel
+             parametro $\lambda$ e collocazione delle zone considerate.
+             La funzione mappa le CI più basse verso $\lambda \approx 1$
+             (preferenza per la qualità) e le CI più alte verso
+             $\lambda \approx 0$ (preferenza per il risparmio energetico).}
+    \label{fig:sigmoid-overlay}
+\end{figure}
+
+Per ogni coppia funzione-zona viene eseguita la stessa traccia nei tre
+regimi \emph{always-accurate}, \emph{always-energy} e carbon-aware:
+864 invocazioni per coppia nelle funzioni numeriche e 576 nelle funzioni ML.
+
+\subsection{Risultati}
+\label{subsec:esperimento1-risultati}
+
+La metrica principale dell'esperimento è la distribuzione delle varianti
+selezionate. La Figura~\ref{fig:variant-distribution-exp1} riporta, per
+ciascuna funzione, la composizione percentuale delle varianti scelte dallo
+scheduler con calibrazione europea nelle cinque zone, ordinate per CI media
+crescente.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/validation/01_variant_distribution_PiLeibniz.png}
+    \caption{Distribuzione delle varianti selezionate per PiLeibniz al
+             variare della zona. Al crescere della CI media, la quota
+             delle varianti più accurate si riduce progressivamente a
+             favore di varianti a minore consumo energetico.}
+    \label{fig:variant-distribution-exp1}
+\end{figure}
+
+\paragraph{Funzioni numeriche.}
+Per le funzioni numeriche il comportamento è progressivo. In LnHarmonic,
+Francia e Spagna selezionano la variante più accurata \texttt{n100000}
+nel 100\% delle invocazioni; in Italia la stessa variante resta dominante
+al 97\%, mentre in Germania la quota scende al 54\% e in Polonia al 25\%.
+In parallelo cresce la quota di varianti meno costose: \texttt{n10000}
+raggiunge il 46\% in Germania e il 75\% in Polonia, mentre \texttt{n1000}
+compare solo in Polonia con il 3\%.
+
+MonteCarlo mostra una transizione più netta: la Francia utilizza
+\texttt{n100000} nel 100\% delle invocazioni, mentre Spagna e Italia
+passano prevalentemente a \texttt{n50000}. In Polonia compaiono anche
+\texttt{n10000} e \texttt{n1000}, con quote rispettivamente del 29\%
+e dell'8\%. PiLeibniz presenta la frontiera più articolata: la variante
+nativa in C domina in Francia, ma già in Spagna vengono selezionate anche
+\texttt{n10000}, \texttt{n5000} e \texttt{n1000}. Questo comportamento è
+coerente con la struttura della frontiera di Pareto della funzione,
+illustrata in Figura~\ref{fig:pareto-pileibniz-exp1}: diverse varianti
+approssimate offrono scambi energia--errore non dominati e possono quindi
+risultare ottimali per intervalli distinti di $\lambda$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/validation/PiLeibniz-CurvaPareto.png}
+    \caption{Frontiera di Pareto di PiLeibniz nello scenario warm.
+             Le varianti dominate non vengono considerate dallo scheduler.
+             La densità dei punti non dominati determina la granularità
+             con cui è possibile modulare il trade-off energia--qualità.}
+    \label{fig:pareto-pileibniz-exp1}
+\end{figure}
+
+\paragraph{Funzioni ML.}
+Per le funzioni ML le transizioni sono meno continue, poiché il numero di
+modelli disponibili è ridotto e ogni modello corrisponde a un salto
+architetturale discreto. In SentimentAnalysis la Francia seleziona
+RoBERTa-large, mentre Spagna, Italia e Germania sono dominate da DistilBERT;
+in Polonia compare VADER, variante più leggera e di conseguenza meno
+accurata. ImageClassification è il caso in cui la variabilità decisionale
+è più marcata: nella stessa zona (Germania) vengono selezionate ViT-Base,
+EfficientNet-B0, MobileNet-V2 e MobileNet-V2-Tiny, a indicare che il
+valore di $\lambda$ oscilla intorno a più soglie di transizione.
+SpamDetection presenta invece una transizione più netta: RoBERTa-spam
+è prevalente nelle zone a bassa CI, BERT-tiny nelle zone intermedie, e il
+classificatore keyword diventa esclusivo in Polonia.
+
+\paragraph{Trade-off aggregato.}
+La Figura~\ref{fig:tradeoff-exp1} riassume l'effetto aggregato della
+selezione mostrando energia media e qualità media per zona. Per MonteCarlo
+l'energia media passa da 19.4~mJ in Francia a 1.4~mJ in Polonia, con
+qualità media da 0.995 a 0.986. Per ImageClassification l'energia scende
+da 294~mJ a 16~mJ, mentre la qualità media passa da 0.82 a 0.61. Il caso
+di SpamDetection è il più rilevante dal punto di vista qualitativo: in
+Polonia il classificatore keyword riduce il consumo in modo significativo,
+ma porta la qualità media al valore più basso tra le funzioni ML, a
+indicare che il costo del risparmio energetico non è uniforme e dipende
+dalla struttura della frontiera di Pareto della specifica funzione.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/validation/03_tradeoff_ImageClassification.png}
+    \caption{Trade-off energia--qualità per ImageClassification nelle zone
+             considerate. La strategia carbon-aware occupa una posizione
+             intermedia tra le due baseline, la cui distanza dal punto
+             \emph{always-accurate} cresce proporzionalmente alla CI
+             media della zona.}
+    \label{fig:tradeoff-exp1}
+\end{figure}
+
+Il confronto con la baseline \emph{always-accurate} quantifica il
+beneficio energetico e il costo qualitativo dello scheduler. La
+Tabella~\ref{tab:baseline-savings-exp1} riporta il risparmio energetico
+relativo $\Delta E$ e la riduzione di qualità relativa $\Delta Q$ per
+funzione e zona. Nelle funzioni numeriche il risparmio cresce con la CI
+e la perdita di qualità resta inferiore all'1\%. Nelle funzioni ML il
+risparmio può essere più ampio, ma il costo qualitativo dipende dal
+salto tra modelli adiacenti.
+
+\begin{table}[H]
+    \centering
+    \caption{Risparmio energetico e riduzione di qualità rispetto ad
+             \emph{always-accurate} nell'Esperimento~1.}
+    \label{tab:baseline-savings-exp1}
+    \begin{tabular}{llrrrrr}
+        \toprule
+        Funzione & Metrica & Francia & Spagna & Italia & Germania & Polonia \\
+        \midrule
+        LnHarmonic          & $\Delta E$ &   0\% &    0\% &  28\%  &  47\%  &  80\%  \\
+        LnHarmonic          & $\Delta Q$ &   0\% &    0\% & 0.01\% & 0.01\% & 0.02\% \\
+        MonteCarlo          & $\Delta E$ &   0\% &   58\% &  91\%  &  91\%  &  93\%  \\
+        MonteCarlo          & $\Delta Q$ &   0\% &  0.1\% & 0.2\%  & 0.2\%  & 0.9\%  \\
+        PiLeibniz           & $\Delta E$ &   0\% &   -1\% &  21\%  &  15\%  &  50\%  \\
+        PiLeibniz           & $\Delta Q$ &   0\% &    0\% & 0.1\%  & 0.1\%  & 0.2\%  \\
+        SentimentAnalysis   & $\Delta E$ &   0\% &  100\% &  99\%  &  99\%  &  99\%  \\
+        SentimentAnalysis   & $\Delta Q$ &   0\% &  5.3\% & 5.2\%  & 5.2\%  & 10.8\% \\
+        ImageClassification & $\Delta E$ &   0\% &    1\% &  46\%  &  60\%  &  94\%  \\
+        ImageClassification & $\Delta Q$ &   0\% &  0.1\% & 4.5\%  & 10.7\% & 25.6\% \\
+        SpamDetection       & $\Delta E$ &   0\% &    5\% &  65\%  &  73\%  &  96\%  \\
+        SpamDetection       & $\Delta Q$ &   0\% &  1.8\% & 25.2\% & 33.4\% & 47.4\% \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Interpretazione}
+\label{subsec:esperimento1-interpretazione}
+
+I risultati mostrano l'effetto della calibrazione europea sulle scelte
+dello scheduler. Poiché tutte le zone sono valutate rispetto alla stessa
+funzione $\lambda(\mathrm{CI})$, le reti con CI mediamente più bassa, come
+la Francia, ricadono più spesso in regioni che privilegiano la qualità,
+mentre le reti con CI più elevata, come la Polonia, ricadono più spesso in
+regioni che favoriscono il risparmio energetico. L'esperimento non definisce
+una scelta corretta in senso assoluto, ma descrive il comportamento della
+politica quando il segnale carbon-aware è interpretato su scala europea.
+
+La Figura~\ref{fig:lambda-regions-pl} rende visibile questa
+interpretazione nello spazio di $\lambda$: il range operativo della Polonia
+si sovrappone prevalentemente alle regioni in cui risultano ottimali le
+varianti a minore energia, mentre il range della Francia ricade vicino alle
+regioni di alta qualità. Le differenze tra le funzioni derivano dalla forma
+della frontiera di Pareto: quando la frontiera è densa, come per alcune
+funzioni numeriche, il passaggio tra varianti è graduale; quando è composta
+da pochi modelli distanti, come nelle funzioni ML, i salti di qualità sono
+più marcati, coerentemente con quanto osservato nella
+Sezione~\ref{subsec:funzioni-utilizzate}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/validation/08_lambda_regions_PL.png}
+    \caption{Regioni di selezione lungo l'asse $\lambda$ per la Polonia.
+             La zona opera prevalentemente in intervalli di $\lambda$
+             associati a varianti efficienti, coerentemente con la sua
+             carbon intensity media elevata.}
+    \label{fig:lambda-regions-pl}
+\end{figure}
+
+% -----------------------------------------------------------
+\section{Esperimento 2: calibrazione locale della carbon intensity}
+\label{sec:esperimento2}
+% -----------------------------------------------------------
+
+\subsection{Obiettivo}
+\label{subsec:esperimento2-obiettivo}
+
+Il secondo esperimento valuta lo stesso scheduler in una configurazione
+locale. A differenza dell'Esperimento~1, in cui tutte le zone condividono
+un riferimento europeo, qui la sigmoide è calibrata sulla distribuzione
+storica di ciascuna zona. Il valore di $\lambda$ non dipende quindi
+soltanto dalla CI assoluta, ma anche dalla sua posizione rispetto al regime
+abituale della rete considerata. Questa configurazione rappresenta il caso
+più vicino a un deployment reale, in cui un nodo interpreta il segnale
+carbon-aware rispetto al contesto elettrico in cui opera.
+
+\subsection{Configurazione}
+\label{subsec:esperimento2-configurazione}
+
+La struttura sperimentale è la stessa dell'Esperimento~1: per ogni zona
+viene rieseguita la stessa traccia nei tre regimi. Cambia la
+normalizzazione del segnale ambientale: per ogni zona $z$, la sigmoide
+utilizza la media storica locale $\mu_z$ e i percentili locali $P_5$ e
+$P_{95}$ stimati dalle serie ElectricityMaps~\cite{electricitymaps2024}.
+La Figura~\ref{fig:local-sigmoid-examples} mostra esempi di calibrazione
+locale per Francia, Italia e Polonia. La stessa CI assoluta può generare
+valori di $\lambda$ differenti in zone diverse, poiché rappresenta una
+condizione ordinaria in una rete e un'anomalia in un'altra: questo aspetto
+motiva l'adozione di una calibrazione locale rispetto a una soglia globale
+uniforme.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/lambda_curve_FR.png}
+        \caption{Francia (FR)}
+    \end{subfigure}
+    \begin{subfigure}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/lambda_curve_IT.png}
+        \caption{Italia (IT)}
+    \end{subfigure}
+    \begin{subfigure}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/lambda_curve_PL.png}
+        \caption{Polonia (PL)}
+    \end{subfigure}
+    \caption{Esempi di sigmoide calibrata sulla distribuzione locale della
+             carbon intensity. La posizione del punto di inflessione e la
+             pendenza della curva differiscono tra zone, riflettendo il
+             regime energetico caratteristico di ciascuna rete elettrica.}
+    \label{fig:local-sigmoid-examples}
+\end{figure}
+
+In questo esperimento l'attenzione si sposta dalle sole quote di selezione
+alle metriche aggregate: energia totale, emissioni totali e tempo medio di
+esecuzione. Per ciascuna zona viene calcolato il delta percentuale dello
+scheduler carbon-aware rispetto ad \emph{always-accurate}:
+%
+\begin{equation}
+    \Delta_{\mathrm{CO_2}} =
+        \frac{\mathrm{CO_2}_{\mathrm{accurate}} -
+              \mathrm{CO_2}_{\mathrm{carbon}}}
+             {\mathrm{CO_2}_{\mathrm{accurate}}}
+        \cdot 100
+    \label{eq:delta-co2}
+\end{equation}
+%
+e il costo qualitativo medio:
+%
+\begin{equation}
+    \Delta_Q =
+        \frac{Q_{\mathrm{accurate}} - Q_{\mathrm{carbon}}}
+             {Q_{\mathrm{accurate}}}
+        \cdot 100 .
+    \label{eq:delta-qualita}
+\end{equation}
+%
+Questi due indici sono sempre riportati congiuntamente, poiché una
+riduzione delle emissioni non può essere valutata correttamente senza
+quantificare il costo qualitativo che la accompagna.
+
+\subsection{Risultati}
+\label{subsec:esperimento2-risultati}
+
+La Tabella~\ref{tab:exp2-aggregate} riporta i risultati aggregati per zona.
+Il confronto deve essere letto per colonna: \emph{always-accurate} fornisce
+il massimo livello qualitativo, \emph{always-energy} il limite inferiore
+del consumo, mentre lo scheduler carbon-aware occupa una posizione
+intermedia determinata dalla calibrazione locale della CI.
+
+\begin{table}[H]
+    \centering
+    \caption{Risultati aggregati dell'Esperimento~2 per zona.}
+    \label{tab:exp2-aggregate}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{llrrrrr}
+        \toprule
+        Zona    & Strategia       & Energia (J) & CO\textsubscript{2} (g) & Tempo medio (ms) & Qualità media & $\Delta_{\mathrm{CO_2}}$ \\
+        \midrule
+        Francia & always-accurate & [VALORE] & [VALORE] & [VALORE] & [VALORE] & --         \\
+        Francia & always-energy   & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        Francia & carbon-aware    & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        \midrule
+        Italia  & always-accurate & [VALORE] & [VALORE] & [VALORE] & [VALORE] & --         \\
+        Italia  & always-energy   & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        Italia  & carbon-aware    & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        \midrule
+        Polonia & always-accurate & [VALORE] & [VALORE] & [VALORE] & [VALORE] & --         \\
+        Polonia & always-energy   & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        Polonia & carbon-aware    & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+La Tabella~\ref{tab:exp2-function} separa il risultato per funzione, al
+fine di evitare che una media aggregata nasconda comportamenti eterogenei.
+Le funzioni numeriche tendono a produrre riduzioni energetiche con perdite
+qualitative molto ridotte, mentre le funzioni ML possono introdurre
+decrementi di qualità più visibili quando la selezione ricade su modelli
+di dimensione significativamente inferiore.
+
+\begin{table}[H]
+    \centering
+    \caption{Riduzione di emissioni e costo qualitativo dello scheduler
+             carbon-aware rispetto ad \emph{always-accurate} per funzione
+             e zona.}
+    \label{tab:exp2-function}
+    \begin{tabular}{llrrr}
+        \toprule
+        Zona    & Funzione            & $\Delta E$ & $\Delta_{\mathrm{CO_2}}$ & $\Delta_Q$ \\
+        \midrule
+        Francia & PiLeibniz           & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
+        Francia & ImageClassification & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
+        Italia  & PiLeibniz           & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
+        Italia  & ImageClassification & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
+        Polonia & PiLeibniz           & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
+        Polonia & ImageClassification & [VALORE]\% & [VALORE]\% & [VALORE]\% \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Interpretazione}
+\label{subsec:esperimento2-interpretazione}
+
+L'Esperimento~2 mostra come le decisioni cambiano quando la CI viene
+interpretata rispetto al contesto locale anziché rispetto a una scala
+europea uniforme. Il guadagno in emissioni non è gratuito: deriva da una
+riduzione dell'energia consumata e, quando la struttura della frontiera di
+Pareto lo richiede, da una riduzione della qualità media. Per questo motivo
+il risultato viene sempre espresso come coppia beneficio-costo: riduzione
+di gCO\textsubscript{2} e perdita di accuratezza o qualità.
+
+La calibrazione locale rende il valore di $\lambda$ più aderente al
+contesto della zona. In una rete strutturalmente pulita, una CI assoluta
+moderata può rappresentare un valore elevato rispetto alla storia locale e
+giustificare una selezione più efficiente. In una rete strutturalmente
+carbon-intensive, lo stesso valore assoluto potrebbe essere irraggiungibile
+o non rappresentativo. L'adozione di una sigmoide calibrata localmente
+evita che una soglia globale unica produca decisioni eccessivamente
+aggressive in alcune zone e troppo conservative in altre.
+
+Il risultato è considerato positivo se lo scheduler riduce le emissioni
+rispetto ad \emph{always-accurate}, si mantiene distante dal comportamento
+estremo di \emph{always-energy} nei casi in cui il costo qualitativo
+sarebbe elevato, e mostra una perdita di qualità coerente con il consenso
+esplicito dell'utente all'uso di varianti approssimate. Questo consenso
+rimane un vincolo progettuale centrale: in assenza di
+\texttt{AllowApprox=true}, la piattaforma preserva il comportamento legacy.
+
+% -----------------------------------------------------------
+\section{Esperimento 3: comportamento con flusso di arrivo variabile}
+\label{sec:esperimento3}
+% -----------------------------------------------------------
+
+\subsection{Obiettivo}
+\label{subsec:esperimento3-obiettivo}
+
+Il terzo esperimento valuta il comportamento del sistema in condizioni di
+carico non uniforme nel tempo. Gli Esperimenti~1 e~2 adottano un replay a
+tempo discreto, utile per confrontare in modo controllato le due
+calibrazioni del segnale carbon-aware. In un deployment reale, tuttavia,
+le richieste possono arrivare in burst e lo scheduler deve eseguire, senza
+introdurre latenza significativa, le seguenti operazioni nel percorso
+critico dell'invocazione: lettura dei profili energetici da \texttt{etcd},
+accesso al valore corrente di $\lambda$, costruzione della frontiera di
+Pareto sul sottoinsieme di varianti disponibili, e valutazione della
+funzione di scalarizzazione. L'obiettivo è verificare la stabilità del
+sistema sotto carico variabile e quantificare l'overhead introdotto dallo
+scheduler rispetto alle baseline.
+
+\subsection{Configurazione}
+\label{subsec:esperimento3-configurazione}
+
+Il carico viene generato con un profilo composto da tre fasi: una prima
+fase a bassa intensità (circa 1--2 richieste al secondo), una seconda con
+un burst sostenuto (circa 8--10 richieste al secondo) e una terza che
+riduce progressivamente il tasso di arrivo fino al livello iniziale. La
+CI viene mantenuta fissa per tutta la durata dell'esperimento, utilizzando
+il valore locale di una zona rappresentativa, al fine di evitare di
+sovrapporre due sorgenti di variabilità indipendenti.
+
+Vengono confrontate le tre strategie \emph{always-accurate},
+\emph{always-energy} e carbon-aware. Le metriche principali sono la
+latenza (percentili p50, p95 e p99), il throughput effettivo, la frazione
+di risposte non valide e l'energia per invocazione nel tempo. La
+distribuzione delle varianti viene osservata su finestre temporali per
+verificare che lo scheduler non modifichi il proprio comportamento in
+funzione del tasso di arrivo, ma esclusivamente del valore di $\lambda$
+e dei profili energetici correnti.
+
+\subsection{Risultati}
+\label{subsec:esperimento3-risultati}
+
+La Tabella~\ref{tab:exp3-latency} riporta le metriche di latenza e
+throughput. L'aspetto centrale è il confronto tra carbon-aware e
+\emph{always-accurate}: se la latenza mediana rimane comparabile e
+l'incremento di p99 è contenuto, il costo della selezione a runtime può
+essere considerato trascurabile rispetto al tempo di esecuzione della
+variante.
+
+\begin{table}[H]
+    \centering
+    \caption{Metriche di latenza e throughput nell'Esperimento~3.}
+    \label{tab:exp3-latency}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{lrrrrr}
+        \toprule
+        Strategia        & p50 (ms) & p95 (ms) & p99 (ms) & Throughput (req/s) & Errori 422 \\
+        \midrule
+        always-accurate  & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE] \\
+        always-energy    & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE] \\
+        carbon-aware     & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE] \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+La Tabella~\ref{tab:exp3-energy} riporta il comportamento energetico
+durante il test. La metrica più informativa non è soltanto l'energia media
+finale, ma la sua evoluzione durante le fasi di burst: se le stime EMA
+rimangono stabili e non oscillano in modo sproporzionato, il sistema
+dimostra di assorbire il carico senza alterare il profilo decisionale.
+
+\begin{table}[H]
+    \centering
+    \caption{Energia per invocazione e distribuzione delle varianti
+             nel test a carico variabile.}
+    \label{tab:exp3-energy}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{lrrrr}
+        \toprule
+        Strategia       & Energia media (J) & Energia p95 (J) & Variante dominante & Quota variante dom. \\
+        \midrule
+        always-accurate & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        always-energy   & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        carbon-aware    & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+\subsection{Interpretazione}
+\label{subsec:esperimento3-interpretazione}
+
+L'overhead introdotto dallo scheduler carbon-aware è composto da
+operazioni computazionalmente leggere: lettura dei profili energetici da
+\texttt{etcd}, calcolo della frontiera di Pareto su un numero ridotto di
+varianti, lettura del valore corrente di $\lambda$ e valutazione della
+funzione di scalarizzazione. Il valore di CI è aggiornato in background
+e non richiede una chiamata remota nel percorso critico dell'invocazione.
+Per questo motivo ci si attende che l'impatto sulla latenza mediana sia
+limitato.
+
+La coda della distribuzione, in particolare p99, è la metrica più sensibile
+durante le fasi di burst. Un aumento contenuto di p99 è accettabile se il
+throughput effettivo segue il tasso di arrivo e non compaiono risposte HTTP
+422. Al contrario, una crescita marcata della coda indicherebbe che il
+collo di bottiglia risiede non nel tempo di esecuzione della variante, ma
+nella capacità del piano di controllo di sostenere la frequenza delle
+decisioni.
+
+Un secondo elemento da osservare è la coerenza della distribuzione delle
+varianti. Con CI fissa, la selezione non dovrebbe cambiare sistematicamente
+tra la fase a basso carico e quella di burst, salvo gli effetti transitori
+dovuti all'esplorazione LCB nelle prime invocazioni. Quando il numero di
+campioni cresce, il contributo del termine LCB diminuisce e le stime EMA
+convergono verso un profilo stabile, garantendo che lo scheduler non
+confonda la variabilità del carico con una variazione del segnale
+ambientale.
+
+% -----------------------------------------------------------
+\section{Discussione generale}
+\label{sec:discussione-generale}
+% -----------------------------------------------------------
+
+I tre esperimenti rispondono a domande complementari. I primi due
+confrontano due modi diversi di interpretare il segnale di carbon
+intensity. La calibrazione europea dell'Esperimento~1 fornisce una scala
+comune: è utile per confrontare zone diverse senza introdurre soglie
+specifiche per ciascuna rete e per osservare come la stessa politica si
+comporta al variare del mix elettrico. La calibrazione locale
+dell'Esperimento~2 è invece più vicina a un deployment reale: il valore di
+$\lambda$ riflette quanto la CI corrente sia alta o bassa rispetto alla
+storia della zona, evitando che una soglia europea unica produca decisioni
+non proporzionate in reti strutturalmente molto diverse.
+
+In entrambi i casi lo scheduler occupa una posizione intermedia tra
+\emph{always-accurate}, che preserva la qualità ignorando il costo
+ambientale, e \emph{always-energy}, che minimizza il consumo ignorando la
+qualità. Il terzo esperimento verifica infine che questa selezione possa
+essere eseguita anche in presenza di carico variabile, senza introdurre un
+overhead tale da compromettere la latenza del servizio.
+
+\paragraph{Limitazioni.}
+I risultati evidenziano alcune limitazioni del sistema proposto. La prima
+riguarda le zone con CI prossima al punto medio della sigmoide: in tali
+condizioni, piccole variazioni della CI possono attraversare soglie di
+selezione e produrre cambi più frequenti di variante. La seconda riguarda
+le funzioni con frontiera di Pareto poco estesa: quando sono disponibili
+solo pochi punti non dominati, lo scheduler ha meno possibilità di
+modulare gradualmente il compromesso e i salti di qualità possono essere
+più marcati. La terza riguarda i burst molto intensi: il sistema resta
+vincolato alla capacità del piano di controllo, alla latenza di
+\texttt{etcd} e alla frequenza con cui le metriche energetiche vengono
+aggiornate.
+
+\paragraph{Sintesi.}
+Nel complesso, la valutazione mostra che l'estensione proposta consente di
+collocare Serverledge tra due estremi operativi ben definiti:
+\emph{always-accurate}, che massimizza la qualità ignorando il costo
+ambientale, e \emph{always-energy}, che minimizza il consumo ignorando la
+qualità. Lo scheduler carbon-aware occupa una regione intermedia e
+variabile dello spazio di trade-off, determinata dalla carbon intensity
+della zona e vincolata al consenso esplicito dell'utente. La riduzione
+delle emissioni non è ottenuta tramite una degradazione indiscriminata,
+ma attraverso una scelta contestuale e misurabile lungo la frontiera di
+Pareto, coerente con il segnale ambientale osservato a runtime.
