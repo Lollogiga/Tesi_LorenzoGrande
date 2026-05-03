@@ -203,55 +203,47 @@ sia contestuale all'impatto carbonico dell'energia disponibile.
 \label{sec:protocollo-valutazione}
 % -----------------------------------------------------------
 
-\paragraph{Metriche raccolte.}
-Per ogni invocazione vengono raccolte quattro famiglie di metriche.
-La prima è l'energia consumata, espressa come valore totale e come media
-per invocazione. La seconda è l'emissione stimata di CO\textsubscript{2},
-calcolata moltiplicando l'energia dell'invocazione per la carbon intensity
-corrente della zona:
-%
-\begin{equation}
-    \mathrm{CO_2}(r) =
-        \frac{E(r)}{3{,}6 \cdot 10^6}
-        \cdot \mathrm{CI}(r)
-    \label{eq:emissioni-invocazione}
-\end{equation}
-%
-dove $E(r)$ è l'energia dell'invocazione $r$ espressa in joule e
-$\mathrm{CI}(r)$ è la carbon intensity corrente in
-gCO\textsubscript{2}eq/kWh. Il fattore $3{,}6 \cdot 10^6$ converte
-l'energia da joule a kWh, poiché $1~\mathrm{kWh}=3{,}6 \cdot 10^6~\mathrm{J}$.
-La terza metrica è il tempo medio di esecuzione per invocazione, espresso
-in millisecondi. La quarta, infine, è la distribuzione percentuale delle varianti selezionate.
+Gli Esperimenti~1 e~2 sono condotti a tempo discreto: per ciascuna zona
+viene riletta una traccia di invocazioni da file e ogni richiesta viene
+valutata rispetto alla CI associata al passo temporale corrente, estratta
+dalle serie storiche orarie di ElectricityMaps~\cite{electricitymaps2024}.
+Questo approccio isola il comportamento decisionale dello scheduler da
+eventuali variazioni del carico e consente di confrontare due diverse
+calibrazioni del segnale carbon-aware. L'Esperimento~1 mantiene fissa la
+funzione sigmoide per tutte le zone: le tracce di CI restano diverse, ma
+vengono trasformate in $\lambda$ tramite la stessa mappa decisionale.
+L'Esperimento~2 utilizza invece una calibrazione locale, più aderente a un
+deployment reale, in cui la CI corrente viene interpretata rispetto alla
+distribuzione storica della zona. L'Esperimento~3 adotta infine un modello
+a tempo continuo, con richieste che arrivano secondo un profilo di carico
+variabile, al fine di valutare la stabilità del sistema e l'overhead della
+selezione a runtime.
 
-\paragraph{Zone e dati di carbon intensity.}
-Le zone geografiche considerate sono Francia (FR), Spagna (ES), Italia
-(IT), Germania (DE) e Polonia (PL), ordinate per CI media crescente. La
-scelta copre un intervallo ampio e rappresentativo del panorama europeo:
-la Francia rappresenta un regime a bassa CI (prevalente energia nucleare),
-la Polonia un regime ad alta CI (prevalente energia da carbone), mentre
-Spagna, Italia e Germania occupano fasce intermedie con mix energetici
-diversificati. I valori di carbon intensity provengono da serie storiche
-orarie di ElectricityMaps~\cite{electricitymaps2024}.
-La Tabella~\ref{tab:ci-zone} riporta le statistiche sintetiche della
-traccia impiegata, mentre la Figura~\ref{fig:ci-distribution-zone} ne
-mostra la distribuzione per zona.
+\paragraph{Zone considerate.}
+Le zone geografiche considerate in tutti gli esperimenti sono Francia (FR),
+Spagna (ES), Italia (IT), Germania (DE) e Polonia (PL), ordinate per CI
+media crescente. La scelta copre un intervallo ampio e rappresentativo del
+panorama europeo: la Francia rappresenta un regime a bassa CI (prevalente
+energia nucleare), la Polonia un regime ad alta CI (prevalente energia da
+carbone), mentre Spagna, Italia e Germania occupano fasce intermedie con
+mix energetici diversificati. La Tabella~\ref{tab:ci-zone} riporta le
+statistiche sintetiche della traccia impiegata, mentre la
+Figura~\ref{fig:ci-distribution-zone} ne mostra la distribuzione per zona.
 
 \begin{table}[H]
     \centering
-    \caption{Statistiche della carbon intensity nelle zone considerate
-             negli esperimenti.}
+    \caption{Statistiche della carbon intensity nelle zone considerate.}
     \label{tab:ci-zone}
     \resizebox{\textwidth}{!}{%
     \begin{tabular}{lrrrr}
         \toprule
-        Zona    & CI media (g/kWh) & CI minima (g/kWh) & CI massima (g/kWh) & Campioni \\
+        Zona    & CI media (g/kWh) & CI minima (g/kWh) & CI massima (g/kWh)\\
         \midrule
-        Francia  &  14.6 &   3.1 &  64.3 & 1152 \\
-        Spagna   &  89.3 &  31.2 & 222.4 & 1152 \\
-        Italia   & 195.1 &  66.0 & 307.2 & 1152 \\
-        Germania & 271.1 &  81.9 & 550.7 & 1152 \\
-        Polonia  & 518.1 & 257.3 & 720.6 & 1152 \\
+        Francia  &  14.8 &   2.4 &  64.3 \\
+        Spagna   &  91.3 &  30.8 & 260.9 \\
+        Italia   & 197.4 &  60.0 & 332.3 \\
+        Germania & 279.2 &  72.1 & 566.7 \\
+        Polonia  & 519.3 & 249.6 & 728.4 \\
         \bottomrule
     \end{tabular}
     }
@@ -259,27 +251,12 @@ mostra la distribuzione per zona.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{figures/validation/05_ci_distribution_per_zone.png}
+    \includegraphics[width=0.95\textwidth]{figures/boxplot_ci_full (1).png}
     \caption{Distribuzione della carbon intensity oraria per zona nella
              traccia usata negli esperimenti. Le zone sono ordinate per
              CI media crescente da sinistra a destra.}
     \label{fig:ci-distribution-zone}
 \end{figure}
-
-\paragraph{Struttura degli esperimenti.}
-Gli Esperimenti~1 e~2 sono condotti a tempo discreto: una traccia di
-invocazioni viene riletta da file e ogni richiesta viene valutata rispetto
-alla CI associata al passo temporale corrente. Questo approccio isola il
-comportamento decisionale dello scheduler da eventuali variazioni del
-carico e consente di confrontare due diverse calibrazioni del segnale
-carbon-aware. L'Esperimento~1 mantiene fissa la funzione sigmoide per tutte
-le zone: le tracce di CI restano diverse, ma vengono trasformate in
-$\lambda$ tramite la stessa mappa decisionale. L'Esperimento~2 utilizza
-invece una calibrazione locale, più aderente a un deployment reale, in cui
-la CI corrente viene interpretata rispetto alla distribuzione storica della
-zona. L'Esperimento~3 adotta infine un modello a tempo continuo, con
-richieste che arrivano secondo un profilo di carico variabile, al fine di
-valutare la stabilità del sistema e l'overhead della selezione a runtime.
 
 % -----------------------------------------------------------
 \section{Esperimento 1: calibrazione europea della carbon intensity}
@@ -323,6 +300,12 @@ europea e la collocazione delle zone lungo l'asse decisionale.
 Per ogni coppia funzione-zona viene eseguita la stessa traccia nei tre
 regimi \emph{always-accurate}, \emph{always-energy} e carbon-aware:
 864 invocazioni per coppia nelle funzioni numeriche e 576 nelle funzioni ML.
+
+\paragraph{Metriche raccolte.}
+Per ogni invocazione vengono raccolte tre metriche: l'energia consumata,
+espressa come valore totale e come media per invocazione; il tempo medio
+di esecuzione per invocazione, espresso in millisecondi; e la distribuzione
+percentuale delle varianti selezionate dallo scheduler nelle cinque zone.
 
 \subsection{Risultati}
 \label{subsec:esperimento1-risultati}
@@ -640,44 +623,157 @@ La struttura sperimentale è la stessa dell'Esperimento~1: per ogni zona
 viene rieseguita la stessa traccia nei tre regimi. Cambia la
 normalizzazione del segnale ambientale: per ogni zona $z$, la sigmoide
 utilizza la media storica locale $\mu_z$ e i percentili locali $P_5$ e
-$P_{95}$ stimati dalle serie ElectricityMaps~\cite{electricitymaps2024}.
+$P_{95}$ stimati dalle serie ElectricityMaps~\cite{electricitymaps2024};
+la Figura~\ref{fig:exp2-sigmoidi-locali} mostra due esempi rappresentativi
+di questa calibrazione.
 La stessa CI assoluta può generare valori di $\lambda$ differenti in zone
 diverse, poiché rappresenta una condizione ordinaria in una rete e
 un'anomalia in un'altra: questo aspetto motiva l'adozione di una
 calibrazione locale rispetto a una soglia globale uniforme.
 
-In questo esperimento l'attenzione si sposta dalle sole quote di selezione
-alle metriche aggregate: energia totale, emissioni totali e tempo medio di
-esecuzione. Per ciascuna zona viene calcolato il delta percentuale dello
-scheduler carbon-aware rispetto ad \emph{always-accurate}:
+Nell'Esperimento~2 la traccia di carbon intensity non viene campionata per
+giornate prestabilite, come nell'Esperimento~1, ma a livello di singoli
+timestamp orari. A partire dalla distribuzione annuale della CI di ciascuna
+zona, i valori orari sono ordinati e suddivisi in tre fasce
+rappresentative: bassa, media e alta intensità carbonica. Da ciascuna fascia
+viene selezionato lo stesso numero di timestamp, ottenendo un campione
+complessivo di 120 punti per zona.
+
+Questo permette di osservare lo scheduler in condizioni ambientali
+eterogenee e rilevanti per la decisione carbon-aware. Rispetto a un
+campionamento basato su giornate intere fissate a priori, il campionamento
+per timestamp distribuisce meglio le misure lungo l'intervallo di valori
+della CI, includendo sia condizioni in cui la rete è relativamente pulita
+sia condizioni più carbon-intensive. In questo modo il confronto tra
+\emph{always-energy}, carbon-aware e \emph{always-accurate} viene effettuato
+su punti che coprono in modo più diretto le diverse regioni della funzione
+$\lambda(\mathrm{CI})$. La Figura~\ref{fig:exp2-ci-distribution-sampling}
+mostra, per ciascuna zona, la distribuzione annuale della CI e la
+suddivisione usata per individuare le fasce di campionamento.
+
+\begin{figure}[p]
+    \centering
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ci_distribution_FR.png}
+        \caption{Francia (FR)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ci_distribution_ES.png}
+        \caption{Spagna (ES)}
+    \end{subfigure}
+
+    \vspace{0.25cm}
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ci_distribution_IT.png}
+        \caption{Italia (IT)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ci_distribution_DE.png}
+        \caption{Germania (DE)}
+    \end{subfigure}
+
+    \vspace{0.25cm}
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ci_distribution_PL.png}
+        \caption{Polonia (PL)}
+    \end{subfigure}
+    \caption{Distribuzione annuale della carbon intensity per zona e fasce
+             utilizzate per il campionamento dei timestamp dell'Esperimento~2.
+             La selezione bilanciata tra valori bassi, medi e alti evita che
+             il campione sia concentrato solo attorno alle condizioni più
+             frequenti della rete.}
+    \label{fig:exp2-ci-distribution-sampling}
+\end{figure}
+
+\begin{figure}[p]
+    \centering
+    \begin{subfigure}{0.80\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/lambda_curve_FR.png}
+        \caption{Francia (FR)}
+    \end{subfigure}
+
+    \vspace{0.25cm}
+    \begin{subfigure}{0.80\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/lambda_curve_PL.png}
+        \caption{Polonia (PL)}
+    \end{subfigure}
+    \caption{Esempi di sigmoidi locali utilizzate nell'Esperimento~2 per
+             trasformare la carbon intensity oraria nel parametro
+             $\lambda$. Francia e Polonia rappresentano due estremi della
+             distribuzione osservata: la stessa funzione decisionale viene
+             traslata e scalata rispetto ai valori tipici della zona. Il
+             parametro $k$ controlla la rapidità della transizione: valori
+             più alti rendono più brusco il passaggio da $\lambda \approx 1$
+             a $\lambda \approx 0$, mentre valori più bassi producono una
+             variazione più graduale.}
+    \label{fig:exp2-sigmoidi-locali}
+\end{figure}
+
+Nei due esempi della Figura~\ref{fig:exp2-sigmoidi-locali}, il punto medio
+della sigmoide coincide con la media storica locale: per la Francia la
+transizione avviene a valori assoluti di CI molto bassi, mentre per la
+Polonia la stessa logica decisionale è centrata su valori molto più elevati.
+Questa differenza evidenzia il ruolo della calibrazione locale: $\lambda$
+non misura quanto una CI sia alta in senso assoluto, ma quanto sia alta
+rispetto al comportamento usuale della zona considerata.
+
+Rispetto all'Esperimento~1, l'analisi include una metrica aggiuntiva:
+l'emissione stimata di CO\textsubscript{2} per invocazione, calcolata
+moltiplicando l'energia dell'invocazione per la carbon intensity corrente
+della zona:
 %
 \begin{equation}
-    \Delta_{\mathrm{CO_2}} =
-        \frac{\mathrm{CO_2}_{\mathrm{accurate}} -
-              \mathrm{CO_2}_{\mathrm{carbon}}}
-             {\mathrm{CO_2}_{\mathrm{accurate}}}
-        \cdot 100
-    \label{eq:delta-co2}
+    \mathrm{CO_2}(r) =
+        \frac{E(r)}{3{,}6 \cdot 10^6}
+        \cdot \mathrm{CI}(r)
+    \label{eq:emissioni-invocazione}
 \end{equation}
 %
-e il costo qualitativo medio:
-%
-\begin{equation}
-    \Delta_Q =
-        \frac{Q_{\mathrm{accurate}} - Q_{\mathrm{carbon}}}
-             {Q_{\mathrm{accurate}}}
-        \cdot 100 .
-    \label{eq:delta-qualita}
-\end{equation}
-%
-Questi due indici sono sempre riportati congiuntamente, poiché una
-riduzione delle emissioni non può essere valutata correttamente senza
-quantificare il costo qualitativo che la accompagna.
+dove $E(r)$ è l'energia dell'invocazione $r$ espressa in joule e
+$\mathrm{CI}(r)$ è la carbon intensity corrente in
+gCO\textsubscript{2}eq/kWh. Il fattore $3{,}6 \cdot 10^6$ converte
+l'energia da joule a kWh, poiché $1~\mathrm{kWh}=3{,}6 \cdot 10^6~\mathrm{J}$.
+
+%In questo esperimento l'attenzione si sposta dalle sole quote di selezione
+%alle metriche aggregate: energia totale, emissioni totali e tempo medio di
+%esecuzione. Per ciascuna zona viene calcolato il delta percentuale dello
+%scheduler carbon-aware rispetto ad \emph{always-accurate}:
+%%
+%\begin{equation}
+%    \Delta_{\mathrm{CO_2}} =
+%        \frac{\mathrm{CO_2}_{\mathrm{accurate}} -
+%              \mathrm{CO_2}_{\mathrm{carbon}}}
+%             {\mathrm{CO_2}_{\mathrm{accurate}}}
+%        \cdot 100
+%    \label{eq:delta-co2}
+%\end{equation}
+%%
+%e il costo qualitativo medio:
+%%
+%\begin{equation}
+%    \Delta_Q =
+%        \frac{Q_{\mathrm{accurate}} - Q_{\mathrm{carbon}}}
+%             {Q_{\mathrm{accurate}}}
+%        \cdot 100 .
+%    \label{eq:delta-qualita}
+%\end{equation}
+%%
+%Questi due indici sono sempre riportati congiuntamente, poiché una
+%riduzione delle emissioni non può essere valutata correttamente senza
+%quantificare il costo qualitativo che la accompagna.
 
 \subsection{Risultati}
 \label{subsec:esperimento2-risultati}
 
-Inserire sigmoideeeee!
 La Tabella~\ref{tab:exp2-aggregate} riporta i risultati aggregati per zona.
 Il confronto deve essere letto per colonna: \emph{always-accurate} fornisce
 il massimo livello qualitativo, \emph{always-energy} il limite inferiore

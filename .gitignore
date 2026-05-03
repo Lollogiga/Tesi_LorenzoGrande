@@ -43,3 +43,8 @@
 *~
 .DS_Store
 Thumbs.db
+.codex
+*.bbl
+.gitignore
+*.lol
+*.bbl
