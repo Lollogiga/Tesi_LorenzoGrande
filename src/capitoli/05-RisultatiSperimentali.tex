@@ -597,8 +597,6 @@ Quando la rete è molto carbon-intensive, tale punto si avvicina alla
 baseline energetica; quando la rete è poco carbon-intensive, si avvicina
 alla baseline accurata.
 
-
-
 % -----------------------------------------------------------
 \section{Esperimento 2: calibrazione locale della carbon intensity}
 \label{sec:esperimento2}
@@ -639,7 +637,7 @@ rappresentative: bassa, media e alta intensità carbonica. Da ciascuna fascia
 viene selezionato lo stesso numero di timestamp, ottenendo un campione
 complessivo di 120 punti per zona.
 
-Questo permette di osservare lo scheduler in condizioni ambientali
+Tale approccio permette di osservare lo scheduler in condizioni ambientali
 eterogenee e rilevanti per la decisione carbon-aware. Rispetto a un
 campionamento basato su giornate intere fissate a priori, il campionamento
 per timestamp distribuisce meglio le misure lungo l'intervallo di valori
@@ -839,7 +837,7 @@ LnHarmonic, \texttt{n=100\,000} al 45\% in MonteCarlo, \texttt{n=10\,000} al
 55\% in PiLeibniz; nelle funzioni ML, EfficientNet-B0 al 75\% in
 ImageClassification, DistilBERT al 56\% in SentimentAnalysis, BERT-tiny al
 90\% in SpamDetection. Le varianti a massima accuratezza sono praticamente
-assenti ($\leq 2$\%): la griglia francese opera già quasi sempre ai propri
+assenti ($\leq 3$\%): la griglia francese opera già quasi sempre ai propri
 valori minimi di CI, e non vi sono episodi di CI insolitamente bassa rispetto
 alla norma locale. Le varianti a minima energia risultano invece più presenti
 di quanto ci si aspetterebbe: in LnHarmonic e PiLeibniz raggiungono il 10\%
@@ -847,7 +845,7 @@ e il 12\%, rispettivamente, perché anche una griglia stabile presenta occasiona
 fluttuazioni al rialzo della CI che, amplificate dalla calibrazione locale,
 producono $\lambda$ sufficientemente elevati da attivare le varianti più leggere.
 
-\paragraph{Spagna (92\,g/kWh).}
+\paragraph{Spagna}
 In Spagna il contributo di solare ed eolico introduce una volatilità maggiore
 rispetto alla Francia. Il profilo di $\lambda$ è più disperso e le varianti
 secondarie guadagnano peso. Per le funzioni numeriche la variante principale
@@ -859,7 +857,7 @@ in SentimentAnalysis --- assente in Francia: la variabilità rinnovabile genera
 episodi di CI insolitamente bassa rispetto alla media locale, e la calibrazione
 li traduce in $\lambda$ minimi che attivano i modelli più pesanti.
 
-\paragraph{Italia (197\,g/kWh).}
+\paragraph{Italia}
 In Italia il baricentro si sposta verso varianti intermedie più leggere. In
 LnHarmonic \texttt{n=10\,000} sale al 33\%, avvicinandosi alla quota della
 variante principale \texttt{n=50\,000} (42\%); in PiLeibniz è \texttt{n=5\,000}
@@ -869,10 +867,10 @@ abbastanza bassi da spingere lo scheduler verso la regione più accurata della
 frontiera. Anche
 per le funzioni ML la struttura bimodale di Spagna si conferma: ViT-Base al
 17\% e RoBERTa-large al 18\%, mentre le varianti a minima energia restano
-contenute (7--10\%).
+contenute (3--10\%).
 
-\paragraph{Germania (280\,g/kWh).}
-Germania presenta la distribuzione più ampia tra le cinque zone. In
+\paragraph{Germania}
+La Germania presenta la distribuzione più ampia tra le cinque zone. In
 ImageClassification ViT-Base raggiunge il 22\%, il valore più alto dell'intero
 esperimento: nonostante la CI media sia elevata, la griglia tedesca alterna tra
 generazione rinnovabile (eolico) e fossile, producendo oscillazioni ampie che la
@@ -881,13 +879,14 @@ insolitamente pulita) sia molto alti (CI insolitamente elevata). Il risultato è
 una distribuzione allargata verso entrambi gli estremi: \texttt{n=10\,000} al
 30\% e MobileNet-V2 al 21\% nei timestamp più pesanti; ViT-Base e RoBERTa-large
 nei momenti insolitamente puliti. La variante a minima energia rimane comunque
-residuale (9\% in LnHarmonic, 6--14\% nelle funzioni ML).
+residuale (9\% in LnHarmonic, 6--14\% nelle funzioni ML, con SpamDetection al
+6\% e ImageClassification al 14\%).
 
-\paragraph{Polonia (519\,g/kWh).}
-Polonia, con la CI media più alta (519\,g/kWh), mostra la distribuzione più
+\paragraph{Polonia}
+La Polonia, con la CI media più alta (518\,g/kWh), mostra la distribuzione più
 spostata verso le varianti intermedie leggere: \texttt{n=10\,000} al 38\% in
 LnHarmonic, \texttt{n=5\,000} al 55\% in PiLeibniz, BERT-tiny al 50\% in
-SentimentAnalysis. Tuttavia, anche Polonia mantiene presenze significative delle
+SentimentAnalysis. Tuttavia, anche la Polonia mantiene presenze significative delle
 varianti più accurate (ViT-Base al 20\%, RoBERTa-large al 20\%), confermando
 che nemmeno la zona più carbon-intensive produce $\lambda$ costantemente alti:
 le ore notturne o i weekend abbassano periodicamente la CI sotto la norma locale,
@@ -900,10 +899,12 @@ evento eccezionale.
 \paragraph{Trade-off energia--qualità.}
 Le Figure~\ref{fig:tradeoff-numeric-exp2} e~\ref{fig:tradeoff-ml-exp2}
 riportano il trade-off aggregato tra energia media per invocazione e qualità
-media. In tutte le funzioni e in tutte le zone lo scheduler carbon-aware
-rimane tra \emph{always-accurate} e \emph{always-energy}: riduce l'energia
-rispetto alla baseline accurata e mantiene una qualità superiore alla
-baseline energetica. Questo risultato è coerente con la distribuzione
+media. Ogni grafico mostra i tre punti operativi --- \emph{always-accurate},
+carbon-aware e \emph{always-energy} --- proiettati sul piano energia--qualità,
+separatamente per ciascuna zona. In tutte le funzioni e in tutte le zone lo
+scheduler carbon-aware rimane tra \emph{always-accurate} e \emph{always-energy}:
+riduce l'energia rispetto alla baseline accurata e mantiene una qualità superiore
+alla baseline energetica. Questo risultato è coerente con la distribuzione
 empirica di $\lambda$: i timestamp con CI davvero anomala rispetto alla storia
 locale sono rari, e la maggior parte delle invocazioni ricade in una regione
 intermedia che produce un punto di operazione lontano da entrambi gli estremi.
@@ -938,13 +939,14 @@ intermedia che produce un punto di operazione lontano da entrambi gli estremi.
 
 Il comportamento delle curve conferma la differenza strutturale tra funzioni
 numeriche e ML\@. LnHarmonic e PiLeibniz mantengono qualità praticamente identiche
-a 1 anche quando l'energia si riduce rispettivamente di circa il 90\% e il 63\%
+a 1 anche quando l'energia si riduce rispettivamente di circa il 90\% e il 66\%
 rispetto alla baseline accurata: la frontiera continua permette di spostarsi
 verso varianti meno costose senza attraversare salti qualitativi rilevanti.
 MonteCarlo mostra una perdita leggermente più visibile
-($\Delta Q_{acc} \approx -0.7$\%), ma rimane prossimo alla qualità massima.
+($\Delta Q_{acc} \approx -0{,}6$--$0{,}7$\%), ma rimane prossimo alla qualità massima.
 
-Per le funzioni ML il costo qualitativo è più evidente: ImageClassification
+Per le funzioni ML il costo qualitativo è più evidente (cfr.\
+Figure~\ref{fig:tradeoff-ml-exp2}): ImageClassification
 opera tra 0.74 e 0.75 (vs 0.818 della baseline accurata e 0.603 di quella
 energetica), SentimentAnalysis tra 0.86 e 0.87 (vs 0.964 e 0.674),
 SpamDetection tra 0.93 e 0.95 (vs 0.995 e 0.720). Il degrado non dipende
@@ -953,7 +955,7 @@ per ciascuna funzione --- ma dalla granularità della frontiera: i salti discret
 di accuratezza tra modelli adiacenti rendono il costo qualitativo inevitabilmente
 più visibile rispetto alle funzioni numeriche.
 
-Merita osservare la variazione di energia tra zone nelle funzioni ML\@.
+È opportuno osservare la variazione di energia tra zone nelle funzioni ML\@.
 In ImageClassification Francia produce in media circa 370\,mJ per invocazione,
 mentre le altre zone oscillano tra 510 e 560\,mJ; la differenza non riflette
 la CI locale (la calibrazione è relativa), ma il mix di varianti selezionate ---
@@ -962,102 +964,6 @@ raggiunge il 17--22\%. Analogamente, SentimentAnalysis in Francia consuma circa
 28\,mJ contro i 32--35\,mJ delle altre zone, dove la presenza di RoBERTa-large
 (91\,mJ) è più significativa. La calibrazione locale non converge quindi sulla
 stessa composizione energetica in tutte le zone.
-
-La Tabella~\ref{tab:baseline-comparison-exp2} quantifica gli stessi fenomeni
-rispetto alle due baseline. La colonna $\Delta \mathrm{CO_2}$ combina il
-profilo energetico della variante con la CI del timestamp: quando lo scheduler
-seleziona varianti più efficienti nei momenti localmente più sfavorevoli, il
-beneficio carbonico risulta sistematicamente più marcato del solo risparmio
-energetico medio, come si osserva in tutte le funzioni e tutte le zone.
-
-\begin{table}[p]
-    \centering
-    \caption{Variazione percentuale dello scheduler carbon-aware
-             dell'Esperimento~2 rispetto alle due baseline. $\Delta E$,
-             $\Delta \mathrm{CO_2}$, $\Delta T$ e $\Delta Q$ sono calcolati
-             sulle medie per invocazione. Valori negativi di $\Delta E$,
-             $\Delta \mathrm{CO_2}$ e $\Delta T$ indicano un risparmio
-             rispetto alla baseline; valori positivi di $\Delta Q$ indicano
-             qualità superiore alla baseline.}
-    \label{tab:baseline-comparison-exp2}
-    \resizebox{\textwidth}{!}{%
-    \begin{tabular}{llrrrrrrrr}
-        \toprule
-        Funzione & Zona
-            & $\Delta E_{acc}$ & $\Delta \mathrm{CO_2}_{acc}$
-            & $\Delta T_{acc}$ & $\Delta Q_{acc}$
-            & $\Delta E_{ene}$ & $\Delta \mathrm{CO_2}_{ene}$
-            & $\Delta T_{ene}$ & $\Delta Q_{ene}$ \\
-        \midrule
-        PiLeibniz & Francia
-            & \greenval{-66.15\%} & \greenval{-71.89\%} & \greenval{-71.68\%} & \redval{-0.05\%} & \redval{+81.71\%} & \redval{+50.85\%} & \redval{+10.94\%} & \greenval{+0.15\%} \\
-                  & Spagna
-            & \greenval{-66.28\%} & \greenval{-69.44\%} & \greenval{-23.27\%} & \redval{-0.05\%} & \redval{+80.98\%} & \redval{+64.02\%} & \redval{+13.58\%} & \greenval{+0.15\%} \\
-                  & Italia
-            & \greenval{-63.04\%} & \greenval{-66.51\%} & \greenval{-15.19\%} & \redval{-0.04\%} & \redval{+98.39\%} & \redval{+79.77\%} & \redval{+26.73\%} & \greenval{+0.16\%} \\
-                  & Germania
-            & \greenval{-63.91\%} & \greenval{-68.41\%} & \greenval{-14.75\%} & \redval{-0.05\%} & \redval{+93.73\%} & \redval{+69.56\%} & \redval{+28.40\%} & \greenval{+0.15\%} \\
-                  & Polonia
-            & \greenval{-62.50\%} & \greenval{-65.26\%} & \greenval{-13.46\%} & \redval{-0.04\%} & \redval{+101.28\%} & \redval{+86.47\%} & \redval{+27.79\%} & \greenval{+0.16\%} \\
-        \midrule
-        LnHarmonic & Francia
-            & \greenval{-90.35\%} & \greenval{-92.73\%} & \greenval{-89.15\%} & \redval{-0.01\%} & \redval{+279.03\%} & \redval{+185.79\%} & \redval{+96.77\%} & \greenval{+0.14\%} \\
-                   & Spagna
-            & \greenval{-90.09\%} & \greenval{-91.68\%} & \greenval{-88.56\%} & \redval{-0.01\%} & \redval{+289.28\%} & \redval{+226.98\%} & \redval{+114.24\%} & \greenval{+0.13\%} \\
-                   & Italia
-            & \greenval{-90.59\%} & \greenval{-91.51\%} & \greenval{-89.64\%} & \redval{-0.01\%} & \redval{+269.75\%} & \redval{+233.71\%} & \redval{+95.15\%} & \greenval{+0.14\%} \\
-                   & Germania
-            & \greenval{-90.45\%} & \greenval{-91.94\%} & \greenval{-89.14\%} & \redval{-0.01\%} & \redval{+275.08\%} & \redval{+216.57\%} & \redval{+98.91\%} & \greenval{+0.14\%} \\
-                   & Polonia
-            & \greenval{-90.68\%} & \greenval{-91.40\%} & \greenval{-89.47\%} & \redval{-0.01\%} & \redval{+266.23\%} & \redval{+237.83\%} & \redval{+94.62\%} & \greenval{+0.14\%} \\
-        \midrule
-        MonteCarlo & Francia
-            & \greenval{-91.02\%} & \greenval{-94.82\%} & \greenval{-82.14\%} & \redval{-0.61\%} & \redval{+14034.02\%} & \redval{+8059.95\%} & \redval{+450.04\%} & \greenval{+4.60\%} \\
-                   & Spagna
-            & \greenval{-91.51\%} & \greenval{-93.58\%} & \greenval{-83.07\%} & \redval{-0.61\%} & \redval{+13276.69\%} & \redval{+10012.13\%} & \redval{+430.90\%} & \greenval{+4.59\%} \\
-                   & Italia
-            & \greenval{-90.83\%} & \greenval{-92.86\%} & \greenval{-82.64\%} & \redval{-0.59\%} & \redval{+14332.33\%} & \redval{+11147.43\%} & \redval{+446.52\%} & \greenval{+4.62\%} \\
-                   & Germania
-            & \greenval{-91.84\%} & \greenval{-93.74\%} & \greenval{-83.49\%} & \redval{-0.61\%} & \redval{+12754.73\%} & \redval{+9755.88\%} & \redval{+414.82\%} & \greenval{+4.60\%} \\
-                   & Polonia
-            & \greenval{-90.07\%} & \greenval{-91.91\%} & \greenval{-82.08\%} & \redval{-0.60\%} & \redval{+15534.17\%} & \redval{+12636.41\%} & \redval{+467.06\%} & \greenval{+4.61\%} \\
-        \midrule
-        SentimentAnalysis & Francia
-            & \greenval{-69.73\%} & \greenval{-82.52\%} & \greenval{-78.36\%} & \redval{-10.55\%} & \redval{+1055.05\%} & \redval{+567.10\%} & \redval{+531.03\%} & \greenval{+27.94\%} \\
-                          & Spagna
-            & \greenval{-61.46\%} & \greenval{-73.61\%} & \greenval{-71.24\%} & \redval{-9.89\%} & \redval{+1370.69\%} & \redval{+907.01\%} & \redval{+772.25\%} & \greenval{+28.89\%} \\
-                          & Italia
-            & \greenval{-64.90\%} & \greenval{-72.44\%} & \greenval{-74.01\%} & \redval{-10.21\%} & \redval{+1239.26\%} & \redval{+951.65\%} & \redval{+691.47\%} & \greenval{+28.43\%} \\
-                          & Germania
-            & \greenval{-62.07\%} & \greenval{-74.47\%} & \greenval{-71.85\%} & \redval{-10.34\%} & \redval{+1347.24\%} & \redval{+874.06\%} & \redval{+762.29\%} & \greenval{+28.24\%} \\
-                          & Polonia
-            & \greenval{-64.13\%} & \greenval{-70.17\%} & \greenval{-72.95\%} & \redval{-10.14\%} & \redval{+1268.89\%} & \redval{+1038.07\%} & \redval{+738.24\%} & \greenval{+28.53\%} \\
-        \midrule
-        SpamDetection & Francia
-            & \greenval{-89.18\%} & \greenval{-91.03\%} & \greenval{-63.45\%} & \redval{-6.83\%} & \redval{+360.00\%} & \redval{+281.17\%} & \redval{+101.37\%} & \greenval{+28.75\%} \\
-                      & Spagna
-            & \greenval{-85.26\%} & \greenval{-88.09\%} & \greenval{-79.01\%} & \redval{-6.02\%} & \redval{+526.25\%} & \redval{+406.15\%} & \redval{+148.16\%} & \greenval{+29.88\%} \\
-                      & Italia
-            & \greenval{-79.48\%} & \greenval{-83.87\%} & \greenval{-72.62\%} & \redval{-4.80\%} & \redval{+772.08\%} & \redval{+585.39\%} & \redval{+235.59\%} & \greenval{+31.56\%} \\
-                      & Germania
-            & \greenval{-80.21\%} & \greenval{-85.71\%} & \greenval{-79.14\%} & \redval{-5.37\%} & \redval{+741.25\%} & \redval{+507.49\%} & \redval{+107.26\%} & \greenval{+30.77\%} \\
-                      & Polonia
-            & \greenval{-78.10\%} & \greenval{-81.69\%} & \greenval{-72.59\%} & \redval{-4.34\%} & \redval{+830.83\%} & \redval{+678.36\%} & \redval{+227.54\%} & \greenval{+32.19\%} \\
-        \midrule
-        ImageClassification & Francia
-            & \greenval{-74.51\%} & \greenval{-81.80\%} & \greenval{-47.64\%} & \redval{-9.04\%} & \redval{+381.71\%} & \redval{+243.93\%} & \redval{+51.67\%} & \greenval{+23.40\%} \\
-                            & Spagna
-            & \greenval{-62.49\%} & \greenval{-72.69\%} & \greenval{-59.98\%} & \redval{-8.18\%} & \redval{+608.86\%} & \redval{+416.07\%} & \redval{+56.74\%} & \greenval{+24.55\%} \\
-                            & Italia
-            & \greenval{-64.88\%} & \greenval{-71.38\%} & \greenval{-61.84\%} & \redval{-8.41\%} & \redval{+563.75\%} & \redval{+440.84\%} & \redval{+42.06\%} & \greenval{+24.25\%} \\
-                            & Germania
-            & \greenval{-61.86\%} & \greenval{-72.97\%} & \greenval{-60.05\%} & \redval{-8.76\%} & \redval{+620.84\%} & \redval{+410.91\%} & \redval{+51.99\%} & \greenval{+23.77\%} \\
-                            & Polonia
-            & \greenval{-63.05\%} & \greenval{-68.51\%} & \greenval{-60.05\%} & \redval{-8.49\%} & \redval{+598.43\%} & \redval{+495.12\%} & \redval{+54.14\%} & \greenval{+24.14\%} \\
-        \bottomrule
-    \end{tabular}
-    }
-\end{table}
 
 \subsection{Interpretazione}
 \label{subsec:esperimento2-interpretazione}
@@ -1085,7 +991,7 @@ resta inferiore all'1\% nonostante riduzioni di energia dell'ordine del 60--90\%
 perché la frontiera continua permette compromessi fini. Nelle funzioni ML la
 perdita è invece tra il 5\% e l'11\%, riflettendo i salti discreti tra modelli
 adiacenti: ImageClassification e SentimentAnalysis perdono circa 8--11\%, mentre
-SpamDetection, pur risparmiando più energia, perde solo il 5--7\% perché BERT-tiny
+SpamDetection, pur risparmiando più energia, perde solo il 4--7\% perché BERT-tiny
 (dominante) è qualitativamente più vicino a RoBERTa-spam di quanto VADER non
 lo sia rispetto ai modelli neurali di SentimentAnalysis.
 
@@ -1099,57 +1005,63 @@ in Polonia compaiono scelte non estreme quando la CI è bassa rispetto al
 profilo locale, e in Francia possono essere selezionate varianti efficienti
 nei rari momenti di CI relativamente alta.
 
-
-% -----------------------------------------------------------
-\section{Esperimento 3: valutazione energetica e stabilità operativa}
+\section{Esperimento 3: flusso di arrivo variabile}
 \label{sec:esperimento3}
 % -----------------------------------------------------------
 
 \subsection{Obiettivo e struttura}
 \label{subsec:esperimento3-obiettivo}
 
-Il terzo esperimento valuta lo scheduler carbon-aware lungo due dimensioni
-complementari che gli Esperimenti~1 e~2 non affrontano direttamente.
+Il terzo esperimento estende la valutazione dello scheduler
+carbon-aware introducendo un flusso di richieste concorrenti generato a
+tempo continuo. Rispetto agli Esperimenti~1 e~2, che isolano la logica
+decisionale tramite invocazioni sequenziali, questo esperimento verifica
+se le stesse relazioni tra energia, emissioni, qualità e latenza
+rimangono osservabili quando il sistema è attraversato da un carico
+variabile.
 
-La prima dimensione riguarda il \emph{confronto quantitativo} tra le tre
-policy in termini di energia consumata, emissioni di
-CO\textsubscript{2} e qualità del risultato in condizioni di carico
-variabile ma moderato. Negli Esperimenti~1 e~2 le invocazioni sono
-eseguite in modo sequenziale da un singolo thread: il tempo di risposta
-coincide quindi per costruzione con il solo tempo di esecuzione della
-variante, senza alcuna componente di attesa. L'Esperimento~3 introduce
-un modello concorrente a tempo continuo e verifica che, in assenza di
-saturazione, questa metrica resti interpretabile nello stesso modo: il
-tempo di risposta deve ancora riflettere principalmente il peso
-computazionale della variante scelta, non la pressione del carico.
+L'analisi è articolata lungo due dimensioni. La prima riguarda il
+\emph{confronto quantitativo} tra le tre policy in condizioni di carico
+moderato: energia consumata, emissioni di CO\textsubscript{2}, qualità
+del risultato e tempo di risposta vengono confrontati mantenendo il
+tasso di arrivo al di sotto della soglia di saturazione. In questo
+regime il tempo di attesa in coda deve restare trascurabile; di
+conseguenza, la latenza osservata può essere interpretata principalmente
+come effetto del costo computazionale della variante selezionata, in
+continuità con gli esperimenti precedenti.
 
-La seconda dimensione riguarda la \emph{stabilità operativa} dello
-scheduler sotto carico crescente fino a condizioni di stress. In un
-deployment reale le richieste possono arrivare in burst; è necessario
-verificare che la logica di selezione della variante non costituisca un
-collo di bottiglia e che il sistema si comporti in modo prevedibile
-quando il tasso di arrivo supera la soglia di saturazione.
+La seconda dimensione riguarda la \emph{stabilità operativa} sotto
+carico crescente. In un deployment reale le richieste non arrivano
+necessariamente in modo uniforme e possono concentrarsi in burst o fasi
+di picco. Per questo motivo è utile osservare non solo quale variante lo
+scheduler seleziona, ma anche se il sistema mantiene throughput,
+completamento e tempi di coda prevedibili quando il tasso di arrivo si
+avvicina o supera la capacità sostenibile del nodo.
 
-Le due dimensioni sono valutate su due run distinti dello stesso
-workload k6, differenziati esclusivamente dal profilo di carico:
+Le due dimensioni sono valutate mediante due run dello stesso script k6,
+che condividono generatore delle richieste, seed e insieme di funzioni e
+zone considerate, ma differiscono nel profilo di carico:
 %
 \begin{itemize}
   \item \textbf{Run~A -- carico moderato}: il tasso di arrivo è
         mantenuto al di sotto della soglia di saturazione per tutte e
-        tre le policy. Tutte le richieste vengono completate; il tempo
-        di risposta osservato riflette il solo tempo di esecuzione.
-        Questo run produce i dati per il confronto quantitativo di
-        energia, CO\textsubscript{2}, qualità e latenza.
+        tre le policy. Il run serve a produrre un confronto quantitativo
+        tra energia, CO\textsubscript{2}, qualità e latenza in una
+        condizione in cui le richieste sono concorrenti, ma il tempo di
+        coda non domina il tempo di risposta.
   \item \textbf{Run~B -- carico crescente}: il tasso di arrivo aumenta
-        progressivamente fino a indurre saturazione nella policy
-        $\lambda{=}1$. Questo run produce i dati per l'analisi della
-        stabilità operativa e del comportamento dello scheduler sotto
-        pressione.
+        progressivamente al fine di caratterizzare il comportamento
+        operativo delle policy sotto pressione, distinguendo il costo
+        della variante eseguita dagli effetti di accumulo in coda.
 \end{itemize}
 
-Il workload è deterministico: a parità di seed, la sequenza di
-richieste --- funzione invocata, zona geografica, valore di carbon
-intensity --- è identica per tutte e tre le policy e tra i due run.
+Il workload è deterministico: a parità di seed, la sequenza di richieste
+--- funzione invocata, zona geografica e valore di carbon intensity --- è
+identica per le tre policy, al fine di mantenerle comparabili. Inoltre, le
+fasi iniziali condivise da Run~A e Run~B utilizzano la stessa sequenza,
+così che le differenze osservate siano attribuibili alla policy di
+scheduling e al profilo di carico, non a una diversa composizione del
+workload.
 % -----------------------------------------------------------
 \subsection{Prima parte: confronto energetico a carico moderato (Run~A)}
 \label{subsec:esperimento3-parte1}
@@ -1181,85 +1093,79 @@ influenzare l'interpretazione della latenza.
 
 La Tabella~\ref{tab:exp3-energy-comparison} riporta, per ciascuna
 funzione, la variazione percentuale di \emph{adaptive-ci} rispetto alle
-due baseline, aggregata sull'intero Run~A. La struttura è analoga alle
-Tabelle~\ref{tab:baseline-comparison-exp1}
-e~\ref{tab:baseline-comparison-exp2} degli esperimenti precedenti.
-
+due baseline, aggregata sull'intero Run~A.
 \begin{table}[H]
     \centering
     \caption{Variazione percentuale di \emph{adaptive-ci} rispetto alle
-             due baseline nel Run~A (carico moderato, tutte le richieste
-             completate). Colonne \emph{acc}: scarto vs $\lambda{=}1$;
-             colonne \emph{ene}: scarto vs $\lambda{=}0$.
-             $\Delta E$ e $\Delta \mathrm{CO_2}$ negativi indicano
-             risparmio; $\Delta Q$ positivo indica qualità superiore;
-             $\Delta T$ si riferisce alla sola durata di esecuzione
-             (\texttt{duration\_seconds}).
-             \textsuperscript{\textdagger}~Valori di $\Delta T$ per le
-             funzioni ML condizionati da cold start: il campione ridotto
-             ($n{=}9$--$18$) causa prima invocazione a freddo per le
-             varianti selezionate da \emph{adaptive-ci}.}
+             due baseline nel Run~A.}
     \label{tab:exp3-energy-comparison}
     \resizebox{\textwidth}{!}{%
     \begin{tabular}{lrrrrrrrr}
         \toprule
-        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\lambda{=}1$}
-        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\lambda{=}0$} \\
+        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\Lambda_0$}
+        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\Lambda_1$} \\
         \cmidrule(lr){2-5}\cmidrule(lr){6-9}
         Funzione
-            & $\Delta E$ & $\Delta \mathrm{CO_2}$ & $\Delta Q$ & $\Delta T$
-            & $\Delta E$ & $\Delta \mathrm{CO_2}$ & $\Delta Q$ & $\Delta T$ \\
+            & $\Delta E_{ene}$ & $\Delta \mathrm{CO_2}_{ene}$
+            & $\Delta T_{ene}$ & $\Delta Q_{ene}$
+            & $\Delta E_{acc}$ & $\Delta \mathrm{CO_2}_{acc}$
+            & $\Delta T_{acc}$ & $\Delta Q_{acc}$ \\
         \midrule
         LnHarmonic
-            & \greenval{-89.8\%} & \greenval{-92.8\%}
-            & \redval{-0.0\%}    & \greenval{-90.8\%}
             & \redval{+300.2\%}  & \redval{+180.0\%}
-            & \greenval{+0.1\%}  & \redval{+154.3\%} \\
+            & \redval{+154.3\%}  & \greenval{+0.1\%}
+            & \greenval{-89.8\%} & \greenval{-92.8\%}
+            & \greenval{-90.8\%} & \redval{-0.13\%} \\
         MonteCarlo
-            & \greenval{-91.7\%} & \greenval{-91.5\%}
-            & \redval{-0.6\%}    & \greenval{-83.5\%}
             & \redval{+13\mathrm{k}\%} & \redval{+11\mathrm{k}\%}
-            & \greenval{+4.6\%}  & \redval{+548.2\%} \\
+            & \redval{+548.2\%}  & \greenval{+4.6\%}
+            & \greenval{-91.7\%} & \greenval{-91.5\%}
+            & \greenval{-83.5\%} & \redval{-0.6\%} \\
         PiLeibniz
-            & \greenval{-64.1\%} & \greenval{-66.4\%}
-            & \redval{-0.0\%}    & \redval{+41.6\%}\textsuperscript{*}
             & \redval{+92.8\%}   & \redval{+81.0\%}
-            & \greenval{+0.2\%}  & \redval{+115.6\%} \\
+            & \redval{+115.6\%}  & \greenval{+0.2\%}
+            & \greenval{-64.1\%} & \greenval{-66.4\%}
+            & \greenval{-41.6\%}   & \redval{-0.26\%} \\
         SentimentAnalysis
-            & \greenval{-70.4\%} & \greenval{-76.5\%}
-            & \redval{-11.8\%}   & \redval{+68.4\%}\textsuperscript{\textdagger}
             & \redval{+1.0\mathrm{k}\%} & \redval{+752.4\%}
-            & \greenval{+26.2\%} & \redval{+516\mathrm{k}\%}\textsuperscript{\textdagger} \\
+            & \redval{+3.2\mathrm{k}\%}
+            & \greenval{+26.2\%}
+            & \greenval{-70.4\%} & \greenval{-76.5\%}
+            & \greenval{-77.2\%}
+            & \redval{-11.8\%} \\
         SpamDetection
-            & \greenval{-77.7\%} & \greenval{-75.4\%}
-            & \redval{-3.9\%}    & \redval{+140.2\%}\textsuperscript{\textdagger}
             & \redval{+846.4\%}  & \redval{+1.3\mathrm{k}\%}
-            & \greenval{+32.8\%} & \redval{+246\mathrm{k}\%}\textsuperscript{\textdagger} \\
+            & \redval{+1.7\mathrm{k}\%}
+            & \greenval{+32.8\%}
+            & \greenval{-77.7\%} & \greenval{-75.4\%}
+            & \greenval{-36.7\%}
+            & \redval{-3.9\%} \\
+        ImageClassification\textsuperscript{\S}
+            & \redval{+554.7\%}  & \redval{+454.1\%}
+            & \redval{+52.2\%}
+            & \greenval{+24.0\%}
+            & \greenval{-65.4\%} & \greenval{-70.7\%}
+            & \greenval{-57.2\%}
+            & \redval{-8.6\%} \\
         \bottomrule
     \end{tabular}
     }
 \end{table}
 
-I risultati replicano, in condizioni di carico concorrente, il
-comportamento osservato negli Esperimenti~1 e~2.
-Rispetto a $\lambda{=}1$, \emph{adaptive-ci} riduce il consumo
-energetico e le emissioni di CO\textsubscript{2} per tutte le funzioni:
-il risparmio è più marcato per le funzioni numeriche con frontiera di
-Pareto estesa (MonteCarlo, LnHarmonic) e meno accentuato per le
-funzioni con varianti discrete (PiLeibniz, SpamDetection). Il costo
-qualitativo rimane contenuto per le funzioni numeriche, in cui le
-varianti adiacenti differiscono poco in accuratezza, ed è invece più
-visibile per le funzioni ML, dove i salti tra modelli producono un
-impatto qualitativo discreto.
-
-Il tempo di risposta di \emph{adaptive-ci} si colloca in posizione
-intermedia rispetto alle due baseline per le funzioni numeriche:
-inferiore a $\lambda{=}1$ (varianti più leggere) e superiore a
-$\lambda{=}0$ (varianti più pesanti). Il tempo di coda
-(\texttt{queueing\_time}) è trascurabile per tutte le policy:
-questa condizione conferma che i valori di $\Delta T$ riflettono
-esclusivamente il peso computazionale delle varianti selezionate e non
-la pressione del carico.
+I risultati confermano, anche in presenza di richieste concorrenti, il
+comportamento osservato negli Esperimenti~1 e~2. Rispetto alla baseline
+a massima qualità ($\Lambda_1$), \emph{adaptive-ci} riduce il consumo
+energetico e le emissioni di CO\textsubscript{2} per tutte le funzioni,
+collocandosi in una regione intermedia tra i due estremi della frontiera
+di Pareto. 
+Il confronto con $\Lambda_0$ mostra il lato opposto del compromesso:
+\emph{adaptive-ci} consuma più della baseline energetica, ma mantiene
+una qualità sensibilmente superiore. La latenza segue in generale la
+complessità della variante selezionata.
+ Il tempo di coda
+(\texttt{queueing\_time}) resta trascurabile nel Run~A: la latenza
+osservata è quindi attribuibile principalmente al peso computazionale
+delle varianti, non alla pressione del carico.
 
 % -----------------------------------------------------------
 \subsection{Seconda parte: stabilità sotto carico crescente (Run~B)}
@@ -1269,133 +1175,89 @@ la pressione del carico.
 \subsubsection{Profilo del workload e composizione}
 \label{subsubsec:esperimento3-parte2-workload}
 
-Il Run~B estende il profilo di carico del Run~A includendo le due fasi
-di stress, per un totale di cinque fasi con tasso di arrivo compreso
-tra 2 e 25~richieste al secondo e una durata complessiva di
-30~minuti. La Figura~\ref{fig:exp3-workload-profile} mostra il profilo
-configurato.
+Il Run~B utilizza lo stesso generatore di richieste del Run~A, ma
+estende il profilo di carico con due fasi aggiuntive di stress. Il run è
+composto da cinque fasi consecutive, con tasso di arrivo compreso tra
+2 e 25~richieste al secondo e durata complessiva pari a 30~minuti. Le
+prime tre fasi coincidono con il profilo moderato già impiegato nel
+Run~A; le ultime due aumentano progressivamente la pressione sul nodo,
+fino a raggiungere un regime in cui almeno una policy non riesce più a
+sostenere il flusso in ingresso. La
+Figura~\ref{fig:exp3-workload-profile} mostra il profilo configurato.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{figures/validation/exp3/01-wokload.png}
     \caption{Profilo del workload di arrivo nel Run~B. Le prime tre fasi
-             (\emph{Low}, \emph{Medium}, \emph{High}) sono identiche al
-             Run~A; le ultime due (\emph{Stress} e \emph{Peak}) inducono
-             condizioni di saturazione progressiva. Il tasso configurato è
-             mantenuto costante da k6 tramite l'esecutore
-             \texttt{constant-arrival-rate}.}
+             (\emph{Low}, \emph{Medium}, \emph{High}) riproducono il carico
+             moderato del Run~A; le ultime due (\emph{Stress} e
+             \emph{Peak}) aumentano il tasso di arrivo fino a condizioni di
+             saturazione. Il tasso configurato è mantenuto da k6 tramite
+             l'esecutore \texttt{constant-arrival-rate}.}
     \label{fig:exp3-workload-profile}
 \end{figure}
 
-Il workload non è mono-funzione né mono-zona: cinque funzioni diverse
-e cinque zone geografiche sono distribuite in modo bilanciato tra le
-richieste, come mostrato nella Figura~\ref{fig:exp3-workload-mix}.
-Questa eterogeneità è necessaria per valutare lo scheduler in
-condizioni rappresentative di un deployment reale, in cui il nodo serve
-funzioni con profili energetici molto diversi e riceve segnali di CI
-da zone con caratteristiche elettriche differenti.
+Il workload è eterogeneo sia rispetto alla funzione invocata sia
+rispetto alla zona geografica associata al segnale di carbon intensity.
+Le richieste sono distribuite tra cinque funzioni e cinque zone europee,
+come mostrato nella Figura~\ref{fig:exp3-workload-mix}. Questa scelta
+evita che la stabilità osservata dipenda da un singolo profilo
+computazionale o da una sola traiettoria di CI: il nodo deve servire
+funzioni con costi energetici diversi e, allo stesso tempo, applicare la
+logica carbon-aware a segnali provenienti da reti elettriche con
+caratteristiche differenti.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{figures/validation/exp3/09_workload_mix_function_zone.png}
     \caption{Composizione del workload nel Run~B: distribuzione per
              funzione invocata (sinistra), per zona CI (centro) e
-             heatmap funzione~$\times$~zona (destra). La sequenza è
-             deterministica e identica per tutte e tre le policy.}
+             heatmap funzione~$\times$~zona (destra). A parità di seed,
+             la sequenza di richieste è identica per tutte e tre le
+             policy.}
     \label{fig:exp3-workload-mix}
 \end{figure}
 
 \subsubsection{Risultati}
 \label{subsubsec:esperimento3-parte2-risultati}
 
-\paragraph{Latenza e saturazione della coda.}
-La Figura~\ref{fig:exp3-latency-decomp} mostra la latenza mediana
-disaggregata nelle due componenti --- attesa in coda e durata di
-esecuzione --- per fase e policy. La scala logaritmica sull'asse
-verticale permette di confrontare contemporaneamente valori che
-differiscono di quattro ordini di grandezza.
+\paragraph{Saturazione operativa.}
+Il Run~B è eseguito su un singolo nodo serverless. Quando una richiesta
+arriva mentre il nodo sta già eseguendo un'invocazione, essa viene
+accodata fino a quando una risorsa di esecuzione torna disponibile. In
+questa configurazione la coda ha capacità finita, pari a 1000
+richieste: se il tempo medio di servizio cresce oltre quanto il tasso di
+arrivo consente di sostenere, le richieste iniziano ad accumularsi e il
+sistema entra progressivamente in saturazione.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.98\textwidth]{figures/validation/exp3/02_latency_decomposition_log.pdf}
-    \caption{Decomposizione della latenza mediana per fase e policy
-             (scala logaritmica). La parte tratteggiata rappresenta
-             l'attesa in coda (p50); la parte piena la durata di
-             esecuzione (p50). Le barre con pattern a croce indicano
-             fasi in cui $\lambda{=}1$ non ha completato alcuna
-             richiesta: il riferimento è il timeout di k6 (180~s).
-             $\lambda{=}0$ rimane stabile sotto i 5~ms in tutte le fasi;
-             \emph{adaptive-ci} cresce gradualmente con il carico;
-             $\lambda{=}1$ accumula code di oltre 100~s già dalla fase
-             \emph{Medium}.}
-    \label{fig:exp3-latency-decomp}
-\end{figure}
+La policy più esposta a questo comportamento è $\Lambda_1$, perché
+seleziona sempre la variante a massima qualità. Per le funzioni
+numericamente leggere questo costo aggiuntivo resta contenuto, ma per le
+funzioni ML la differenza tra varianti può essere molto più marcata:
+modelli più accurati richiedono tempi di esecuzione superiori e riducono
+la capacità effettiva del nodo. Sotto carico crescente, quindi,
+$\Lambda_1$ può accumulare richieste in coda anche quando lo scheduler
+opera normalmente, selezionando la variante attesa dalla policy.
 
-Per $\lambda{=}1$ il collo di bottiglia non è nella logica
-dello scheduler, ma nell'accumulo di richieste in coda. Questo
-distingue il fenomeno osservato da una degradazione delle prestazioni di
-esecuzione: il sistema è corretto nel \emph{cosa} esegue, ma non riesce
-a sostenere il ritmo con cui le richieste arrivano.
+Per evidenziare questo effetto è sufficiente osservare il throughput
+effettivo: se il sistema è stabile, il numero di richieste completate al
+secondo segue il tasso di arrivo configurato; quando invece il nodo entra
+in saturazione, le due curve divergono e il throughput osservato smette
+di crescere con il carico.
 
 \paragraph{Throughput effettivo.}
 La Figura~\ref{fig:exp3-throughput} confronta il throughput effettivo
 --- richieste completate con HTTP~200 per secondo --- con il tasso
-configurato da k6.
+configurato da k6. $\lambda{=}0$ e \emph{adaptive-ci} seguono il
+profilo configurato in tutte le fasi; $\lambda{=}1$ inizia a divergere
+dalla fase \emph{Medium} e collassa nelle fasi di stress.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.90\textwidth]{figures/validation/exp3/03-throughput.png}
+    \includegraphics[width=0.90\textwidth]{figures/validation/exp3/throuput.png}
     \caption{Throughput effettivo vs arrival rate configurato per fase e
-             policy. $\lambda{=}0$ e \emph{adaptive-ci} seguono il
-             profilo configurato in tutte le fasi; $\lambda{=}1$ inizia
-             a divergere dalla fase \emph{Medium} e collassa nelle fasi
-             di stress.}
+             policy.}
     \label{fig:exp3-throughput}
-\end{figure}
-
-\paragraph{Frazione cumulativa di completamento.}
-La Figura~\ref{fig:exp3-completion} introduce una rappresentazione
-alternativa alla CDF classica del tempo di risposta. L'asse verticale
-riporta la percentuale di richieste completate \emph{sul totale
-inviato}, non sul sottoinsieme delle sole richieste andate a buon fine.
-Questa scelta evita una distorsione tipica dei sistemi sotto stress: una
-CDF calcolata solo sui completamenti di $\lambda{=}1$ restituirebbe una
-distribuzione apparentemente normale, ma taciterebbe il fatto che il
-96.5\% delle richieste inviate non ha mai ricevuto risposta. -(da rivedere)
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.90\textwidth]{figures/validation/exp3/05_completion_fraction.png}
-    \caption{Frazione cumulativa di completamento per policy (scala
-             logaritmica sull'asse $x$). L'asse $y$ indica la
-             percentuale di richieste completate rispetto al totale
-             inviato. Le curve di $\lambda{=}0$ e \emph{adaptive-ci}
-             raggiungono il 100\% e il 99\% entro pochi secondi;
-             la curva di $\lambda{=}1$ asintota al 3.5\%, mostrando
-             che il 96.5\% delle richieste non ha mai ricevuto risposta
-             entro il timeout di 180~s.}
-    \label{fig:exp3-completion}
-\end{figure}
-
-\paragraph{Confronto quantitativo per fase.}
-La Figura~\ref{fig:exp3-phase-table} riassume, per ciascuna
-combinazione di fase e policy, le metriche operative principali:
-tasso di completamento, throughput, percentili di durata e di coda.
-Le celle evidenziate in verde indicano il valore migliore per quella
-fase; quelle in rosso il peggiore.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.98\textwidth]{figures/validation/exp3/06_comparison_table_phase_policy.png}
-    \caption{Confronto operativo per fase e policy. Nelle fasi
-             \emph{Low} e \emph{Medium} le tre policy sono comparabili;
-             la differenziazione emerge progressivamente con il crescere
-             del carico. $\lambda{=}1$ mostra le prime code misurabili
-             già in \emph{Medium}; in \emph{High} e \emph{Stress} il
-             completamento scende a zero. \emph{adaptive-ci} mantiene
-             metriche paragonabili a $\lambda{=}0$ fino a \emph{Stress},
-             con un primo degrado visibile solo nel \emph{Peak}.}
-    \label{fig:exp3-phase-table}
 \end{figure}
 
 \subsubsection{Distribuzione delle varianti selezionate}
@@ -1410,7 +1272,7 @@ di carbon intensity ricevuto.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.98\textwidth]{figures/validation/exp3/08_variant_distribution_by_function.png}
+    \includegraphics[width=0.98\textwidth]{figures/validation/exp3/08_variant_distribution.png}
     \caption{Distribuzione percentuale delle varianti selezionate da
              \emph{adaptive-ci} per funzione nel Run~B. L'ordine va
              dalla variante meno costosa (sinistra) a quella più costosa
