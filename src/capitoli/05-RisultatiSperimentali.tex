@@ -777,13 +777,27 @@ l'energia da joule a kWh, poiché $1~\mathrm{kWh}=3{,}6 \cdot 10^6~\mathrm{J}$.
 Come nell'Esperimento~1, il primo indicatore osservato è la distribuzione
 delle varianti selezionate. Le Figure~\ref{fig:variant-distribution-numeric-exp2}
 e~\ref{fig:variant-distribution-ml-exp2} riportano le quote di selezione
-ottenute con calibrazione locale della CI. La differenza principale rispetto
-alla calibrazione europea è che l'ordinamento per CI media della zona non
-determina da solo una transizione monotona: ciascuna rete viene valutata
-rispetto alla propria distribuzione storica e, quindi, una zona con CI
-assoluta elevata può comunque attraversare regioni di $\lambda$ simili a
-quelle di una zona più pulita, se il timestamp è ordinario rispetto al suo
-profilo locale.
+ottenute con calibrazione locale della CI.
+
+Un primo segnale del corretto funzionamento dello scheduler è che le varianti
+agli estremi della frontiera di Pareto --- quella a massima accuratezza e quella
+a minima energia --- rimangono residuali in tutte le zone e per tutte le funzioni.
+La sigmoide locale produce valori di $\lambda$ estremi solo quando il timestamp
+è davvero anomalo rispetto alla storia della zona; la grande maggioranza dei
+timestamp ordinari ricade in una regione intermedia, e lo scheduler converge
+sulle varianti di compromesso. Le scelte estreme compaiono nei rari episodi di
+picco o di minimo relativo della CI locale, non come comportamento sistematico.
+La natura e la frequenza di questi episodi variano da zona a zona in funzione
+della volatilità del mix energetico locale, e sono ciò che differenzia le
+distribuzioni tra le cinque zone.
+
+A differenza della calibrazione europea, $\lambda$ non misura il livello assoluto
+di CI, ma quanto il timestamp si discosta dal profilo storico locale della rete:
+anche una zona con CI media elevata produce $\lambda$ simili a quelli di una zona
+più pulita quando il momento è ordinario per quella rete. La struttura zona per
+zona delle distribuzioni riflette pertanto la forma del profilo storico di
+ciascuna griglia.
+
 
 \begin{figure}[p]
     \centering
@@ -816,54 +830,83 @@ profilo locale.
     \label{fig:variant-distribution-ml-exp2}
 \end{figure}
 
-\paragraph{Funzioni numeriche.}
-Nelle funzioni numeriche la calibrazione locale produce un compromesso
-stabile e poco costoso in termini qualitativi. In LnHarmonic la variante
-\texttt{n=50 000} rimane centrale in tutte le zone, ma la quota di
-\texttt{n=10 000} cresce nelle zone con CI media più elevata, passando dal
-14\% in Francia al 38\% in Polonia. La variante più accurata è invece
-selezionata solo in modo marginale, segnale che la sigmoide locale colloca
-buona parte dei timestamp in una regione di compromesso, non nella regione
-di massima qualità.
+\paragraph{Francia (15\,g/kWh).}
+Francia è la zona con il profilo di CI più stabile, dominato dalla generazione
+nucleare. La bassa volatilità si traduce in una distribuzione di $\lambda$ molto
+concentrata attorno a valori medi, e lo scheduler converge quasi interamente
+sull'unica variante intermedia principale: \texttt{n=50\,000} al 62\% in
+LnHarmonic, \texttt{n=100\,000} al 45\% in MonteCarlo, \texttt{n=10\,000} al
+55\% in PiLeibniz; nelle funzioni ML, EfficientNet-B0 al 75\% in
+ImageClassification, DistilBERT al 56\% in SentimentAnalysis, BERT-tiny al
+90\% in SpamDetection. Le varianti a massima accuratezza sono praticamente
+assenti ($\leq 2$\%): la griglia francese opera già quasi sempre ai propri
+valori minimi di CI, e non vi sono episodi di CI insolitamente bassa rispetto
+alla norma locale. Le varianti a minima energia risultano invece più presenti
+di quanto ci si aspetterebbe: in LnHarmonic e PiLeibniz raggiungono il 10\%
+e il 12\%, rispettivamente, perché anche una griglia stabile presenta occasionali
+fluttuazioni al rialzo della CI che, amplificate dalla calibrazione locale,
+producono $\lambda$ sufficientemente elevati da attivare le varianti più leggere.
 
-MonteCarlo mostra un comportamento analogo, ma con un peso maggiore delle
-varianti intermedie: \texttt{n=100 000} e \texttt{n=50 000} coprono quasi
-tutte le invocazioni, mentre \texttt{n=10 000} cresce moderatamente al
-crescere della CI media. PiLeibniz è il caso più regolare: nelle zone più
-carbon-intensive aumenta la quota di \texttt{n=5 000}, che passa dal 32\%
-in Francia al 55\% in Polonia, mentre \texttt{n=10 000} diminuisce. Questa
-correlazione è coerente con il contesto dell'esperimento: quando la CI
-locale è relativamente alta, lo scheduler tende a spostarsi verso varianti
-meno costose, ma la decisione resta vincolata alla frontiera di Pareto della
-singola funzione.
+\paragraph{Spagna (92\,g/kWh).}
+In Spagna il contributo di solare ed eolico introduce una volatilità maggiore
+rispetto alla Francia. Il profilo di $\lambda$ è più disperso e le varianti
+secondarie guadagnano peso. Per le funzioni numeriche la variante principale
+rimane dominante (44\% in LnHarmonic, 45\% in MonteCarlo), ma crescono le quote
+adiacenti: in LnHarmonic \texttt{n=10\,000} sale al 22\% e \texttt{n=100\,000}
+al 24\%. Nelle funzioni ML emerge una quota non trascurabile delle varianti più
+accurate --- ViT-Base al 19\% in ImageClassification, RoBERTa-large al 20\%
+in SentimentAnalysis --- assente in Francia: la variabilità rinnovabile genera
+episodi di CI insolitamente bassa rispetto alla media locale, e la calibrazione
+li traduce in $\lambda$ minimi che attivano i modelli più pesanti.
 
-\paragraph{Funzioni ML.}
-Per le funzioni ML emerge lo stesso effetto, ma in modo più discontinuo.
-ImageClassification distribuisce le invocazioni tra EfficientNet-B0,
-MobileNet-V2 e MobileNet-V2-Tiny, con una presenza non trascurabile di
-ViT-Base nelle zone diverse dalla Francia. L'aumento di MobileNet-V2 nelle
-zone a CI media più alta indica una preferenza per modelli più leggeri, ma
-non una selezione esclusiva del modello minimo: anche in Polonia
-EfficientNet-B0 rimane al 42\%.
+\paragraph{Italia (197\,g/kWh).}
+In Italia il baricentro si sposta verso varianti intermedie più leggere. In
+LnHarmonic \texttt{n=10\,000} sale al 33\%, avvicinandosi alla quota della
+variante principale \texttt{n=50\,000} (42\%); in PiLeibniz è \texttt{n=5\,000}
+a dominare con il 52\%, mentre \texttt{n=50\,000} compare per la prima volta
+in modo non residuale (7\%), segnale che alcuni timestamp producono $\lambda$
+abbastanza bassi da spingere lo scheduler verso la regione più accurata della
+frontiera. Anche
+per le funzioni ML la struttura bimodale di Spagna si conferma: ViT-Base al
+17\% e RoBERTa-large al 18\%, mentre le varianti a minima energia restano
+contenute (7--10\%).
 
-SentimentAnalysis segue una dinamica simile: BERT-tiny cresce dal 30\% in
-Francia al 50\% in Polonia, mentre DistilBERT diminuisce. RoBERTa-large
-resta comunque presente in quattro zone su cinque, perché la calibrazione
-locale assegna $\lambda$ elevati quando la CI è bassa rispetto alla storia
-della zona. SpamDetection è il caso più sbilanciato verso una variante
-intermedia: BERT-tiny domina in tutte le zone, con quote tra il 75\% e il
-90\%. Il classificatore keyword, pur essendo la baseline energetica, rimane
-residuale; questo mostra che, con calibrazione locale, lo scheduler non
-interpreta una rete ad alta CI media come motivo sufficiente per scegliere
-sempre la variante minima.
+\paragraph{Germania (280\,g/kWh).}
+Germania presenta la distribuzione più ampia tra le cinque zone. In
+ImageClassification ViT-Base raggiunge il 22\%, il valore più alto dell'intero
+esperimento: nonostante la CI media sia elevata, la griglia tedesca alterna tra
+generazione rinnovabile (eolico) e fossile, producendo oscillazioni ampie che la
+calibrazione locale registra come episodi di $\lambda$ sia molto bassi (CI
+insolitamente pulita) sia molto alti (CI insolitamente elevata). Il risultato è
+una distribuzione allargata verso entrambi gli estremi: \texttt{n=10\,000} al
+30\% e MobileNet-V2 al 21\% nei timestamp più pesanti; ViT-Base e RoBERTa-large
+nei momenti insolitamente puliti. La variante a minima energia rimane comunque
+residuale (9\% in LnHarmonic, 6--14\% nelle funzioni ML).
+
+\paragraph{Polonia (519\,g/kWh).}
+Polonia, con la CI media più alta (519\,g/kWh), mostra la distribuzione più
+spostata verso le varianti intermedie leggere: \texttt{n=10\,000} al 38\% in
+LnHarmonic, \texttt{n=5\,000} al 55\% in PiLeibniz, BERT-tiny al 50\% in
+SentimentAnalysis. Tuttavia, anche Polonia mantiene presenze significative delle
+varianti più accurate (ViT-Base al 20\%, RoBERTa-large al 20\%), confermando
+che nemmeno la zona più carbon-intensive produce $\lambda$ costantemente alti:
+le ore notturne o i weekend abbassano periodicamente la CI sotto la norma locale,
+generando episodi di $\lambda$ bassi. Specularmente, la variante a minima energia
+è più contenuta rispetto alle attese (5--6\% nelle funzioni numeriche,
+ad esempio LnHarmonic al 5\% e PiLeibniz al 6\%): la CI alta
+è la norma polacca, non un picco, e la calibrazione locale non la interpreta come
+evento eccezionale.
 
 \paragraph{Trade-off energia--qualità.}
 Le Figure~\ref{fig:tradeoff-numeric-exp2} e~\ref{fig:tradeoff-ml-exp2}
 riportano il trade-off aggregato tra energia media per invocazione e qualità
-media. In tutte le funzioni lo scheduler carbon-aware rimane tra
-\emph{always-accurate} e \emph{always-energy}: riduce l'energia rispetto
-alla baseline accurata, ma preserva una qualità nettamente superiore alla
-baseline energetica.
+media. In tutte le funzioni e in tutte le zone lo scheduler carbon-aware
+rimane tra \emph{always-accurate} e \emph{always-energy}: riduce l'energia
+rispetto alla baseline accurata e mantiene una qualità superiore alla
+baseline energetica. Questo risultato è coerente con la distribuzione
+empirica di $\lambda$: i timestamp con CI davvero anomala rispetto alla storia
+locale sono rari, e la maggior parte delle invocazioni ricade in una regione
+intermedia che produce un punto di operazione lontano da entrambi gli estremi.
 
 \begin{figure}[p]
     \centering
@@ -893,24 +936,39 @@ baseline energetica.
     \label{fig:tradeoff-ml-exp2}
 \end{figure}
 
-Il comportamento delle curve conferma la differenza tra funzioni numeriche
-e ML. LnHarmonic e PiLeibniz mantengono qualità prossime a 1 anche quando
-l'energia media si riduce di un ordine di grandezza rispetto alla baseline
-accurata. MonteCarlo mostra una perdita leggermente più visibile, ma resta
-molto vicino alla qualità massima. Per le funzioni ML, invece,
-ImageClassification lavora intorno a una qualità media compresa tra 0.74 e
-0.75, SentimentAnalysis tra 0.86 e 0.87 e SpamDetection tra 0.93 e 0.95:
-il risparmio è quindi ottenuto accettando un degrado qualitativo misurabile,
-ma non fino al livello della baseline energetica.
+Il comportamento delle curve conferma la differenza strutturale tra funzioni
+numeriche e ML\@. LnHarmonic e PiLeibniz mantengono qualità praticamente identiche
+a 1 anche quando l'energia si riduce rispettivamente di circa il 90\% e il 63\%
+rispetto alla baseline accurata: la frontiera continua permette di spostarsi
+verso varianti meno costose senza attraversare salti qualitativi rilevanti.
+MonteCarlo mostra una perdita leggermente più visibile
+($\Delta Q_{acc} \approx -0.7$\%), ma rimane prossimo alla qualità massima.
 
-La Tabella~\ref{tab:baseline-comparison-exp2} quantifica lo stesso fenomeno
-rispetto alle due baseline. La colonna $\Delta \mathrm{CO_2}$ è calcolata
-dalle emissioni stimate per invocazione, quindi combina il profilo
-energetico della variante selezionata con la CI del timestamp. Per questo
-motivo la riduzione percentuale di CO\textsubscript{2} non coincide sempre
-con la riduzione di energia: quando lo scheduler seleziona varianti più
-efficienti proprio nei timestamp a CI più alta, il beneficio carbonico può
-risultare più marcato del solo risparmio energetico medio.
+Per le funzioni ML il costo qualitativo è più evidente: ImageClassification
+opera tra 0.74 e 0.75 (vs 0.818 della baseline accurata e 0.603 di quella
+energetica), SentimentAnalysis tra 0.86 e 0.87 (vs 0.964 e 0.674),
+SpamDetection tra 0.93 e 0.95 (vs 0.995 e 0.720). Il degrado non dipende
+dalla zona --- la qualità è sostanzialmente stabile su tutte e cinque le zone
+per ciascuna funzione --- ma dalla granularità della frontiera: i salti discreti
+di accuratezza tra modelli adiacenti rendono il costo qualitativo inevitabilmente
+più visibile rispetto alle funzioni numeriche.
+
+Merita osservare la variazione di energia tra zone nelle funzioni ML\@.
+In ImageClassification Francia produce in media circa 370\,mJ per invocazione,
+mentre le altre zone oscillano tra 510 e 560\,mJ; la differenza non riflette
+la CI locale (la calibrazione è relativa), ma il mix di varianti selezionate ---
+in Francia ViT-Base è quasi assente (2\%, 1455\,mJ), mentre nelle altre zone
+raggiunge il 17--22\%. Analogamente, SentimentAnalysis in Francia consuma circa
+28\,mJ contro i 32--35\,mJ delle altre zone, dove la presenza di RoBERTa-large
+(91\,mJ) è più significativa. La calibrazione locale non converge quindi sulla
+stessa composizione energetica in tutte le zone.
+
+La Tabella~\ref{tab:baseline-comparison-exp2} quantifica gli stessi fenomeni
+rispetto alle due baseline. La colonna $\Delta \mathrm{CO_2}$ combina il
+profilo energetico della variante con la CI del timestamp: quando lo scheduler
+seleziona varianti più efficienti nei momenti localmente più sfavorevoli, il
+beneficio carbonico risulta sistematicamente più marcato del solo risparmio
+energetico medio, come si osserva in tutte le funzioni e tutte le zone.
 
 \begin{table}[p]
     \centering
@@ -932,70 +990,70 @@ risultare più marcato del solo risparmio energetico medio.
             & $\Delta T_{ene}$ & $\Delta Q_{ene}$ \\
         \midrule
         PiLeibniz & Francia
-            & \greenval{-66.23\%} & \greenval{-72.41\%} & \greenval{-91.19\%} & \redval{-0.05\%} & \redval{+81.23\%} & \redval{+48.07\%} & \greenval{-2.09\%} & \greenval{+0.15\%} \\
+            & \greenval{-66.15\%} & \greenval{-71.89\%} & \greenval{-71.68\%} & \redval{-0.05\%} & \redval{+81.71\%} & \redval{+50.85\%} & \redval{+10.94\%} & \greenval{+0.15\%} \\
                   & Spagna
-            & \greenval{-65.11\%} & \greenval{-69.63\%} & \greenval{-18.48\%} & \redval{-0.05\%} & \redval{+87.24\%} & \redval{+63.00\%} & \redval{+4.25\%} & \greenval{+0.15\%} \\
+            & \greenval{-66.28\%} & \greenval{-69.44\%} & \greenval{-23.27\%} & \redval{-0.05\%} & \redval{+80.98\%} & \redval{+64.02\%} & \redval{+13.58\%} & \greenval{+0.15\%} \\
                   & Italia
-            & \greenval{-63.07\%} & \greenval{-67.20\%} & \greenval{-19.98\%} & \redval{-0.04\%} & \redval{+98.24\%} & \redval{+76.06\%} & \redval{+19.31\%} & \greenval{+0.16\%} \\
+            & \greenval{-63.04\%} & \greenval{-66.51\%} & \greenval{-15.19\%} & \redval{-0.04\%} & \redval{+98.39\%} & \redval{+79.77\%} & \redval{+26.73\%} & \greenval{+0.16\%} \\
                   & Germania
-            & \greenval{-63.99\%} & \greenval{-68.96\%} & \greenval{-18.44\%} & \redval{-0.05\%} & \redval{+93.26\%} & \redval{+66.60\%} & \redval{+18.45\%} & \greenval{+0.15\%} \\
+            & \greenval{-63.91\%} & \greenval{-68.41\%} & \greenval{-14.75\%} & \redval{-0.05\%} & \redval{+93.73\%} & \redval{+69.56\%} & \redval{+28.40\%} & \greenval{+0.15\%} \\
                   & Polonia
-            & \greenval{-61.50\%} & \greenval{-65.00\%} & \greenval{-15.40\%} & \redval{-0.04\%} & \redval{+106.65\%} & \redval{+87.85\%} & \redval{+22.55\%} & \greenval{+0.16\%} \\
+            & \greenval{-62.50\%} & \greenval{-65.26\%} & \greenval{-13.46\%} & \redval{-0.04\%} & \redval{+101.28\%} & \redval{+86.47\%} & \redval{+27.79\%} & \greenval{+0.16\%} \\
         \midrule
         LnHarmonic & Francia
-            & \greenval{-90.36\%} & \greenval{-93.02\%} & \greenval{-88.68\%} & \redval{-0.01\%} & \redval{+278.81\%} & \redval{+174.17\%} & \redval{+90.00\%} & \greenval{+0.13\%} \\
+            & \greenval{-90.35\%} & \greenval{-92.73\%} & \greenval{-89.15\%} & \redval{-0.01\%} & \redval{+279.03\%} & \redval{+185.79\%} & \redval{+96.77\%} & \greenval{+0.14\%} \\
                    & Spagna
-            & \greenval{-89.95\%} & \greenval{-91.73\%} & \greenval{-88.80\%} & \redval{-0.01\%} & \redval{+294.86\%} & \redval{+225.06\%} & \redval{+113.12\%} & \greenval{+0.13\%} \\
+            & \greenval{-90.09\%} & \greenval{-91.68\%} & \greenval{-88.56\%} & \redval{-0.01\%} & \redval{+289.28\%} & \redval{+226.98\%} & \redval{+114.24\%} & \greenval{+0.13\%} \\
                    & Italia
-            & \greenval{-90.52\%} & \greenval{-91.67\%} & \greenval{-88.66\%} & \redval{-0.01\%} & \redval{+272.51\%} & \redval{+227.37\%} & \redval{+112.20\%} & \greenval{+0.14\%} \\
+            & \greenval{-90.59\%} & \greenval{-91.51\%} & \greenval{-89.64\%} & \redval{-0.01\%} & \redval{+269.75\%} & \redval{+233.71\%} & \redval{+95.15\%} & \greenval{+0.14\%} \\
                    & Germania
-            & \greenval{-90.53\%} & \greenval{-92.11\%} & \greenval{-88.86\%} & \redval{-0.01\%} & \redval{+271.98\%} & \redval{+210.13\%} & \redval{+103.98\%} & \greenval{+0.14\%} \\
+            & \greenval{-90.45\%} & \greenval{-91.94\%} & \greenval{-89.14\%} & \redval{-0.01\%} & \redval{+275.08\%} & \redval{+216.57\%} & \redval{+98.91\%} & \greenval{+0.14\%} \\
                    & Polonia
-            & \greenval{-90.67\%} & \greenval{-91.52\%} & \greenval{-88.97\%} & \redval{-0.01\%} & \redval{+266.50\%} & \redval{+232.96\%} & \redval{+101.06\%} & \greenval{+0.14\%} \\
+            & \greenval{-90.68\%} & \greenval{-91.40\%} & \greenval{-89.47\%} & \redval{-0.01\%} & \redval{+266.23\%} & \redval{+237.83\%} & \redval{+94.62\%} & \greenval{+0.14\%} \\
         \midrule
         MonteCarlo & Francia
-            & \greenval{-90.90\%} & \greenval{-95.02\%} & \greenval{-83.82\%} & \redval{-0.71\%} & \redval{+14236.65\%} & \redval{+7738.70\%} & \redval{+426.29\%} & \greenval{+4.50\%} \\
+            & \greenval{-91.02\%} & \greenval{-94.82\%} & \greenval{-82.14\%} & \redval{-0.61\%} & \redval{+14034.02\%} & \redval{+8059.95\%} & \redval{+450.04\%} & \greenval{+4.60\%} \\
                    & Spagna
-            & \greenval{-91.24\%} & \greenval{-93.60\%} & \greenval{-83.99\%} & \redval{-0.71\%} & \redval{+13686.70\%} & \redval{+9983.49\%} & \redval{+404.43\%} & \greenval{+4.49\%} \\
+            & \greenval{-91.51\%} & \greenval{-93.58\%} & \greenval{-83.07\%} & \redval{-0.61\%} & \redval{+13276.69\%} & \redval{+10012.13\%} & \redval{+430.90\%} & \greenval{+4.59\%} \\
                    & Italia
-            & \greenval{-88.70\%} & \greenval{-92.38\%} & \greenval{-82.00\%} & \redval{-0.58\%} & \redval{+17695.76\%} & \redval{+11900.43\%} & \redval{+474.43\%} & \greenval{+4.63\%} \\
+            & \greenval{-90.83\%} & \greenval{-92.86\%} & \greenval{-82.64\%} & \redval{-0.59\%} & \redval{+14332.33\%} & \redval{+11147.43\%} & \redval{+446.52\%} & \greenval{+4.62\%} \\
                    & Germania
-            & \greenval{-91.80\%} & \greenval{-93.86\%} & \greenval{-84.51\%} & \redval{-0.64\%} & \redval{+12810.23\%} & \redval{+9566.32\%} & \redval{+376.96\%} & \greenval{+4.57\%} \\
+            & \greenval{-91.84\%} & \greenval{-93.74\%} & \greenval{-83.49\%} & \redval{-0.61\%} & \redval{+12754.73\%} & \redval{+9755.88\%} & \redval{+414.82\%} & \greenval{+4.60\%} \\
                    & Polonia
-            & \greenval{-88.70\%} & \greenval{-91.44\%} & \greenval{-81.90\%} & \redval{-0.58\%} & \redval{+17695.76\%} & \redval{+13382.24\%} & \redval{+463.30\%} & \greenval{+4.63\%} \\
+            & \greenval{-90.07\%} & \greenval{-91.91\%} & \greenval{-82.08\%} & \redval{-0.60\%} & \redval{+15534.17\%} & \redval{+12636.41\%} & \redval{+467.06\%} & \greenval{+4.61\%} \\
         \midrule
         SentimentAnalysis & Francia
-            & \greenval{-69.02\%} & \greenval{-83.36\%} & \greenval{-84.02\%} & \redval{-10.53\%} & \redval{+1082.26\%} & \redval{+534.91\%} & \redval{+18161.42\%} & \greenval{+27.97\%} \\
+            & \greenval{-69.73\%} & \greenval{-82.52\%} & \greenval{-78.36\%} & \redval{-10.55\%} & \redval{+1055.05\%} & \redval{+567.10\%} & \redval{+531.03\%} & \greenval{+27.94\%} \\
                           & Spagna
-            & \greenval{-60.64\%} & \greenval{-74.01\%} & \greenval{-71.48\%} & \redval{-9.98\%} & \redval{+1401.90\%} & \redval{+891.79\%} & \redval{+745.23\%} & \greenval{+28.75\%} \\
+            & \greenval{-61.46\%} & \greenval{-73.61\%} & \greenval{-71.24\%} & \redval{-9.89\%} & \redval{+1370.69\%} & \redval{+907.01\%} & \redval{+772.25\%} & \greenval{+28.89\%} \\
                           & Italia
-            & \greenval{-65.13\%} & \greenval{-73.27\%} & \greenval{-75.29\%} & \redval{-10.18\%} & \redval{+1230.41\%} & \redval{+920.14\%} & \redval{+634.92\%} & \greenval{+28.46\%} \\
+            & \greenval{-64.90\%} & \greenval{-72.44\%} & \greenval{-74.01\%} & \redval{-10.21\%} & \redval{+1239.26\%} & \redval{+951.65\%} & \redval{+691.47\%} & \greenval{+28.43\%} \\
                           & Germania
-            & \greenval{-63.13\%} & \greenval{-75.90\%} & \greenval{-71.48\%} & \redval{-10.66\%} & \redval{+1306.76\%} & \redval{+819.52\%} & \redval{+723.87\%} & \greenval{+27.78\%} \\
+            & \greenval{-62.07\%} & \greenval{-74.47\%} & \greenval{-71.85\%} & \redval{-10.34\%} & \redval{+1347.24\%} & \redval{+874.06\%} & \redval{+762.29\%} & \greenval{+28.24\%} \\
                           & Polonia
-            & \greenval{-63.97\%} & \greenval{-70.58\%} & \greenval{-73.03\%} & \redval{-10.30\%} & \redval{+1274.64\%} & \redval{+1022.59\%} & \redval{+689.70\%} & \greenval{+28.30\%} \\
+            & \greenval{-64.13\%} & \greenval{-70.17\%} & \greenval{-72.95\%} & \redval{-10.14\%} & \redval{+1268.89\%} & \redval{+1038.07\%} & \redval{+738.24\%} & \greenval{+28.53\%} \\
         \midrule
         SpamDetection & Francia
-            & \greenval{-89.41\%} & \greenval{-91.82\%} & \greenval{-46.27\%} & \redval{-7.41\%} & \redval{+350.00\%} & \redval{+247.62\%} & \redval{+11904.25\%} & \greenval{+27.95\%} \\
+            & \greenval{-89.18\%} & \greenval{-91.03\%} & \greenval{-63.45\%} & \redval{-6.83\%} & \redval{+360.00\%} & \redval{+281.17\%} & \redval{+101.37\%} & \greenval{+28.75\%} \\
                       & Spagna
-            & \greenval{-82.89\%} & \greenval{-87.68\%} & \greenval{-77.05\%} & \redval{-6.09\%} & \redval{+627.08\%} & \redval{+423.79\%} & \redval{+176.58\%} & \greenval{+29.77\%} \\
+            & \greenval{-85.26\%} & \greenval{-88.09\%} & \greenval{-79.01\%} & \redval{-6.02\%} & \redval{+526.25\%} & \redval{+406.15\%} & \redval{+148.16\%} & \greenval{+29.88\%} \\
                       & Italia
-            & \greenval{-80.05\%} & \greenval{-84.99\%} & \greenval{-75.61\%} & \redval{-5.03\%} & \redval{+747.92\%} & \redval{+537.96\%} & \redval{+197.98\%} & \greenval{+31.25\%} \\
+            & \greenval{-79.48\%} & \greenval{-83.87\%} & \greenval{-72.62\%} & \redval{-4.80\%} & \redval{+772.08\%} & \redval{+585.39\%} & \redval{+235.59\%} & \greenval{+31.56\%} \\
                       & Germania
-            & \greenval{-79.22\%} & \greenval{-86.04\%} & \redval{+1244.17\%} & \redval{-5.90\%} & \redval{+783.33\%} & \redval{+493.25\%} & \redval{+16297.05\%} & \greenval{+30.03\%} \\
+            & \greenval{-80.21\%} & \greenval{-85.71\%} & \greenval{-79.14\%} & \redval{-5.37\%} & \redval{+741.25\%} & \redval{+507.49\%} & \redval{+107.26\%} & \greenval{+30.77\%} \\
                       & Polonia
-            & \greenval{-78.82\%} & \greenval{-82.79\%} & \greenval{-73.11\%} & \redval{-4.94\%} & \redval{+800.00\%} & \redval{+631.38\%} & \redval{+222.81\%} & \greenval{+31.37\%} \\
+            & \greenval{-78.10\%} & \greenval{-81.69\%} & \greenval{-72.59\%} & \redval{-4.34\%} & \redval{+830.83\%} & \redval{+678.36\%} & \redval{+227.54\%} & \greenval{+32.19\%} \\
         \midrule
         ImageClassification & Francia
-            & \greenval{-72.32\%} & \greenval{-81.55\%} & \greenval{-16.09\%} & \redval{-8.61\%} & \redval{+423.17\%} & \redval{+248.64\%} & \redval{+89.76\%} & \greenval{+23.97\%} \\
+            & \greenval{-74.51\%} & \greenval{-81.80\%} & \greenval{-47.64\%} & \redval{-9.04\%} & \redval{+381.71\%} & \redval{+243.93\%} & \redval{+51.67\%} & \greenval{+23.40\%} \\
                             & Spagna
-            & \greenval{-63.95\%} & \greenval{-74.14\%} & \greenval{-61.20\%} & \redval{-8.17\%} & \redval{+581.33\%} & \redval{+388.71\%} & \redval{+43.60\%} & \greenval{+24.58\%} \\
+            & \greenval{-62.49\%} & \greenval{-72.69\%} & \greenval{-59.98\%} & \redval{-8.18\%} & \redval{+608.86\%} & \redval{+416.07\%} & \redval{+56.74\%} & \greenval{+24.55\%} \\
                             & Italia
-            & \greenval{-65.57\%} & \greenval{-72.90\%} & \greenval{-63.25\%} & \redval{-8.98\%} & \redval{+550.64\%} & \redval{+412.26\%} & \redval{+43.37\%} & \greenval{+23.48\%} \\
+            & \greenval{-64.88\%} & \greenval{-71.38\%} & \greenval{-61.84\%} & \redval{-8.41\%} & \redval{+563.75\%} & \redval{+440.84\%} & \redval{+42.06\%} & \greenval{+24.25\%} \\
                             & Germania
-            & \greenval{-62.60\%} & \greenval{-73.96\%} & \greenval{-56.91\%} & \redval{-8.74\%} & \redval{+606.76\%} & \redval{+392.12\%} & \redval{+60.34\%} & \greenval{+23.80\%} \\
+            & \greenval{-61.86\%} & \greenval{-72.97\%} & \greenval{-60.05\%} & \redval{-8.76\%} & \redval{+620.84\%} & \redval{+410.91\%} & \redval{+51.99\%} & \greenval{+23.77\%} \\
                             & Polonia
-            & \greenval{-62.60\%} & \greenval{-68.67\%} & \greenval{-60.00\%} & \redval{-8.74\%} & \redval{+606.76\%} & \redval{+492.08\%} & \redval{+60.83\%} & \greenval{+23.80\%} \\
+            & \greenval{-63.05\%} & \greenval{-68.51\%} & \greenval{-60.05\%} & \redval{-8.49\%} & \redval{+598.43\%} & \redval{+495.12\%} & \redval{+54.14\%} & \greenval{+24.14\%} \\
         \bottomrule
     \end{tabular}
     }
@@ -1007,41 +1065,40 @@ risultare più marcato del solo risparmio energetico medio.
 L'Esperimento~2 mostra come le decisioni cambiano quando la CI viene
 interpretata rispetto al contesto locale anziché rispetto a una scala
 europea uniforme. Rispetto a \emph{always-accurate}, lo scheduler riduce
-sempre energia e CO\textsubscript{2} nelle esecuzioni osservate. Il
-risparmio carbonico è spesso più alto del risparmio energetico, soprattutto
-nelle funzioni numeriche e in SpamDetection, perché la scelta della variante
-non è indipendente dalla CI del timestamp: nei momenti localmente più
-sfavorevoli la politica tende a usare varianti meno costose.
+sempre energia e CO\textsubscript{2} in tutte le zone e funzioni osservate.
+Il risparmio carbonico è sistematicamente più alto del risparmio energetico:
+la scelta della variante non è indipendente dalla CI del timestamp, e lo
+scheduler tende a selezionare varianti efficienti proprio nei momenti
+localmente più sfavorevoli, amplificando il beneficio carbonico oltre il
+solo risparmio energetico medio.
 
-Il costo qualitativo dipende invece dalla granularità della frontiera di
-Pareto. Nelle funzioni numeriche la perdita rispetto ad \emph{always-accurate}
-resta inferiore all'1\%, e in LnHarmonic e PiLeibniz è praticamente
-trascurabile. Nelle funzioni ML la perdita è più evidente: circa 8--11\%
-per ImageClassification e SentimentAnalysis, e circa 5--7\% per
-SpamDetection. Questo non dipende dalla CI in sé, ma dalla distanza tra i
-modelli disponibili: quando il salto tra due varianti è ampio, anche una
-piccola variazione di $\lambda$ può produrre un cambiamento qualitativo più
-visibile.
+Il risparmio energetico è però intrinsecamente legato a un costo qualitativo:
+selezionare varianti meno costose significa, per costruzione, scegliere
+varianti meno accurate. Più lo scheduler si sposta verso varianti efficienti,
+maggiore è la perdita di qualità che ne deriva. Il grado di questa correlazione
+dipende dalla struttura della frontiera di Pareto di ciascuna funzione: quando
+le varianti adiacenti differiscono poco in accuratezza, il costo qualitativo
+per unità di risparmio energetico è contenuto; quando i salti sono ampi, anche
+una piccola riduzione di energia può comportare una perdita qualitativa
+visibile. Nelle funzioni numeriche la perdita rispetto ad \emph{always-accurate}
+resta inferiore all'1\% nonostante riduzioni di energia dell'ordine del 60--90\%,
+perché la frontiera continua permette compromessi fini. Nelle funzioni ML la
+perdita è invece tra il 5\% e l'11\%, riflettendo i salti discreti tra modelli
+adiacenti: ImageClassification e SentimentAnalysis perdono circa 8--11\%, mentre
+SpamDetection, pur risparmiando più energia, perde solo il 5--7\% perché BERT-tiny
+(dominante) è qualitativamente più vicino a RoBERTa-spam di quanto VADER non
+lo sia rispetto ai modelli neurali di SentimentAnalysis.
 
-Il confronto con \emph{always-energy} chiarisce il ruolo della calibrazione
-locale. Lo scheduler non minimizza semplicemente l'energia: consuma più
-della baseline energetica, ma mantiene una qualità superiore in tutte le
-funzioni. Questo comportamento è coerente con l'obiettivo dell'esperimento:
-la sigmoide locale non classifica una zona come ``pulita'' o
-``carbon-intensive'' in senso assoluto, ma valuta ogni timestamp rispetto
-alla storia della zona. Di conseguenza, anche in Polonia compaiono scelte
-non estreme quando la CI è bassa rispetto al profilo locale, mentre in
-Francia possono essere selezionate varianti efficienti quando la CI è alta
-rispetto al suo regime abituale.
+Il confronto con \emph{always-energy} conferma che lo scheduler non minimizza
+semplicemente l'energia: consuma più della baseline energetica, ma mantiene
+una qualità nettamente superiore in tutte le funzioni. Questo comportamento
+è la conseguenza diretta della calibrazione locale: la sigmoide non classifica
+una zona come ``pulita'' o ``carbon-intensive'' in senso assoluto, ma valuta
+ogni timestamp rispetto alla storia specifica della rete. Di conseguenza, anche
+in Polonia compaiono scelte non estreme quando la CI è bassa rispetto al
+profilo locale, e in Francia possono essere selezionate varianti efficienti
+nei rari momenti di CI relativamente alta.
 
-Rimane un'anomalia prestazionale nel caso SpamDetection--Germania, dove il
-tempo medio dello scheduler carbon-aware è superiore a quello della
-baseline accurata pur mantenendo energia e CO\textsubscript{2} inferiori.
-Il dato indica che, almeno in quella combinazione, la latenza osservata non
-segue direttamente il profilo energetico medio della variante selezionata.
-La correlazione principale dell'esperimento resta quindi robusta per energia
-ed emissioni, mentre il tempo di risposta va letto come metrica più sensibile
-a variabilità runtime e overhead specifici dell'esecuzione locale.
 
 % -----------------------------------------------------------
 \section{Esperimento 3: comportamento con flusso di arrivo variabile}
