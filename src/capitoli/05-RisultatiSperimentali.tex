@@ -1101,125 +1101,386 @@ nei rari momenti di CI relativamente alta.
 
 
 % -----------------------------------------------------------
-\section{Esperimento 3: comportamento con flusso di arrivo variabile}
+\section{Esperimento 3: valutazione energetica e stabilità operativa}
 \label{sec:esperimento3}
 % -----------------------------------------------------------
 
-\subsection{Obiettivo}
+\subsection{Obiettivo e struttura}
 \label{subsec:esperimento3-obiettivo}
 
-Il terzo esperimento valuta il comportamento del sistema in condizioni di
-carico non uniforme nel tempo. Gli Esperimenti~1 e~2 adottano un replay a
-tempo discreto, utile per confrontare in modo controllato le due
-calibrazioni del segnale carbon-aware. In un deployment reale, tuttavia,
-le richieste possono arrivare in burst e lo scheduler deve eseguire, senza
-introdurre latenza significativa, le seguenti operazioni nel percorso
-critico dell'invocazione: lettura dei profili energetici da \texttt{etcd},
-accesso al valore corrente di $\lambda$, costruzione della frontiera di
-Pareto sul sottoinsieme di varianti disponibili, e valutazione della
-funzione di scalarizzazione. L'obiettivo è verificare la stabilità del
-sistema sotto carico variabile e quantificare l'overhead introdotto dallo
-scheduler rispetto alle baseline.
+Il terzo esperimento valuta lo scheduler carbon-aware lungo due dimensioni
+complementari che gli Esperimenti~1 e~2 non affrontano direttamente.
 
-\subsection{Configurazione}
-\label{subsec:esperimento3-configurazione}
+La prima dimensione riguarda il \emph{confronto quantitativo} tra le tre
+policy in termini di energia consumata, emissioni di
+CO\textsubscript{2} e qualità del risultato in condizioni di carico
+variabile ma moderato. Negli Esperimenti~1 e~2 le invocazioni sono
+eseguite in modo sequenziale da un singolo thread: il tempo di risposta
+coincide quindi per costruzione con il solo tempo di esecuzione della
+variante, senza alcuna componente di attesa. L'Esperimento~3 introduce
+un modello concorrente a tempo continuo e verifica che, in assenza di
+saturazione, questa metrica resti interpretabile nello stesso modo: il
+tempo di risposta deve ancora riflettere principalmente il peso
+computazionale della variante scelta, non la pressione del carico.
 
-Il carico viene generato con un profilo composto da tre fasi: una prima
-fase a bassa intensità (circa 1--2 richieste al secondo), una seconda con
-un burst sostenuto (circa 8--10 richieste al secondo) e una terza che
-riduce progressivamente il tasso di arrivo fino al livello iniziale. La
-CI viene mantenuta fissa per tutta la durata dell'esperimento, utilizzando
-il valore locale di una zona rappresentativa, al fine di evitare di
-sovrapporre due sorgenti di variabilità indipendenti.
+La seconda dimensione riguarda la \emph{stabilità operativa} dello
+scheduler sotto carico crescente fino a condizioni di stress. In un
+deployment reale le richieste possono arrivare in burst; è necessario
+verificare che la logica di selezione della variante non costituisca un
+collo di bottiglia e che il sistema si comporti in modo prevedibile
+quando il tasso di arrivo supera la soglia di saturazione.
 
-Vengono confrontate le tre strategie \emph{always-accurate},
-\emph{always-energy} e carbon-aware. Le metriche principali sono la
-latenza (percentili p50, p95 e p99), il throughput effettivo, la frazione
-di risposte non valide e l'energia per invocazione nel tempo. La
-distribuzione delle varianti viene osservata su finestre temporali per
-verificare che lo scheduler non modifichi il proprio comportamento in
-funzione del tasso di arrivo, ma esclusivamente del valore di $\lambda$
-e dei profili energetici correnti.
+Le due dimensioni sono valutate su due run distinti dello stesso
+workload k6, differenziati esclusivamente dal profilo di carico:
+%
+\begin{itemize}
+  \item \textbf{Run~A -- carico moderato}: il tasso di arrivo è
+        mantenuto al di sotto della soglia di saturazione per tutte e
+        tre le policy. Tutte le richieste vengono completate; il tempo
+        di risposta osservato riflette il solo tempo di esecuzione.
+        Questo run produce i dati per il confronto quantitativo di
+        energia, CO\textsubscript{2}, qualità e latenza.
+  \item \textbf{Run~B -- carico crescente}: il tasso di arrivo aumenta
+        progressivamente fino a indurre saturazione nella policy
+        $\lambda{=}1$. Questo run produce i dati per l'analisi della
+        stabilità operativa e del comportamento dello scheduler sotto
+        pressione.
+\end{itemize}
 
-\subsection{Risultati}
-\label{subsec:esperimento3-risultati}
+Il workload è deterministico: a parità di seed, la sequenza di
+richieste --- funzione invocata, zona geografica, valore di carbon
+intensity --- è identica per tutte e tre le policy e tra i due run.
+% -----------------------------------------------------------
+\subsection{Prima parte: confronto energetico a carico moderato (Run~A)}
+\label{subsec:esperimento3-parte1}
+% -----------------------------------------------------------
 
-La Tabella~\ref{tab:exp3-latency} riporta le metriche di latenza e
-throughput. L'aspetto centrale è il confronto tra carbon-aware e
-\emph{always-accurate}: se la latenza mediana rimane comparabile e
-l'incremento di p99 è contenuto, il costo della selezione a runtime può
-essere considerato trascurabile rispetto al tempo di esecuzione della
-variante.
+\subsubsection{Configurazione}
+\label{subsubsec:esperimento3-parte1-config}
+
+Il Run~A utilizza un profilo di carico variabile ma contenuto, composto
+dalle prime tre fasi del workload k6 (\emph{Low}, \emph{Medium},
+\emph{High} a rispettivamente 2, 5 e 10~richieste al secondo), per una
+durata complessiva di 15~minuti. Le fasi di stress (\emph{Stress} e
+\emph{Peak}) sono escluse da questo run: il loro scopo è valutare la
+stabilità sotto pressione, non il confronto quantitativo delle metriche
+energetiche. La variabilità del tasso di arrivo permette di verificare
+che lo scheduler mantenga scelte coerenti anche al variare del numero di
+richieste concorrenti.
+
+Le metriche raccolte sono: energia media per invocazione
+(\texttt{estimated\_energy\_joule}), emissioni stimate di
+CO\textsubscript{2} per invocazione, qualità del risultato  e 
+tempo di risposta effettivo. Il tempo
+di attesa in coda (\texttt{queueing\_time}) è monitorato come
+controllo: in assenza di saturazione deve restare trascurabile e non
+influenzare l'interpretazione della latenza.
+
+\subsubsection{Risultati}
+\label{subsubsec:esperimento3-parte1-risultati}
+
+La Tabella~\ref{tab:exp3-energy-comparison} riporta, per ciascuna
+funzione, la variazione percentuale di \emph{adaptive-ci} rispetto alle
+due baseline, aggregata sull'intero Run~A. La struttura è analoga alle
+Tabelle~\ref{tab:baseline-comparison-exp1}
+e~\ref{tab:baseline-comparison-exp2} degli esperimenti precedenti.
 
 \begin{table}[H]
     \centering
-    \caption{Metriche di latenza e throughput nell'Esperimento~3.}
-    \label{tab:exp3-latency}
+    \caption{Variazione percentuale di \emph{adaptive-ci} rispetto alle
+             due baseline nel Run~A (carico moderato, tutte le richieste
+             completate). Colonne \emph{acc}: scarto vs $\lambda{=}1$;
+             colonne \emph{ene}: scarto vs $\lambda{=}0$.
+             $\Delta E$ e $\Delta \mathrm{CO_2}$ negativi indicano
+             risparmio; $\Delta Q$ positivo indica qualità superiore;
+             $\Delta T$ si riferisce alla sola durata di esecuzione
+             (\texttt{duration\_seconds}).
+             \textsuperscript{\textdagger}~Valori di $\Delta T$ per le
+             funzioni ML condizionati da cold start: il campione ridotto
+             ($n{=}9$--$18$) causa prima invocazione a freddo per le
+             varianti selezionate da \emph{adaptive-ci}.}
+    \label{tab:exp3-energy-comparison}
     \resizebox{\textwidth}{!}{%
-    \begin{tabular}{lrrrrr}
+    \begin{tabular}{lrrrrrrrr}
         \toprule
-        Strategia        & p50 (ms) & p95 (ms) & p99 (ms) & Throughput (req/s) & Errori 422 \\
+        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\lambda{=}1$}
+        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\lambda{=}0$} \\
+        \cmidrule(lr){2-5}\cmidrule(lr){6-9}
+        Funzione
+            & $\Delta E$ & $\Delta \mathrm{CO_2}$ & $\Delta Q$ & $\Delta T$
+            & $\Delta E$ & $\Delta \mathrm{CO_2}$ & $\Delta Q$ & $\Delta T$ \\
         \midrule
-        always-accurate  & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE] \\
-        always-energy    & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE] \\
-        carbon-aware     & [VALORE] & [VALORE] & [VALORE] & [VALORE] & [VALORE] \\
+        LnHarmonic
+            & \greenval{-89.8\%} & \greenval{-92.8\%}
+            & \redval{-0.0\%}    & \greenval{-90.8\%}
+            & \redval{+300.2\%}  & \redval{+180.0\%}
+            & \greenval{+0.1\%}  & \redval{+154.3\%} \\
+        MonteCarlo
+            & \greenval{-91.7\%} & \greenval{-91.5\%}
+            & \redval{-0.6\%}    & \greenval{-83.5\%}
+            & \redval{+13\mathrm{k}\%} & \redval{+11\mathrm{k}\%}
+            & \greenval{+4.6\%}  & \redval{+548.2\%} \\
+        PiLeibniz
+            & \greenval{-64.1\%} & \greenval{-66.4\%}
+            & \redval{-0.0\%}    & \redval{+41.6\%}\textsuperscript{*}
+            & \redval{+92.8\%}   & \redval{+81.0\%}
+            & \greenval{+0.2\%}  & \redval{+115.6\%} \\
+        SentimentAnalysis
+            & \greenval{-70.4\%} & \greenval{-76.5\%}
+            & \redval{-11.8\%}   & \redval{+68.4\%}\textsuperscript{\textdagger}
+            & \redval{+1.0\mathrm{k}\%} & \redval{+752.4\%}
+            & \greenval{+26.2\%} & \redval{+516\mathrm{k}\%}\textsuperscript{\textdagger} \\
+        SpamDetection
+            & \greenval{-77.7\%} & \greenval{-75.4\%}
+            & \redval{-3.9\%}    & \redval{+140.2\%}\textsuperscript{\textdagger}
+            & \redval{+846.4\%}  & \redval{+1.3\mathrm{k}\%}
+            & \greenval{+32.8\%} & \redval{+246\mathrm{k}\%}\textsuperscript{\textdagger} \\
         \bottomrule
     \end{tabular}
     }
 \end{table}
 
-La Tabella~\ref{tab:exp3-energy} riporta il comportamento energetico
-durante il test. La metrica più informativa non è soltanto l'energia media
-finale, ma la sua evoluzione durante le fasi di burst: se le stime EMA
-rimangono stabili e non oscillano in modo sproporzionato, il sistema
-dimostra di assorbire il carico senza alterare il profilo decisionale.
+I risultati replicano, in condizioni di carico concorrente, il
+comportamento osservato negli Esperimenti~1 e~2.
+Rispetto a $\lambda{=}1$, \emph{adaptive-ci} riduce il consumo
+energetico e le emissioni di CO\textsubscript{2} per tutte le funzioni:
+il risparmio è più marcato per le funzioni numeriche con frontiera di
+Pareto estesa (MonteCarlo, LnHarmonic) e meno accentuato per le
+funzioni con varianti discrete (PiLeibniz, SpamDetection). Il costo
+qualitativo rimane contenuto per le funzioni numeriche, in cui le
+varianti adiacenti differiscono poco in accuratezza, ed è invece più
+visibile per le funzioni ML, dove i salti tra modelli producono un
+impatto qualitativo discreto.
 
-\begin{table}[H]
+Il tempo di risposta di \emph{adaptive-ci} si colloca in posizione
+intermedia rispetto alle due baseline per le funzioni numeriche:
+inferiore a $\lambda{=}1$ (varianti più leggere) e superiore a
+$\lambda{=}0$ (varianti più pesanti). Il tempo di coda
+(\texttt{queueing\_time}) è trascurabile per tutte le policy:
+questa condizione conferma che i valori di $\Delta T$ riflettono
+esclusivamente il peso computazionale delle varianti selezionate e non
+la pressione del carico.
+
+% -----------------------------------------------------------
+\subsection{Seconda parte: stabilità sotto carico crescente (Run~B)}
+\label{subsec:esperimento3-parte2}
+% -----------------------------------------------------------
+
+\subsubsection{Profilo del workload e composizione}
+\label{subsubsec:esperimento3-parte2-workload}
+
+Il Run~B estende il profilo di carico del Run~A includendo le due fasi
+di stress, per un totale di cinque fasi con tasso di arrivo compreso
+tra 2 e 25~richieste al secondo e una durata complessiva di
+30~minuti. La Figura~\ref{fig:exp3-workload-profile} mostra il profilo
+configurato.
+
+\begin{figure}[H]
     \centering
-    \caption{Energia per invocazione e distribuzione delle varianti
-             nel test a carico variabile.}
-    \label{tab:exp3-energy}
-    \resizebox{\textwidth}{!}{%
-    \begin{tabular}{lrrrr}
-        \toprule
-        Strategia       & Energia media (J) & Energia p95 (J) & Variante dominante & Quota variante dom. \\
-        \midrule
-        always-accurate & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
-        always-energy   & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
-        carbon-aware    & [VALORE] & [VALORE] & [VALORE] & [VALORE]\% \\
-        \bottomrule
-    \end{tabular}
-    }
-\end{table}
+    \includegraphics[width=0.95\textwidth]{figures/validation/exp3/01-wokload.png}
+    \caption{Profilo del workload di arrivo nel Run~B. Le prime tre fasi
+             (\emph{Low}, \emph{Medium}, \emph{High}) sono identiche al
+             Run~A; le ultime due (\emph{Stress} e \emph{Peak}) inducono
+             condizioni di saturazione progressiva. Il tasso configurato è
+             mantenuto costante da k6 tramite l'esecutore
+             \texttt{constant-arrival-rate}.}
+    \label{fig:exp3-workload-profile}
+\end{figure}
+
+Il workload non è mono-funzione né mono-zona: cinque funzioni diverse
+e cinque zone geografiche sono distribuite in modo bilanciato tra le
+richieste, come mostrato nella Figura~\ref{fig:exp3-workload-mix}.
+Questa eterogeneità è necessaria per valutare lo scheduler in
+condizioni rappresentative di un deployment reale, in cui il nodo serve
+funzioni con profili energetici molto diversi e riceve segnali di CI
+da zone con caratteristiche elettriche differenti.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/validation/exp3/09_workload_mix_function_zone.png}
+    \caption{Composizione del workload nel Run~B: distribuzione per
+             funzione invocata (sinistra), per zona CI (centro) e
+             heatmap funzione~$\times$~zona (destra). La sequenza è
+             deterministica e identica per tutte e tre le policy.}
+    \label{fig:exp3-workload-mix}
+\end{figure}
+
+\subsubsection{Risultati}
+\label{subsubsec:esperimento3-parte2-risultati}
+
+\paragraph{Latenza e saturazione della coda.}
+La Figura~\ref{fig:exp3-latency-decomp} mostra la latenza mediana
+disaggregata nelle due componenti --- attesa in coda e durata di
+esecuzione --- per fase e policy. La scala logaritmica sull'asse
+verticale permette di confrontare contemporaneamente valori che
+differiscono di quattro ordini di grandezza.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/validation/exp3/02_latency_decomposition_log.pdf}
+    \caption{Decomposizione della latenza mediana per fase e policy
+             (scala logaritmica). La parte tratteggiata rappresenta
+             l'attesa in coda (p50); la parte piena la durata di
+             esecuzione (p50). Le barre con pattern a croce indicano
+             fasi in cui $\lambda{=}1$ non ha completato alcuna
+             richiesta: il riferimento è il timeout di k6 (180~s).
+             $\lambda{=}0$ rimane stabile sotto i 5~ms in tutte le fasi;
+             \emph{adaptive-ci} cresce gradualmente con il carico;
+             $\lambda{=}1$ accumula code di oltre 100~s già dalla fase
+             \emph{Medium}.}
+    \label{fig:exp3-latency-decomp}
+\end{figure}
+
+Per $\lambda{=}1$ il collo di bottiglia non è nella logica
+dello scheduler, ma nell'accumulo di richieste in coda. Questo
+distingue il fenomeno osservato da una degradazione delle prestazioni di
+esecuzione: il sistema è corretto nel \emph{cosa} esegue, ma non riesce
+a sostenere il ritmo con cui le richieste arrivano.
+
+\paragraph{Throughput effettivo.}
+La Figura~\ref{fig:exp3-throughput} confronta il throughput effettivo
+--- richieste completate con HTTP~200 per secondo --- con il tasso
+configurato da k6.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/validation/exp3/03-throughput.png}
+    \caption{Throughput effettivo vs arrival rate configurato per fase e
+             policy. $\lambda{=}0$ e \emph{adaptive-ci} seguono il
+             profilo configurato in tutte le fasi; $\lambda{=}1$ inizia
+             a divergere dalla fase \emph{Medium} e collassa nelle fasi
+             di stress.}
+    \label{fig:exp3-throughput}
+\end{figure}
+
+\paragraph{Frazione cumulativa di completamento.}
+La Figura~\ref{fig:exp3-completion} introduce una rappresentazione
+alternativa alla CDF classica del tempo di risposta. L'asse verticale
+riporta la percentuale di richieste completate \emph{sul totale
+inviato}, non sul sottoinsieme delle sole richieste andate a buon fine.
+Questa scelta evita una distorsione tipica dei sistemi sotto stress: una
+CDF calcolata solo sui completamenti di $\lambda{=}1$ restituirebbe una
+distribuzione apparentemente normale, ma taciterebbe il fatto che il
+96.5\% delle richieste inviate non ha mai ricevuto risposta. -(da rivedere)
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/validation/exp3/05_completion_fraction.png}
+    \caption{Frazione cumulativa di completamento per policy (scala
+             logaritmica sull'asse $x$). L'asse $y$ indica la
+             percentuale di richieste completate rispetto al totale
+             inviato. Le curve di $\lambda{=}0$ e \emph{adaptive-ci}
+             raggiungono il 100\% e il 99\% entro pochi secondi;
+             la curva di $\lambda{=}1$ asintota al 3.5\%, mostrando
+             che il 96.5\% delle richieste non ha mai ricevuto risposta
+             entro il timeout di 180~s.}
+    \label{fig:exp3-completion}
+\end{figure}
+
+\paragraph{Confronto quantitativo per fase.}
+La Figura~\ref{fig:exp3-phase-table} riassume, per ciascuna
+combinazione di fase e policy, le metriche operative principali:
+tasso di completamento, throughput, percentili di durata e di coda.
+Le celle evidenziate in verde indicano il valore migliore per quella
+fase; quelle in rosso il peggiore.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/validation/exp3/06_comparison_table_phase_policy.png}
+    \caption{Confronto operativo per fase e policy. Nelle fasi
+             \emph{Low} e \emph{Medium} le tre policy sono comparabili;
+             la differenziazione emerge progressivamente con il crescere
+             del carico. $\lambda{=}1$ mostra le prime code misurabili
+             già in \emph{Medium}; in \emph{High} e \emph{Stress} il
+             completamento scende a zero. \emph{adaptive-ci} mantiene
+             metriche paragonabili a $\lambda{=}0$ fino a \emph{Stress},
+             con un primo degrado visibile solo nel \emph{Peak}.}
+    \label{fig:exp3-phase-table}
+\end{figure}
+
+\subsubsection{Distribuzione delle varianti selezionate}
+\label{subsubsec:esperimento3-parte2-varianti}
+
+La Figura~\ref{fig:exp3-variant-dist} mostra la distribuzione
+percentuale delle varianti selezionate dalla policy \emph{adaptive-ci}
+per ciascuna funzione, aggregata sull'intero Run~B. Questa figura serve
+a verificare che lo scheduler non collassi su una scelta fissa sotto
+carico, ma continui a modulare la selezione in funzione del segnale
+di carbon intensity ricevuto.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{figures/validation/exp3/08_variant_distribution_by_function.png}
+    \caption{Distribuzione percentuale delle varianti selezionate da
+             \emph{adaptive-ci} per funzione nel Run~B. L'ordine va
+             dalla variante meno costosa (sinistra) a quella più costosa
+             (destra). Le varianti agli estremi della frontiera di Pareto
+             compaiono con frequenza residua: lo scheduler occupa la
+             regione intermedia del trade-off, con una distribuzione
+             coerente con i valori medi di CI campionati nelle diverse
+             fasi orarie.}
+    \label{fig:exp3-variant-dist}
+\end{figure}
+
+La distribuzione conferma un comportamento già osservato negli
+Esperimenti~1 e~2: le varianti agli estremi --- quella a minima energia
+e quella a massima qualità --- compaiono solo nei momenti in cui la CI
+è sistematicamente molto bassa o molto alta rispetto alla storia della
+zona. La grande maggioranza delle invocazioni ricade su varianti
+intermedie, con pesi che variano tra le funzioni in funzione della
+struttura della loro frontiera di Pareto. Questo segnala che lo
+scheduler non è disturbato dalla concorrenza delle richieste: il piano
+di controllo legge il segnale ambientale in modo stabile e lo traduce
+in scelte coerenti anche sotto carico.
 
 \subsection{Interpretazione}
 \label{subsec:esperimento3-interpretazione}
 
-L'overhead introdotto dallo scheduler carbon-aware è composto da
-operazioni computazionalmente leggere: lettura dei profili energetici da
-\texttt{etcd}, calcolo della frontiera di Pareto su un numero ridotto di
-varianti, lettura del valore corrente di $\lambda$ e valutazione della
-funzione di scalarizzazione. Il valore di CI è aggiornato in background
-e non richiede una chiamata remota nel percorso critico dell'invocazione.
-Per questo motivo ci si attende che l'impatto sulla latenza mediana sia
-limitato.
+I risultati dell'Esperimento~3 completano la valutazione dello scheduler
+carbon-aware lungo una dimensione che gli Esperimenti~1 e~2 non
+affrontano: la coesistenza tra la logica di selezione della variante e
+un flusso di richieste concorrente.
 
-La coda della distribuzione, in particolare p99, è la metrica più sensibile
-durante le fasi di burst. Un aumento contenuto di p99 è accettabile se il
-throughput effettivo segue il tasso di arrivo e non compaiono risposte HTTP
-422. Al contrario, una crescita marcata della coda indicherebbe che il
-collo di bottiglia risiede non nel tempo di esecuzione della variante, ma
-nella capacità del piano di controllo di sostenere la frequenza delle
-decisioni.
+\paragraph{Coerenza del comportamento carbon-aware sotto carico.}
+Il Run~A mostra che, in assenza di saturazione, il confronto
+energetico e qualitativo tra le policy replica il pattern degli
+esperimenti precedenti. La variabilità del tasso di arrivo tra le fasi
+non influenza le scelte dello scheduler: la distribuzione delle varianti
+varia in funzione della CI campionata, non del numero di richieste
+concorrenti. Il tempo di risposta riflette il peso computazionale della
+variante selezionata, confermando che il piano di controllo non
+introduce overhead misurabile nel percorso critico dell'invocazione.
 
-Un secondo elemento da osservare è la coerenza della distribuzione delle
-varianti. Con CI fissa, la selezione non dovrebbe cambiare sistematicamente
-tra la fase a basso carico e quella di burst, salvo gli effetti transitori
-dovuti all'esplorazione LCB nelle prime invocazioni. Quando il numero di
-campioni cresce, il contributo del termine LCB diminuisce e le stime EMA
-convergono verso un profilo stabile, garantendo che lo scheduler non
-confonda la variabilità del carico con una variazione del segnale
-ambientale.
+\paragraph{Stabilità di $\lambda{=}0$ e \emph{adaptive-ci}.}
+Nel Run~B, $\lambda{=}0$ completa il 100\% delle richieste in tutte le
+fasi, con latenza stabile nell'ordine del millisecondo. Questo risultato
+è strutturale: le varianti leggere selezionate da questa policy hanno
+tempi di esecuzione contenuti che permettono al nodo di servire flussi
+intensi senza accumulare code. \emph{Adaptive-ci} completa il 99\% delle
+richieste sull'intero workload; i fallimenti si concentrano nella sola
+fase \emph{Peak} (25~req/s) e corrispondono a timeout dovuti a code che
+si formano sotto il carico massimo, non a errori di configurazione
+(HTTP~422 è sempre zero per tutte le policy).
+
+\paragraph{Saturazione di $\lambda{=}1$ e sua causa.}
+La policy a massima qualità è la più instabile dal punto di vista
+operativo. Già dalla fase \emph{Medium} (5~req/s) si accumulano code
+con p50 superiore a 100~secondi; nelle fasi \emph{High} e \emph{Stress}
+nessuna richiesta viene completata. Questo collasso non è causato da
+errori logici o di configurazione: è la conseguenza diretta della
+scelta sistematica di varianti computazionalmente costose, che riduce
+la capacità del nodo di servire il flusso in arrivo.
+
+Il caso $\lambda{=}1$ costituisce un risultato di interesse autonomo:
+mostra che il costo operativo di una strategia di scheduling non può
+essere valutato indipendentemente dal profilo di carico a cui il sistema
+è soggetto. Una policy che privilegia sempre la qualità può essere
+sostenibile a basso traffico, ma produce instabilità a carichi medi o
+elevati. Lo scheduler carbon-aware, selezionando dinamicamente la
+variante in funzione della CI, evita questo problema nei regimi di
+carico testati: nelle fasi di alta CI sceglie varianti più leggere,
+riducendo il carico computazionale sul nodo proprio nei momenti in cui
+il flusso di richieste è tipicamente più intenso.
 
 % -----------------------------------------------------------
 \section{Discussione generale}
