@@ -2,10 +2,9 @@
 \label{cap:RisultatiSperimentali}
 
 \emph{Questo capitolo valuta sperimentalmente l'estensione carbon-aware
-di Serverledge proposta in questa tesi. La valutazione verifica che lo
-scheduler carbon-aware traduca la carbon intensity della zona in scelte
-coerenti lungo la frontiera di Pareto, modulando il consumo energetico in
-funzione dell'impatto carbonico contestuale dell'esecuzione. Il consumo
+di Serverledge proposta in questa tesi. L'obiettivo è valutare se lo scheduler carbon-aware seleziona varianti
+coerenti con la carbon intensity della zona, muovendosi lungo la frontiera
+di Pareto in funzione del contesto carbonico dell'esecuzione. Il consumo
 è considerato una dimensione del trade-off con la qualità del risultato:
 lo scheduler privilegia varianti più efficienti quando il costo carbonico
 dell'energia è elevato, mantenendo varianti più accurate quando tale costo
@@ -215,7 +214,7 @@ per guidare le decisioni dello scheduler durante la simulazione.
 Gli Esperimenti~1 e~2 sono condotti a tempo discreto: per ciascuna zona
 viene riletta una traccia di invocazioni da file e ogni richiesta viene
 valutata rispetto alla CI associata al passo temporale corrente, estratta
-dalle serie storiche orarie di ElectricityMaps~\cite{electricitymaps2024}.
+dalle serie storiche orarie di ElectricityMaps.
 Questo approccio isola il comportamento decisionale dello scheduler da
 eventuali variazioni del carico e consente di confrontare due diverse
 calibrazioni del segnale carbon-aware. L'Esperimento~1 mantiene fissa la
@@ -225,8 +224,7 @@ L'Esperimento~2 utilizza invece una calibrazione locale, più aderente a un
 deployment reale, in cui la CI corrente viene interpretata rispetto alla
 distribuzione storica della zona. L'Esperimento~3 adotta infine un modello
 a tempo continuo, con richieste che arrivano secondo un profilo di carico
-variabile, al fine di valutare la stabilità del sistema e l'overhead della
-selezione a runtime.
+variabile, al fine di valutare la stabilità del sistema.
 
 \paragraph{Zone considerate.}
 Le zone geografiche considerate in tutti gli esperimenti sono Francia (FR),
@@ -334,10 +332,7 @@ calibrazione europea nelle cinque zone, ordinate per CI media crescente.
     \vspace{0.2cm}
     \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_PiLeibniz.png}
     \caption{Distribuzione delle varianti selezionate per le funzioni
-             numeriche nell'Esperimento~1. Al crescere della CI media, la
-             quota delle varianti più accurate si riduce a favore di
-             varianti a minore consumo, con una granularità che dipende
-             dalla frontiera di Pareto della singola funzione.}
+             numeriche nell'Esperimento~1.}
     \label{fig:variant-distribution-numeric-exp1}
 \end{figure}
 
@@ -349,9 +344,7 @@ calibrazione europea nelle cinque zone, ordinate per CI media crescente.
     \vspace{0.2cm}
     \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_SpamDetection.png}
     \caption{Distribuzione delle varianti selezionate per le funzioni ML
-             nell'Esperimento~1. Le transizioni tra varianti sono più
-             discrete rispetto alle funzioni numeriche, poiché ciascuna
-             variante corrisponde a un modello architetturalmente distinto.}
+             nell'Esperimento~1.}
     \label{fig:variant-distribution-ml-exp1}
 \end{figure}
 
@@ -1047,11 +1040,11 @@ efficienti vengono selezionate proprio nei momenti localmente più sfavorevoli.
 
 Il costo qualitativo dipende dalla forma della frontiera di Pareto: le funzioni
 numeriche permettono transizioni più graduali, mentre nelle funzioni ML il
-passaggio tra modelli distinti introduce salti più visibili. L'Esperimento~2
-conferma quindi che la calibrazione locale rende lo scheduler meno dipendente
-dalla CI assoluta della zona, ma non elimina il vincolo fondamentale del
-problema: il risparmio energetico resta sempre legato alla struttura delle
-varianti disponibili.
+passaggio tra modelli distinti introduce salti più visibili. L'Esperimento~2 conferma quindi che la calibrazione locale rende lo
+scheduler meno dipendente dalla CI assoluta della zona; il punto operativo
+rimane però determinato dalla struttura della frontiera di Pareto: quando
+le varianti disponibili sono molte e vicine, il compromesso è graduale,
+mentre pochi modelli distinti producono salti più netti.
 
 \section{Esperimento 3: flusso di arrivo variabile}
 \label{sec:esperimento3}
@@ -1156,12 +1149,7 @@ considerare eventuali tempi di accodamento.
 \begin{table}[H]
     \centering
     \caption{Variazione percentuale dello scheduler carbon-aware
-             dell'Esperimento~3 rispetto alle due baseline, calcolata
-             sulle prime tre fasi del workload. Valori negativi di
-             $\Delta E$, $\Delta \mathrm{CO_2}$ e $\Delta T$ indicano un
-             risparmio rispetto alla baseline indicata dal pedice; valori
-             positivi di $\Delta Q$ indicano qualità superiore alla
-             baseline indicata dal pedice.}
+             dell'Esperimento~3 rispetto alle due baseline.}
     \label{tab:exp3-energy-comparison}
     \resizebox{\textwidth}{!}{%
     \begin{tabular}{lrrrrrrrr}
@@ -1296,30 +1284,35 @@ delle varianti ad alta qualità.
 \label{subsec:esperimento3-interpretazione}
 
 I risultati dell'Esperimento~3 completano la valutazione dello scheduler
-carbon-aware lungo una dimensione che gli Esperimenti~1 e~2 non
-affrontano: la coesistenza tra la logica di selezione della variante e
-un flusso di richieste concorrente.
+carbon-aware verificando se il comportamento osservato negli
+Esperimenti~1 e~2 si conserva in presenza di richieste concorrenti. In
+particolare, l'esperimento sposta l'attenzione dal solo effetto della
+selezione della variante su energia, emissioni e qualità, alla sua
+interazione con la capacità del sistema di sostenere un carico variabile.
 
-Nelle prime tre fasi, usate come regime moderato, \emph{adaptive-ci}
-mantiene lo stesso ruolo osservato negli esperimenti precedenti: riduce
-energia ed emissioni rispetto a $\Lambda_1$ e preserva qualità rispetto a
-$\Lambda_0$. La presenza di richieste concorrenti non modifica quindi la
-semantica della decisione carbon-aware; il tempo di risposta continua a
-riflettere soprattutto il costo computazionale della variante scelta.
+In questo scenario, \emph{Adaptive-ci} mantiene il ruolo emerso negli
+esperimenti precedenti: riduce energia ed emissioni rispetto a
+$\Lambda_1$ e preserva la qualità rispetto a $\Lambda_0$. La presenza di
+concorrenza, quindi, non altera la semantica della decisione
+carbon-aware: il tempo di risposta continua a dipendere principalmente
+dal costo computazionale della variante selezionata. Tuttavia, rende più
+visibile una conseguenza operativa di tale decisione, ossia il suo impatto
+sulla stabilità del sistema al crescere del carico.
 
-La differenza emerge quando il tasso di arrivo cresce. $\Lambda_0$ resta
-stabile perché seleziona sempre varianti leggere, mentre $\Lambda_1$
-raggiunge presto il proprio limite di capacità: dalla fase \emph{Medium}
+Questa differenza emerge chiaramente quando aumenta il tasso di arrivo.
+$\Lambda_0$ rimane stabile perché seleziona sempre varianti leggere,
+mentre $\Lambda_1$ raggiunge rapidamente il proprio limite di capacità:
 il throughput effettivo non segue più il carico configurato e si assesta
-intorno a 1,25~req/s. \emph{Adaptive-ci} evita questo comportamento, mantenendo un throughput
-effettivo aderente al profilo configurato in tutte le fasi, con una lieve
-divergenza solo nella fase \emph{Peak}. Il risultato indica
-che la scelta dinamica della variante non è solo un compromesso
-energetico, ma contribuisce anche a mantenere il sistema operativo sotto
-carico variabile.
+intorno a 1{,}25~req/s. \emph{Adaptive-ci} evita questo comportamento,
+mantenendo un throughput effettivo aderente al profilo configurato, con
+una lieve divergenza solo alla pressione massima. Il risultato mostra
+quindi che la scelta dinamica della variante non rappresenta soltanto un
+compromesso tra qualità ed emissioni, ma contribuisce anche a preservare
+la stabilità del sistema sotto carico variabile.
+
 
 % -----------------------------------------------------------
-\section{Conclusioni del capitolo}
+\section{Conclusioni}
 \label{sec:conclusioni-capitolo5}
 % -----------------------------------------------------------
 
@@ -1348,7 +1341,7 @@ I risultati principali sono i seguenti:
         superiore: nell'Esperimento~2 il guadagno qualitativo è circa
         0.13--4.62\% per le funzioni numeriche e 23.40--32.19\% per le
         funzioni ML;
-  \item sotto carico variabile per 30~minuti consecutivi (2--25~req/s),
+  \item sotto carico variabile,
         \emph{adaptive-ci} mantiene piena stabilità operativa in tutte le
         cinque fasi del workload; il risparmio di CO\textsubscript{2}
         rispetto a $\Lambda_1$ si attesta tra il 66\% e il 93\% a seconda
