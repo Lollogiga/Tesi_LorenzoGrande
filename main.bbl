@@ -120,4 +120,13 @@ P.~Auer, N.~Cesa-Bianchi, and P.~Fischer, ``Finite-time analysis of the multiarm
 \bibitem{grafana-k6-docs}
 {Grafana Labs}, ``{Grafana k6 Documentation},'' \url{https://grafana.com/docs/k6/latest/}, consultato: maggio 2026.
 
+\bibitem{gupta2021chasingcarbon}
+U.~Gupta, Y.~G. Kim, S.~Lee, J.~Tse, H.-H.~S. Lee, G.-Y. Wei, D.~Brooks, and C.-J. Wu, ``Chasing carbon: The elusive environmental footprint of computing,'' in \emph{Proceedings of the 27th IEEE International Symposium on High-Performance Computer Architecture (HPCA)}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE, 2021, pp. 854--867.
+
+\bibitem{han2016deepcompression}
+S.~Han, H.~Mao, and W.~J. Dally, ``Deep compression: Compressing deep neural networks with pruning, trained quantization and huffman coding,'' in \emph{International Conference on Learning Representations (ICLR)}, 2016.
+
+\bibitem{hinton2015distilling}
+G.~Hinton, O.~Vinyals, and J.~Dean, ``Distilling the knowledge in a neural network,'' \emph{arXiv preprint arXiv:1503.02531}, 2015.
+
 \end{thebibliography}

@@ -1,2 +1,248 @@
 \chapter{Conclusioni}
 \label{cap:Conclusioni}
+
+\section{Sintesi dei contributi}
+
+Questa tesi ha affrontato il problema dell'efficienza energetica nel
+paradigma Function-as-a-Service a partire da una lacuna concreta: le
+piattaforme serverless non dispongono, in generale, di meccanismi nativi
+per adattare l'esecuzione delle funzioni al costo carbonico dell'energia
+disponibile nel momento e nel luogo dell'invocazione. Nel comportamento
+tradizionale, una funzione viene eseguita nella propria versione di
+riferimento indipendentemente dal contesto energetico, senza distinguere
+tra un periodo in cui la rete elettrica è alimentata prevalentemente da
+fonti rinnovabili e uno in cui è dominata da fonti fossili.
+
+Il contributo complessivo del lavoro consiste nell'estensione della
+piattaforma Serverledge con un modello di esecuzione carbon-aware, nel
+quale la scelta della variante non è fissata staticamente ma viene
+determinata a runtime in funzione della carbon intensity corrente della zona di
+esecuzione, dei profili energetici osservati e del livello di qualità
+associato alle alternative disponibili. Questo contributo si articola in
+quattro direzioni principali.
+
+Il primo contributo è il modello di funzione logica con varianti. Una
+funzione logica non corrisponde a una sola implementazione, ma a un insieme
+di varianti compatibili dal punto di vista dell'interfaccia e dello scopo,
+ma diverse per costo energetico e qualità del risultato. In questo modo il
+trade-off energia--qualità diventa un elemento esplicito del sistema, e non
+una proprietà implicita lasciata interamente allo sviluppatore.
+
+Il secondo contributo riguarda il monitoraggio energetico a granularità di
+funzione. Tramite l'integrazione di Kepler con Prometheus, il sistema
+raccoglie metriche di consumo a livello di container e le associa alle
+singole invocazioni tramite un worker periodico. I profili energetici
+ottenuti vengono aggiornati nel tempo con una media mobile esponenziale e
+memorizzati in etcd, rendendoli disponibili allo scheduler durante la
+selezione. Questo meccanismo permette di superare una visione puramente
+statica del consumo, adattando le stime al comportamento osservato sul nodo
+corrente.
+
+Il terzo contributo è l'integrazione dell'incertezza nella selezione. Nelle
+fasi iniziali, quando alcune varianti sono state osservate poche volte, il
+sistema applica una stima ottimistica ispirata al principio Lower Confidence
+Bound. Le varianti meno campionate vengono così esplorate con maggiore
+probabilità, riducendo il rischio che una stima iniziale imprecisa escluda
+prematuramente alternative potenzialmente efficienti.
+
+Il quarto contributo è lo scheduler carbon-aware. A partire dalla carbon
+intensity della zona di esecuzione, il sistema calcola un parametro
+$\lambda$ tramite una funzione sigmoide calibrata sulla distribuzione
+storica locale. Tale parametro regola una scalarizzazione lineare della
+frontiera di Pareto energia--qualità: valori elevati di $\lambda$
+privilegiano varianti più accurate, mentre valori ridotti orientano la
+selezione verso varianti più efficienti. La calibrazione locale consente di
+interpretare la carbon intensity non come valore assoluto, ma come
+posizione rispetto al comportamento tipico della rete elettrica considerata.
+
+\section{Risultati principali}
+
+La valutazione sperimentale ha considerato sei funzioni, tre numeriche e
+tre di classificazione, su cinque zone europee con profili di carbon
+intensity differenti. Gli esperimenti hanno confrontato lo scheduler
+carbon-aware con due baseline statiche: $\Lambda_1$, che seleziona sempre
+la variante a massima qualità, e $\Lambda_0$, che seleziona sempre la
+variante a minima energia.
+
+L'Esperimento~1 ha verificato il comportamento della logica decisionale con
+una calibrazione europea comune. I risultati mostrano che lo scheduler si
+sposta lungo la frontiera di Pareto in modo coerente con il segnale
+carbonico: nelle zone a bassa carbon intensity tende a selezionare varianti
+più accurate, mentre nelle zone più carbon-intensive privilegia varianti
+più efficienti.
+
+L'Esperimento~2 ha introdotto una calibrazione locale della sigmoide,
+interpretando ogni valore di carbon intensity rispetto alla storia della
+zona. Questa scelta produce un comportamento più equilibrato: anche zone con
+CI media elevata possono generare decisioni intermedie quando il valore
+corrente è ordinario rispetto alla propria distribuzione storica. Rispetto
+alla baseline $\Lambda_1$, lo scheduler ottiene risparmi energetici compresi
+tra il 62\% e il 92\% a seconda della funzione e della zona, con una
+riduzione stimata delle emissioni di CO\textsubscript{2} fino al 94{,}82\%.
+Il costo qualitativo rimane contenuto per le funzioni numeriche, con perdite
+comprese tra circa 0{,}01\% e 0{,}61\%, mentre risulta più evidente nelle
+funzioni ML, dove i passaggi tra modelli distinti producono riduzioni di
+qualità comprese tra il 4{,}34\% e il 10{,}55\%. Rispetto alla baseline
+$\Lambda_0$, lo scheduler mantiene invece un guadagno qualitativo compreso
+tra 0{,}13\% e 4{,}62\% per le funzioni numeriche e tra 23{,}40\% e
+32{,}19\% per le funzioni ML.
+
+L'Esperimento~3 ha esteso la valutazione a un flusso di richieste
+concorrenti con carico crescente. I risultati confermano che la presenza di
+concorrenza non altera la semantica della decisione carbon-aware: lo
+scheduler continua a posizionarsi tra le due baseline, riducendo energia ed
+emissioni rispetto a $\Lambda_1$ e preservando qualità rispetto a
+$\Lambda_0$. Inoltre, l'esperimento evidenzia un effetto operativo
+ulteriore. La baseline $\Lambda_1$ raggiunge rapidamente il proprio limite
+di capacità e si stabilizza attorno a 1{,}25~req/s, mentre
+\emph{adaptive-ci} mantiene un throughput effettivo aderente al profilo
+configurato, con una divergenza visibile solo alla pressione massima. La
+scelta dinamica della variante contribuisce quindi non solo alla riduzione
+dell'impatto carbonico, ma anche alla stabilità del sistema sotto carico
+variabile.
+
+Nel complesso, i risultati indicano che la riduzione delle emissioni non è
+ottenuta degradando indistintamente la qualità del servizio, ma scegliendo
+di volta in volta la variante più adatta al costo carbonico dell'esecuzione.
+Il beneficio emerge quando il sistema dispone di alternative sufficientemente
+differenziate e di un segnale ambientale capace di guidarne la scelta.
+
+\section{Limiti del lavoro attuale}
+
+Nonostante i risultati ottenuti, il sistema proposto presenta alcune
+limitazioni che definiscono i confini di validità del contributo e indicano
+le principali direzioni di miglioramento.
+
+\paragraph{Varianti definite manualmente.}
+Il sistema richiede che le varianti di ciascuna funzione siano progettate e
+registrate a priori dallo sviluppatore. Non esiste, nel prototipo attuale,
+un meccanismo automatico di generazione o validazione delle varianti. La
+copertura del trade-off energia--qualità dipende quindi dalla qualità,
+dalla varietà e dalla granularità delle implementazioni fornite. Questo
+vincolo limita la scalabilità dell'approccio in contesti con molte funzioni
+o con applicazioni aggiornate frequentemente.
+
+\paragraph{Qualità modellata come attributo statico.}
+La qualità associata alle varianti è trattata come un valore noto e
+registrato nel sistema. Questa scelta è adeguata per una valutazione
+controllata, ma non cattura possibili variazioni legate al tipo di input,
+alla distribuzione dei dati o alla sensibilità applicativa della singola
+richiesta. Una stessa perdita media di qualità può essere trascurabile per
+alcune invocazioni e non accettabile per altre; il modello attuale non
+dispone di un meccanismo per distinguere automaticamente questi casi.
+
+\paragraph{Granularità discreta della frontiera di Pareto.}
+La qualità del compromesso ottenibile dipende direttamente dalla densità
+della frontiera di Pareto. Quando le varianti sono numerose e vicine, come
+nelle funzioni numeriche parametrizzabili, lo scheduler può muoversi in modo
+graduale tra qualità ed energia. Quando invece la frontiera è composta da
+pochi modelli distinti, come in molte funzioni ML, il passaggio da una
+variante all'altra produce salti qualitativi più marcati. Anche una logica
+di selezione ottimale non può individuare compromessi intermedi se tali
+punti non sono presenti tra le varianti disponibili.
+
+\paragraph{Ambiente sperimentale controllato.}
+La valutazione è stata condotta su un insieme limitato di funzioni
+rappresentative e su un'infrastruttura di laboratorio basata su un singolo
+nodo Serverledge. Il workload dell'Esperimento~3 introduce concorrenza e
+carico variabile, ma resta deterministico e sintetico. I risultati
+dimostrano la fattibilità del meccanismo, ma non esauriscono la varietà di
+condizioni presenti in ambienti produttivi, dove intervengono autoscaling,
+multi-tenancy, interferenze tra applicazioni, burst non prevedibili e
+vincoli di latenza più stringenti.
+
+\paragraph{Stima energetica e confini del calcolo carbonico.}
+In ambienti privi di accesso diretto all'interfaccia RAPL, Kepler opera
+tramite modelli di stima del consumo. Il rumore introdotto da tali modelli
+può influenzare l'aggiornamento dei profili energetici, soprattutto per
+funzioni a basso consumo assoluto. Questo limite non riguarda la natura
+statica dei profili, che nel sistema vengono aggiornati online ed esplorati
+nelle fasi iniziali, ma l'accuratezza della sorgente di misura che alimenta
+tale aggiornamento. Inoltre, la stima delle emissioni considera solo la
+quota operativa dell'esecuzione, cioè l'energia consumata dalla funzione
+moltiplicata per la carbon intensity della zona. Non viene invece modellata
+la \emph{embodied carbon}, ovvero la quota di emissioni associata alla
+produzione, al trasporto, all'installazione e alla dismissione
+dell'hardware, ammortizzata sul ciclo di vita dell'infrastruttura
+computazionale~\cite{gupta2021chasingcarbon}. Questa scelta delimita il
+perimetro del lavoro: lo scheduler riduce l'impatto carbonico operativo
+delle invocazioni, ma non pretende di stimare l'intera impronta ambientale
+del sistema.
+
+\paragraph{Assenza di decisioni distribuite.}
+Il sistema decide quale variante eseguire sul nodo corrente, ma non sceglie
+dove eseguirla. In uno scenario cloud-edge reale, la selezione della
+variante e il posizionamento geografico dell'esecuzione sarebbero decisioni
+interdipendenti. Sarebbe necessario valutare se spostare l'esecuzione verso
+una zona con carbon intensity più bassa consenta di ottenere un compromesso
+migliore tra energia, qualità ed emissioni, tenendo però conto del costo di
+trasferimento introdotto dalla decisione: latenza di rete, energia consumata
+per inviare dati o stato applicativo e possibile overhead di avvio sul nodo
+remoto. Questa interazione resta fuori dal perimetro del prototipo attuale.
+
+\section{Sviluppi futuri}
+
+I limiti individuati aprono diverse direzioni di ricerca e sviluppo, sia a
+breve termine sia verso scenari cloud-edge più ampi.
+
+\paragraph{Generazione automatica di varianti.}
+Un'evoluzione naturale consiste nell'integrare strumenti per generare o
+suggerire automaticamente varianti alternative. Tecniche di traduzione e
+rifattorizzazione automatica del codice, come quelle esplorate in
+\cite{refaas}, potrebbero produrre implementazioni più efficienti dal punto
+di vista energetico. Nel caso delle funzioni ML, tecniche di compressione
+del modello potrebbero svolgere un ruolo analogo: il \emph{pruning} rimuove
+connessioni o componenti poco rilevanti, la quantizzazione rappresenta pesi
+e attivazioni con precisione numerica ridotta, mentre la distillazione
+addestra un modello più piccolo a imitare il comportamento di un modello più
+grande~\cite{han2016deepcompression,hinton2015distilling}. Queste tecniche
+permetterebbero di costruire famiglie di varianti con livelli progressivi
+di costo e accuratezza. Una frontiera più densa ridurrebbe i salti tra
+varianti e permetterebbe allo scheduler di modulare il compromesso con
+maggiore continuità.
+
+\paragraph{Validazione dinamica della qualità.}
+Un'estensione importante riguarda il passaggio da valori statici di qualità
+a metriche dipendenti dagli input e dal contesto applicativo. Lo scheduler
+potrebbe integrare vincoli di qualità minima, classi di richieste con
+criticità diversa o meccanismi di monitoraggio online della correttezza.
+Questo permetterebbe di distinguere richieste per cui l'approssimazione è
+accettabile da richieste per cui la piattaforma deve preservare la variante
+più accurata.
+
+\paragraph{Calibrazione adattiva e predittiva della carbon intensity.}
+La sigmoide è attualmente calibrata su dati storici. Una calibrazione
+periodica basata su finestre mobili permetterebbe di adattarsi a variazioni
+strutturali del mix energetico locale. Un passo ulteriore consiste
+nell'integrare previsioni di carbon intensity, così da pianificare le scelte
+non solo rispetto al valore corrente ma anche rispetto all'evoluzione
+attesa della rete elettrica.
+
+\paragraph{Scheduling distribuito multi-nodo.}
+In un deployment cloud-edge federato, lo scheduler dovrebbe decidere sia la
+variante sia il nodo di esecuzione. Questo richiede di combinare carbon
+intensity, latenza di rete, capacità residua, stato dei container, costo
+energetico della variante e costo di trasferimento. L'obiettivo non sarebbe
+spostare sempre l'esecuzione verso la zona più pulita, ma verificare quando
+il beneficio di una minore carbon intensity compensa l'energia e la latenza
+aggiuntive introdotte dal trasferimento. L'estensione multi-nodo
+trasformerebbe quindi il modello da selezione locale della variante a
+problema congiunto di routing e scheduling carbon-aware.
+
+\paragraph{Integrazione con politiche di SLA e pricing.}
+La selezione carbon-aware introduce una differenziazione del servizio: a
+parità di funzione logica, l'utente può ricevere varianti diverse in base
+al contesto ambientale e alle preferenze espresse. Uno sviluppo futuro
+consiste nel rendere questa scelta parte del contratto di servizio,
+permettendo all'utente di specificare vincoli su qualità minima, latenza,
+impatto carbonico massimo o costo economico. In un modello pay-as-you-go,
+tali preferenze potrebbero essere riflesse anche in politiche di pricing
+differenziate.
+
+\paragraph{Valutazione su workload e infrastrutture reali.}
+Infine, il sistema dovrebbe essere validato su deployment multi-nodo e su
+tracce di workload reali, includendo scenari di autoscaling, cold start,
+interferenza tra tenant e variazioni rapide della domanda. Una campagna
+sperimentale di questo tipo permetterebbe di misurare il comportamento
+dello scheduler in condizioni più vicine alla produzione e di quantificare
+il costo operativo dei meccanismi introdotti.
