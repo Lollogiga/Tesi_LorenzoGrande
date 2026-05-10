@@ -48,7 +48,7 @@ prematuramente alternative potenzialmente efficienti.
 
 Il quarto contributo è lo scheduler carbon-aware. A partire dalla carbon
 intensity della zona di esecuzione, il sistema calcola un parametro
-$\lambda$ tramite una funzione sigmoide calibrata sulla distribuzione
+$\lambda$ tramite la Carbon Response Function (CRF) calibrata sulla distribuzione
 storica locale. Tale parametro regola una scalarizzazione lineare della
 frontiera di Pareto energia--qualità: valori elevati di $\lambda$
 privilegiano varianti più accurate, mentre valori ridotti orientano la
@@ -72,7 +72,7 @@ carbonico: nelle zone a bassa carbon intensity tende a selezionare varianti
 più accurate, mentre nelle zone più carbon-intensive privilegia varianti
 più efficienti.
 
-L'Esperimento~2 ha introdotto una calibrazione locale della sigmoide,
+L'Esperimento~2 ha introdotto una calibrazione locale della CRF,
 interpretando ogni valore di carbon intensity rispetto alla storia della
 zona. Questa scelta produce un comportamento più equilibrato: anche zone con
 CI media elevata possono generare decisioni intermedie quando il valore
@@ -216,7 +216,7 @@ continuità.
 
 
 \paragraph{Calibrazione adattiva e predittiva della carbon intensity.}
-La sigmoide è attualmente calibrata su dati storici. Una calibrazione
+La CRF è attualmente calibrata su dati storici. Una calibrazione
 periodica basata su finestre mobili permetterebbe di adattarsi a variazioni
 strutturali del mix energetico locale. Un passo ulteriore consiste
 nell'integrare previsioni di carbon intensity, così da pianificare le scelte

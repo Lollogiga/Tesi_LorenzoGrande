@@ -16,7 +16,7 @@ segnale ambientale corrente.}
 
 % ============================================================
 \section{La carbon intensity come segnale decisionale}
-\label{sec:sigmoide}
+\label{sec:crf}
 % ============================================================
 
 Come già detto precedentemente, la carbon intensity (CI) esprime la quantità di
@@ -56,20 +56,20 @@ della zona. La semantica adottata è la seguente:
 \end{itemize}
 
 % ------------------------------------------------------------
-\subsection{La funzione sigmoide calibrata per zona}
-\label{sec:sigmoide:calibrazione}
+\subsection{La Carbon Response Function}
+\label{sec:crf:calibrazione}
 % ------------------------------------------------------------
 
 Per tradurre la CI corrente in un valore di $\lambda$ relativo al
-contesto storico della zona, si adotta una funzione sigmoide logistica
-nella forma:
+contesto storico della zona, si adotta una funzione logistica monotona
+decrescente, denominata \emph{Carbon Response Function} (CRF), nella forma:
 %
 \begin{equation}
     \lambda(\mathrm{CI}) \;=\;
         \frac{1}
              {1 + \exp\!\left(k \cdot
                  \dfrac{\mathrm{CI} - \mu_z}{s_z}\right)}
-    \label{eq:sigmoide}
+    \label{eq:crf}
 \end{equation}
 %
 dove $\mu_z$ è la media storica della CI per la zona geografica~$z$
@@ -90,7 +90,7 @@ desiderabili nel contesto dello scheduling:
 
     \item \textbf{Sensibilità contestuale}: i parametri $\mu_z$ e $s_z$
     sono calibrati a partire dalla distribuzione storica della CI nella
-    zona $z$, permettendo alla sigmoide di adattarsi al contesto locale.
+    zona $z$, permettendo alla CRF di adattarsi al contesto locale.
     In questo modo, il valore di $\lambda$ esprime una misura relativa
     rispetto alla norma locale, rendendo confrontabili le decisioni di
     scheduling tra aree geografiche diverse, anche quando i livelli
@@ -160,7 +160,7 @@ dati storici di carbon intensity per ciascuna zona, recuperati da \cite{electric
 Al momento dell'invocazione, lo scheduler recupera la CI
 corrente tramite l'API di ElectricityMaps~\cite{electricitymaps2024}
 , legge i parametri della zona, e calcola $\lambda$ secondo
-l'Equazione~\eqref{eq:sigmoide}, come descritto nell'algoritmo \autoref{alg:lambda}. In caso di indisponibilità dell'API,
+l'Equazione~\eqref{eq:crf}, come descritto nell'algoritmo \autoref{alg:lambda}. In caso di indisponibilità dell'API,
 il sistema degrada a $\lambda = 0{,}5$ (bilanciamento neutro tra
 accuratezza ed efficienza energetica).
 
@@ -443,7 +443,7 @@ unico meccanismo decisionale le tre famiglie di soluzioni identificate nel
 Capitolo~\ref{cap:Stato dell'arte}: la selezione tra varianti con diversi
 profili energia-accuratezza, la sensibilità al contesto carbonico della
 rete elettrica e l'adattività delle stime energetiche alle condizioni
-operative correnti. La sigmoide calibrata per zona traduce la carbon
+operative correnti. La Carbon Response Function calibrata per zona traduce la carbon
 intensity in un peso $\lambda$ contestualizzato rispetto alla
 distribuzione storica locale; la frontiera di Pareto restringe lo
 spazio decisionale alle sole varianti non dominate; la scalarizzazione

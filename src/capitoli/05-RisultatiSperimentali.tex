@@ -199,7 +199,7 @@ Il parametro $\lambda \in [0,1]$ regola il peso relativo tra qualità del
 risultato e risparmio energetico: valori elevati di $\lambda$ privilegiano
 la qualità, valori ridotti favoriscono l'efficienza energetica. Il valore
 di $\lambda$ è derivato dalla carbon intensity (CI) della zona di esecuzione
-tramite una funzione sigmoidale, garantendo che la selezione della variante
+tramite la Carbon Response Function (CRF), garantendo che la selezione della variante
 sia contestuale all'impatto carbonico dell'energia disponibile.
 
 % -----------------------------------------------------------
@@ -218,7 +218,7 @@ dalle serie storiche orarie di ElectricityMaps.
 Questo approccio isola il comportamento decisionale dello scheduler da
 eventuali variazioni del carico e consente di confrontare due diverse
 calibrazioni del segnale carbon-aware. L'Esperimento~1 mantiene fissa la
-funzione sigmoide per tutte le zone: le tracce di CI restano diverse, ma
+CRF per tutte le zone: le tracce di CI restano diverse, ma
 vengono trasformate in $\lambda$ tramite la stessa mappa decisionale.
 L'Esperimento~2 utilizza invece una calibrazione locale, più aderente a un
 deployment reale, in cui la CI corrente viene interpretata rispetto alla
@@ -273,8 +273,8 @@ Figura~\ref{fig:ci-distribution-zone} ne mostra la distribuzione per zona.
 \subsection{Obiettivo}
 \label{subsec:esperimento1-obiettivo}
 
-Il primo esperimento considera una politica carbon-aware in cui la funzione
-sigmoide è fissata una sola volta a livello europeo. Le zone mantengono le
+Il primo esperimento considera una politica carbon-aware in cui la CRF
+è fissata una sola volta a livello europeo. Le zone mantengono le
 proprie tracce di carbon intensity, che possono avere valori e distribuzioni
 molto diversi; ciò che resta invariato è la funzione che converte ciascun
 valore di CI nel parametro $\lambda$. L'esperimento serve quindi a osservare
@@ -284,25 +284,25 @@ vengono interpretati tramite la stessa mappa decisionale.
 \subsection{Configurazione}
 \label{subsec:esperimento1-configurazione}
 
-La normalizzazione del segnale di carbon intensity utilizza una sigmoide
+La normalizzazione del segnale di carbon intensity utilizza una CRF
 calibrata su un riferimento europeo comune, con punto medio fissato al
 valore medio europeo~\cite{eea-electricity-ghg-intensity}. In questo modo
 la medesima funzione $\lambda(\mathrm{CI})$ viene applicata a tutte le
 zone, pur in presenza di tracce di CI differenti. Le differenze osservate
 dipendono quindi dai valori di CI propri di ciascuna zona e dalla loro
-posizione rispetto alla sigmoide comune. La
-Figura~\ref{fig:sigmoid-overlay} mostra la sigmoide europea e la
+posizione rispetto alla CRF comune. La
+Figura~\ref{fig:crf-overlay} mostra la CRF europea e la
 collocazione delle zone lungo l'asse decisionale.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{figures/validation/06_sigmoid_overlay.png}
-    \caption{Sigmoide europea utilizzata per trasformare la CI nel
+    \caption{Carbon Response Function europea utilizzata per trasformare la CI nel
              parametro $\lambda$ e collocazione delle zone considerate.
              La funzione mappa le CI più basse verso $\lambda \approx 1$
              (preferenza per la qualità) e le CI più alte verso
              $\lambda \approx 0$ (preferenza per il risparmio energetico).}
-    \label{fig:sigmoid-overlay}
+    \label{fig:crf-overlay}
 \end{figure}
 
 Per ogni coppia funzione-zona viene eseguita la stessa traccia nei tre
@@ -349,7 +349,7 @@ calibrazione europea nelle cinque zone, ordinate per CI media crescente.
 \end{figure}
 
 \paragraph{Distribuzione delle varianti.}
-Le distribuzioni mostrano l'effetto atteso di una sigmoide europea
+Le distribuzioni mostrano l'effetto atteso di una CRF europea
 comune. In Francia, dove la CI è molto inferiore al riferimento europeo,
 il valore di $\lambda$ resta nella regione che privilegia la qualità: le
 varianti a massima accuratezza sono dominanti. Questo comportamento è
@@ -371,7 +371,7 @@ varianti intermedie o più accurate.
 
 Le zone intermedie mostrano il passaggio tra questi due regimi. Spagna e
 Italia restano vicine al lato qualitativo quando la loro CI è ancora
-relativamente bassa rispetto alla sigmoide europea, ma iniziano a
+relativamente bassa rispetto alla CRF europea, ma iniziano a
 distribuire le scelte su varianti più leggere quando la traccia attraversa
 valori più alti. PiLeibniz rende bene questo comportamento: già in Spagna
 non compare una sola variante dominante, ma più approssimazioni con numero
@@ -612,7 +612,7 @@ coerente con la CI osservata.
 
 Il secondo esperimento valuta lo stesso scheduler in una configurazione
 locale. A differenza dell'Esperimento~1, in cui tutte le zone condividono
-un riferimento europeo, qui la sigmoide è calibrata sulla distribuzione
+un riferimento europeo, qui la CRF è calibrata sulla distribuzione
 storica di ciascuna zona. Il valore di $\lambda$ non dipende quindi
 soltanto dalla CI assoluta, ma anche dalla sua posizione rispetto al regime
 abituale della rete considerata. Questa configurazione rappresenta il caso
@@ -624,13 +624,13 @@ carbon-aware rispetto al contesto elettrico in cui opera.
 
 La struttura sperimentale è la stessa dell'Esperimento~1: per ogni zona
 viene rieseguita la stessa traccia nei tre regimi. Cambia la
-normalizzazione del segnale ambientale: per ogni zona $z$, la sigmoide
+normalizzazione del segnale ambientale: per ogni zona $z$, la CRF
 utilizza la media storica locale $\mu_z$ e i percentili locali $P_5$ e
 $P_{95}$ stimati dalle serie ElectricityMaps~\cite{electricitymaps2024}.
 La media locale definisce il punto centrale della transizione, mentre
 $P_5$ e $P_{95}$ identificano le regioni in cui la CI è rispettivamente
 molto bassa o molto alta per quella zona, cioè dove $\lambda$ tende a
-$1$ o a $0$. La Figura~\ref{fig:exp2-sigmoidi-locali} mostra due esempi
+$1$ o a $0$. La Figura~\ref{fig:exp2-crf-locali} mostra due esempi
 rappresentativi di questa calibrazione.
 Rispetto all'Esperimento~1, la stessa CI assoluta può generare valori di $\lambda$ differenti in zone
 diverse, poiché rappresenta una condizione ordinaria in una rete e
@@ -704,7 +704,7 @@ suddivisione usata per individuare le fasce rappresentative.
         \includegraphics[width=\textwidth]{figures/lambda_curve_PL.png}
         \caption{Polonia (PL)}
     \end{subfigure}
-    \caption{Esempi di sigmoidi locali utilizzate nell'Esperimento~2 per
+    \caption{Esempi di Carbon Response Function locali utilizzate nell'Esperimento~2 per
              trasformare la carbon intensity oraria nel parametro
              $\lambda$. Francia e Polonia rappresentano due estremi della
              distribuzione osservata: la stessa funzione decisionale viene
@@ -713,11 +713,11 @@ suddivisione usata per individuare le fasce rappresentative.
              più alti rendono più brusco il passaggio da $\lambda \approx 1$
              a $\lambda \approx 0$, mentre valori più bassi producono una
              variazione più graduale.}
-    \label{fig:exp2-sigmoidi-locali}
+    \label{fig:exp2-crf-locali}
 \end{figure}
 
-Nei due esempi della Figura~\ref{fig:exp2-sigmoidi-locali}, il punto medio
-della sigmoide coincide con la media storica locale: per la Francia la
+Nei due esempi della Figura~\ref{fig:exp2-crf-locali}, il punto medio
+della CRF coincide con la media storica locale: per la Francia la
 transizione avviene a valori assoluti di CI molto bassi, mentre per la
 Polonia la stessa logica decisionale è centrata su valori molto più elevati.
 Questa differenza evidenzia il ruolo della calibrazione locale: $\lambda$
@@ -779,7 +779,7 @@ ottenute con calibrazione locale della CI.
 
 Un primo segnale del corretto funzionamento dello scheduler è che la
 calibrazione locale evita il collasso sistematico su uno dei due estremi
-della frontiera di Pareto. La sigmoide produce valori di $\lambda$ molto
+della frontiera di Pareto. La CRF produce valori di $\lambda$ molto
 alti o molto bassi solo quando il timestamp è anomalo rispetto alla storia
 della zona; la maggior parte dei timestamp ordinari ricade in una regione
 intermedia, e lo scheduler converge su varianti di compromesso. Le scelte
@@ -1025,7 +1025,7 @@ stimate di CO\textsubscript{2}.
 
 L'Esperimento~2 mostra come le decisioni cambiano quando la CI viene
 interpretata rispetto al contesto locale anziché rispetto a una scala
-europea uniforme. La sigmoide non classifica una zona come
+europea uniforme. La CRF non classifica una zona come
 ``pulita'' o ``carbon-intensive'' in senso assoluto, ma valuta ogni
 timestamp rispetto alla storia della rete locale. Per questo motivo anche
 zone con CI media molto diversa possono produrre decisioni intermedie:

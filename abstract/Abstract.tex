@@ -37,12 +37,14 @@ eseguite e aggiorna i profili energetici tramite media mobile esponenziale.
 In questo modo le stime usate dallo scheduler non restano puramente statiche,
 ma si adattano progressivamente al comportamento osservato sul nodo corrente.
 
-La carbon intensity corrente ottenuta tramite chiamate API ad
+La carbon intensity corrente, ottenuta tramite chiamate API ad
 ElectricityMaps, viene trasformata in un parametro $\lambda \in [0,1]$ tramite
-una funzione sigmoide calibrata sulla distribuzione storica della zona
-geografica. Questa calibrazione locale consente di interpretare la CI come
-valore relativo al contesto della rete elettrica considerata, e non come
-soglia assoluta valida ovunque. Il parametro $\lambda$ regola una
+la \emph{Carbon Response Function} (CRF): una funzione logistica monotona
+decrescente il cui punto medio e la cui scala di transizione sono calibrati
+sulla media e sui percentili storici della zona geografica. La CRF traduce la
+CI corrente in un peso decisionale relativo al contesto locale, consentendo di
+interpretare la CI non come soglia assoluta valida ovunque, ma come posizione
+rispetto al comportamento tipico della rete elettrica considerata. Il parametro $\lambda$ regola una
 scalarizzazione della frontiera di Pareto energia--qualità, costruita sulle
 sole varianti non dominate. Le stime energetiche includono inoltre un termine
 di esplorazione ispirato al principio Lower Confidence Bound, utile a
@@ -60,7 +62,7 @@ minima energia. I risultati mostrano che lo scheduler si posiziona in modo
 coerente tra questi due estremi, adattando la scelta al segnale carbonico
 locale.
 
-Rispetto a $\Lambda_1$, con calibrazione locale della sigmoide, la politica
+Rispetto a $\Lambda_1$, con CRF calibrata localmente per zona, la politica
 proposta ottiene risparmi energetici compresi tra il 62\% e il 92\% e una
 riduzione stimata delle emissioni operative di CO\textsubscript{2} fino al
 94{,}82\%. Il costo qualitativo resta contenuto nelle funzioni numeriche,
