@@ -1090,21 +1090,34 @@ identica per le tre policy, al fine di mantenerle comparabili.
 Il carico dell'Esperimento~3 è generato con k6~\cite{grafana-k6-docs},
 uno strumento di load testing che permette di descrivere un workload tramite script e di
 controllare esplicitamente il tasso di arrivo delle richieste. A
-differenza dell'esecuzione sequenziale usato negli Esperimenti~1 e~2, k6
+differenza dell'esecuzione sequenziale usata negli Esperimenti~1 e~2, k6
 mantiene attivi più virtual user e invia nuove richieste secondo il
 profilo temporale configurato, indipendentemente dalla durata delle
-invocazioni precedenti. Questo consente di simulare un flusso continuo e
-variabile, osservando quando il nodo riesce a seguire il tasso di arrivo
-e quando invece inizia ad accumulare richieste in coda.
+invocazioni precedenti. Questo consente di simulare un flusso continuo con tasso di arrivo
+variabile per fasi, osservando quando il nodo riesce a seguire
+il tasso configurato e quando invece inizia ad accumulare richieste in coda.
+
+Il tempo del workload non coincide con l'orario reale di esecuzione del
+test, ma viene usato per simulare l'arrivo di invocazioni a partire da
+un punto della traccia di carbon intensity. Ogni fase è quindi ancorata
+a un orario iniziale della traccia, indicato da \texttt{ciHourStart}.
+Durante il flusso di richieste, lo script seleziona in modo deterministico
+la zona geografica e associa a ciascuna invocazione la carbon intensity
+osservata nella traccia per il contesto temporale simulato, inoltrandola
+poi a Serverledge tramite il campo \texttt{ci\_override}. In questo modo,
+il workload non rappresenta solo un profilo sintetico di arrivi, ma anche
+una sequenza controllata e variabile di condizioni carbon-aware osservate
+dallo scheduler.
 
 Il workload è composto da cinque fasi consecutive, con tasso di arrivo
 compreso tra 2 e 25~richieste al secondo e durata complessiva pari a
-30~minuti. Le prime tre fasi (\emph{Low}, \emph{Medium}, \emph{High} a
-rispettivamente 2, 5 e 10~req/s) coprono un regime di carico moderato;
-le ultime due (\emph{Stress} e \emph{Peak}) aumentano progressivamente
-la pressione sul nodo. Il tasso configurato è mantenuto tramite
-l'esecutore \texttt{constant-arrival-rate}, che forza k6 a generare un
-numero prefissato di nuove iterazioni al secondo per ciascuna fase.
+30~minuti. Le prime tre fasi simulano fasce temporali associate
+alla mattina, al mezzogiorno e alla sera, con tassi pari rispettivamente
+a 2, 5 e 10~req/s; le ultime due aumentano progressivamente la pressione
+sul nodo, raggiungendo 15 e 25~req/s. Il tasso configurato è mantenuto
+tramite l'esecutore \texttt{constant-arrival-rate}, che forza k6 a
+generare un numero prefissato di nuove iterazioni al secondo per
+ciascuna fase.
 La Figura~\ref{fig:exp3-workload-profile} mostra il profilo configurato.
 
 \begin{figure}[H]

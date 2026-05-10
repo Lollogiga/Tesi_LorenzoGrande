@@ -16,9 +16,8 @@ fonti rinnovabili e uno in cui è dominata da fonti fossili.
 Il contributo complessivo del lavoro consiste nell'estensione della
 piattaforma Serverledge con un modello di esecuzione carbon-aware, nel
 quale la scelta della variante non è fissata staticamente ma viene
-determinata a runtime in funzione della carbon intensity corrente della zona di
-esecuzione, dei profili energetici osservati e del livello di qualità
-associato alle alternative disponibili. Questo contributo si articola in
+determinata a runtime in funzione della carbon intensity rilevata al momento nella zona di esecuzione, dei profili energetici osservati e del livello di qualità associato alle alternative disponibili.
+Questo contributo si articola in
 quattro direzioni principali.
 
 Il primo contributo è il modello di funzione logica con varianti. Una
@@ -43,7 +42,7 @@ Bound. In letteratura tale principio è l'analogo del più noto Upper
 Confidence Bound (UCB) nei problemi di massimizzazione: poiché l'obiettivo
 è minimizzare il consumo energetico, la stima ottimistica si ottiene
 abbassando il limite di confidenza, favorendo così le varianti meno
-campionate. Le varianti meno campionate vengono esplorate con maggiore
+campionate. Quest'ultime saranno esplorate con maggiore
 probabilità, riducendo il rischio che una stima iniziale imprecisa escluda
 prematuramente alternative potenzialmente efficienti.
 
@@ -167,14 +166,12 @@ esclusivamente la componente operativa dell'esecuzione, ottenuta
 moltiplicando l'energia consumata dalla funzione per la carbon intensity
 della zona geografica considerata. Tale valore rappresenta quindi una
 stima delle emissioni associate all'esecuzione runtime delle invocazioni,
-ma non una valutazione completa dell'impronta carbonica lungo il ciclo di
-vita del sistema. Non viene infatti modellata la \emph{embodied carbon},
-ovvero la quota di emissioni associata alla produzione, al trasporto,
-all'installazione, alla manutenzione e alla dismissione dell'hardware,
-eventualmente ammortizzata sul ciclo di vita dell'infrastruttura
-computazionale~\cite{gupta2021chasingcarbon}. Questa scelta delimita il
-perimetro del lavoro: lo scheduler proposto mira a ridurre l'impatto
-carbonico operativo delle invocazioni, ma non pretende di stimare l'intera
+ma non una valutazione completa dell'impronta carbonica del sistema.
+Non viene infatti modellata la \emph{embodied carbon}, ovvero la quota di
+emissioni associata al ciclo di vita dell'hardware, dalla produzione alla
+dismissione~\cite{gupta2021chasingcarbon}. Questa scelta è coerente con
+il perimetro del lavoro: lo scheduler proposto agisce sulla componente
+operativa e variabile delle emissioni, ma non pretende di stimare l'intera
 impronta ambientale dell'infrastruttura sottostante.
 
 \paragraph{Overhead del meccanismo di monitoraggio.}
@@ -227,15 +224,20 @@ non solo rispetto al valore corrente ma anche rispetto all'evoluzione
 attesa della rete elettrica.
 
 \paragraph{Scheduling distribuito multi-nodo.}
-In un deployment cloud-edge federato, lo scheduler dovrebbe decidere sia la
-variante sia il nodo di esecuzione. Questo richiede di combinare carbon
-intensity, latenza di rete, capacità residua, stato dei container, costo
-energetico della variante e costo di trasferimento. L'obiettivo non sarebbe
-spostare sempre l'esecuzione verso la zona più pulita, ma verificare quando
-il beneficio di una minore carbon intensity compensa l'energia e la latenza
-aggiuntive introdotte dal trasferimento. L'estensione multi-nodo
-trasformerebbe quindi il modello da selezione locale della variante a
-problema congiunto di routing e scheduling carbon-aware.
+In un deployment cloud-edge federato, lo scheduler dovrebbe decidere
+congiuntamente sia la variante sia il nodo di esecuzione. In questo scenario,
+l'obiettivo non sarebbe spostare sempre l'esecuzione verso la zona con minore
+carbon intensity, ma valutare quando tale spostamento consente di preservare
+una variante di qualità più elevata senza introdurre costi eccessivi in termini
+di trasferimento, latenza ed energia aggiuntiva.
+
+L'estensione multi-nodo richiederebbe quindi di considerare, per ciascuna
+coppia nodo-variante, il compromesso tra qualità, consumo energetico della
+variante, carbon intensity della zona di esecuzione e costo associato al
+trasferimento. Il problema passerebbe così da una selezione locale della
+variante a una decisione congiunta di routing e scheduling carbon-aware, in
+cui il beneficio ambientale ottenuto eseguendo in una zona più favorevole deve
+essere confrontato con il costo introdotto dallo spostamento dell'invocazione.
 
 \paragraph{Integrazione con politiche di SLA e pricing.}
 La selezione carbon-aware introduce una differenziazione del servizio: a
