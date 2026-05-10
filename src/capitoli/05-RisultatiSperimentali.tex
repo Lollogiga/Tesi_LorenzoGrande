@@ -954,10 +954,10 @@ stimate di CO\textsubscript{2}.
     \begin{tabular}{llrrrrrrrr}
         \toprule
         Funzione & Zona
-            & $\Delta E_{acc}$ & $\Delta \mathrm{CO_2}_{acc}$
-            & $\Delta T_{acc}$ & $\Delta Q_{acc}$
-            & $\Delta E_{ene}$ & $\Delta \mathrm{CO_2}_{ene}$
-            & $\Delta T_{ene}$ & $\Delta Q_{ene}$ \\
+            & $\Delta E_{\Lambda_1}$ & $\Delta \mathrm{CO_2}_{\Lambda_1}$
+            & $\Delta T_{\Lambda_1}$ & $\Delta Q_{\Lambda_1}$
+            & $\Delta E_{\Lambda_0}$ & $\Delta \mathrm{CO_2}_{\Lambda_0}$
+            & $\Delta T_{\Lambda_0}$ & $\Delta Q_{\Lambda_0}$ \\
         \midrule
         PiLeibniz & Francia
             & \greenval{-66.15\%} & \greenval{-71.89\%} & \greenval{-71.68\%} & \redval{-0.05\%} & \redval{+81.71\%} & \redval{+50.85\%} & \redval{+10.94\%} & \greenval{+0.15\%} \\
@@ -1036,40 +1036,26 @@ stimate di CO\textsubscript{2}.
 
 L'Esperimento~2 mostra come le decisioni cambiano quando la CI viene
 interpretata rispetto al contesto locale anziché rispetto a una scala
-europea uniforme. Rispetto a \emph{always-accurate}, lo scheduler riduce
-sempre energia e CO\textsubscript{2} in tutte le zone e funzioni osservate.
-Il risparmio carbonico è sistematicamente più alto del risparmio energetico:
-la scelta della variante non è indipendente dalla CI del timestamp, e lo
-scheduler tende a selezionare varianti efficienti proprio nei momenti
-localmente più sfavorevoli, amplificando il beneficio carbonico oltre il
-solo risparmio energetico medio.
+europea uniforme. La sigmoide non classifica una zona come
+``pulita'' o ``carbon-intensive'' in senso assoluto, ma valuta ogni
+timestamp rispetto alla storia della rete locale. Per questo motivo anche
+zone con CI media molto diversa possono produrre decisioni intermedie:
+ciò che guida lo scheduler non è solo il livello medio della zona, ma la
+posizione del timestamp rispetto al profilo locale.
 
-Il risparmio energetico è però intrinsecamente legato a un costo qualitativo:
-selezionare varianti meno costose significa, per costruzione, scegliere
-varianti meno accurate. Più lo scheduler si sposta verso varianti efficienti,
-maggiore è la perdita di qualità che ne deriva. Il grado di questa correlazione
-dipende dalla struttura della frontiera di Pareto di ciascuna funzione: quando
-le varianti adiacenti differiscono poco in accuratezza, il costo qualitativo
-per unità di risparmio energetico è contenuto; quando i salti sono ampi, anche
-una piccola riduzione di energia può comportare una perdita qualitativa
-visibile. Nelle funzioni numeriche la perdita rispetto ad \emph{always-accurate}
-resta inferiore all'1\% nonostante riduzioni di energia dell'ordine del 60--90\%,
-perché la frontiera continua permette compromessi fini. Nelle funzioni ML la
-perdita è invece tra il 5\% e l'11\%, riflettendo i salti discreti tra modelli
-adiacenti: ImageClassification e SentimentAnalysis perdono circa 8--11\%, mentre
-SpamDetection, pur risparmiando più energia, perde solo il 4--7\% perché BERT-tiny
-(dominante) è qualitativamente più vicino a RoBERTa-spam di quanto VADER non
-lo sia rispetto ai modelli neurali di SentimentAnalysis.
+Il risultato operativo rimane un compromesso tra le due baseline. Rispetto a
+$\Lambda_1$, lo scheduler riduce energia ed emissioni; rispetto a
+$\Lambda_0$, evita di sacrificare eccessivamente la qualità. Il beneficio
+carbonico può superare il solo risparmio energetico perché le varianti più
+efficienti vengono selezionate proprio nei momenti localmente più sfavorevoli.
 
-Il confronto con \emph{always-energy} conferma che lo scheduler non minimizza
-semplicemente l'energia: consuma più della baseline energetica, ma mantiene
-una qualità nettamente superiore in tutte le funzioni. Questo comportamento
-è la conseguenza diretta della calibrazione locale: la sigmoide non classifica
-una zona come ``pulita'' o ``carbon-intensive'' in senso assoluto, ma valuta
-ogni timestamp rispetto alla storia specifica della rete. Di conseguenza, anche
-in Polonia compaiono scelte non estreme quando la CI è bassa rispetto al
-profilo locale, e in Francia possono essere selezionate varianti efficienti
-nei rari momenti di CI relativamente alta.
+Il costo qualitativo dipende dalla forma della frontiera di Pareto: le funzioni
+numeriche permettono transizioni più graduali, mentre nelle funzioni ML il
+passaggio tra modelli distinti introduce salti più visibili. L'Esperimento~2
+conferma quindi che la calibrazione locale rende lo scheduler meno dipendente
+dalla CI assoluta della zona, ma non elimina il vincolo fondamentale del
+problema: il risparmio energetico resta sempre legato alla struttura delle
+varianti disponibili.
 
 \section{Esperimento 3: flusso di arrivo variabile}
 \label{sec:esperimento3}
@@ -1085,6 +1071,12 @@ decisionale tramite invocazioni sequenziali, questo esperimento verifica
 se le stesse relazioni tra energia, emissioni, qualità e tempo di risposta
 rimangono osservabili quando il sistema è attraversato da un carico
 variabile.
+
+Come nell'Esperimento~2, la CI viene interpretata tramite calibrazione
+locale: il valore di $\lambda$ dipende dalla posizione del timestamp
+rispetto alla distribuzione storica della zona, non da una soglia europea
+unica. In questo modo l'Esperimento~3 valuta il comportamento operativo
+della configurazione più vicina a un deployment reale.
 
 L'analisi è articolata lungo due dimensioni, entrambe ricavate dalla
 stessa campagna sperimentale. La prima riguarda il \emph{confronto quantitativo}
@@ -1109,7 +1101,7 @@ identica per le tre policy, al fine di mantenerle comparabili.
 Il carico dell'Esperimento~3 è generato con k6~\cite{grafana-k6-docs},
 uno strumento di load testing che permette di descrivere un workload tramite script e di
 controllare esplicitamente il tasso di arrivo delle richieste. A
-differenza del replay sequenziale usato negli Esperimenti~1 e~2, k6
+differenza dell'esecuzione sequenziale usato negli Esperimenti~1 e~2, k6
 mantiene attivi più virtual user e invia nuove richieste secondo il
 profilo temporale configurato, indipendentemente dalla durata delle
 invocazioni precedenti. Questo consente di simulare un flusso continuo e
@@ -1162,64 +1154,61 @@ provenienti da reti elettriche con caratteristiche differenti.
 
 La Tabella~\ref{tab:exp3-energy-comparison} riporta, per ciascuna
 funzione, la variazione percentuale di \emph{adaptive-ci} rispetto alle
-due baseline, aggregata sulle prime tre fasi del workload (regime
-moderato, senza saturazione). Le colonne $\Delta T$ indicano la
+due baseline, aggregata sulle diverse fasi del workload. Le colonne $\Delta T$ indicano la
 variazione del \emph{tempo di risposta} medio per invocazione, senza
 considerare eventuali tempi di accodamento.
 \begin{table}[H]
     \centering
-    \caption{Variazione percentuale di \emph{adaptive-ci} rispetto alle
-             due baseline nelle prime tre fasi del workload, usate come
-             regime di carico moderato.}
+    \caption{Variazione percentuale dello scheduler carbon-aware
+             dell'Esperimento~3 rispetto alle due baseline, calcolata
+             sulle prime tre fasi del workload. Valori negativi di
+             $\Delta E$, $\Delta \mathrm{CO_2}$ e $\Delta T$ indicano un
+             risparmio rispetto alla baseline indicata dal pedice; valori
+             positivi di $\Delta Q$ indicano qualità superiore alla
+             baseline indicata dal pedice.}
     \label{tab:exp3-energy-comparison}
     \resizebox{\textwidth}{!}{%
     \begin{tabular}{lrrrrrrrr}
         \toprule
-        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\Lambda_0$}
-        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\Lambda_1$} \\
+        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\Lambda_1$}
+        & \multicolumn{4}{c}{\emph{adaptive-ci} vs $\Lambda_0$} \\
         \cmidrule(lr){2-5}\cmidrule(lr){6-9}
         Funzione
-            & $\Delta E_{ene}$ & $\Delta \mathrm{CO_2}_{ene}$
-            & $\Delta T_{ene}$ & $\Delta Q_{ene}$
-            & $\Delta E_{acc}$ & $\Delta \mathrm{CO_2}_{acc}$
-            & $\Delta T_{acc}$ & $\Delta Q_{acc}$ \\
+            & $\Delta E_{\Lambda_1}$ & $\Delta \mathrm{CO_2}_{\Lambda_1}$
+            & $\Delta T_{\Lambda_1}$ & $\Delta Q_{\Lambda_1}$
+            & $\Delta E_{\Lambda_0}$ & $\Delta \mathrm{CO_2}_{\Lambda_0}$
+            & $\Delta T_{\Lambda_0}$ & $\Delta Q_{\Lambda_0}$ \\
         \midrule
         LnHarmonic
-            & \redval{+300.2\%}  & \redval{+180.0\%}
-            & \redval{+154.3\%}  & \greenval{+0.1\%}
             & \greenval{-89.8\%} & \greenval{-92.8\%}
-            & \greenval{-90.8\%} & \redval{-0.13\%} \\
+            & \greenval{-90.8\%} & \redval{-0.13\%}
+            & \redval{+300.2\%}  & \redval{+180.0\%}
+            & \redval{+154.3\%}  & \greenval{+0.1\%} \\
         MonteCarlo
-            & \redval{+13\mathrm{k}\%} & \redval{+11\mathrm{k}\%}
-            & \redval{+548.2\%}  & \greenval{+4.6\%}
             & \greenval{-91.7\%} & \greenval{-91.5\%}
-            & \greenval{-83.5\%} & \redval{-0.6\%} \\
+            & \greenval{-83.5\%} & \redval{-0.6\%}
+            & \redval{+13\mathrm{k}\%} & \redval{+11\mathrm{k}\%}
+            & \redval{+548.2\%}  & \greenval{+4.6\%} \\
         PiLeibniz
-            & \redval{+92.8\%}   & \redval{+81.0\%}
-            & \redval{+115.6\%}  & \greenval{+0.2\%}
             & \greenval{-64.1\%} & \greenval{-66.4\%}
-            & \greenval{-41.6\%}   & \redval{-0.26\%} \\
+            & \greenval{-41.6\%} & \redval{-0.26\%}
+            & \redval{+92.8\%}   & \redval{+81.0\%}
+            & \redval{+115.6\%}  & \greenval{+0.2\%} \\
         SentimentAnalysis
-            & \redval{+1.0\mathrm{k}\%} & \redval{+752.4\%}
-            & \redval{+3.2\mathrm{k}\%}
-            & \greenval{+26.2\%}
             & \greenval{-70.4\%} & \greenval{-76.5\%}
-            & \greenval{-77.2\%}
-            & \redval{-11.8\%} \\
+            & \greenval{-77.2\%} & \redval{-11.8\%}
+            & \redval{+1.0\mathrm{k}\%} & \redval{+752.4\%}
+            & \redval{+3.2\mathrm{k}\%} & \greenval{+26.2\%} \\
         SpamDetection
-            & \redval{+846.4\%}  & \redval{+1.3\mathrm{k}\%}
-            & \redval{+1.7\mathrm{k}\%}
-            & \greenval{+32.8\%}
             & \greenval{-77.7\%} & \greenval{-75.4\%}
-            & \greenval{-36.7\%}
-            & \redval{-3.9\%} \\
+            & \greenval{-36.7\%} & \redval{-3.9\%}
+            & \redval{+846.4\%}  & \redval{+1.3\mathrm{k}\%}
+            & \redval{+1.7\mathrm{k}\%} & \greenval{+32.8\%} \\
         ImageClassification
-            & \redval{+554.7\%}  & \redval{+454.1\%}
-            & \redval{+52.2\%}
-            & \greenval{+24.0\%}
             & \greenval{-65.4\%} & \greenval{-70.7\%}
-            & \greenval{-57.2\%}
-            & \redval{-8.6\%} \\
+            & \greenval{-57.2\%} & \redval{-8.6\%}
+            & \redval{+554.7\%}  & \redval{+454.1\%}
+            & \redval{+52.2\%}   & \greenval{+24.0\%} \\
         \bottomrule
     \end{tabular}
     }
@@ -1274,8 +1263,7 @@ in scelte coerenti anche sotto carico.
 
 Il sistema è eseguito su un singolo nodo serverless. Quando una richiesta
 arriva mentre il nodo sta già eseguendo un'invocazione, essa viene
-accodata fino a quando una risorsa di esecuzione torna disponibile. La
-coda ha capacità finita pari a 1000~richieste: se il tempo medio di
+accodata fino a quando una risorsa di esecuzione torna disponibile: se il tempo medio di
 servizio supera quanto il tasso di arrivo consente di sostenere, le
 richieste si accumulano e il sistema entra progressivamente in
 saturazione.
@@ -1312,93 +1300,68 @@ carbon-aware lungo una dimensione che gli Esperimenti~1 e~2 non
 affrontano: la coesistenza tra la logica di selezione della variante e
 un flusso di richieste concorrente.
 
-\paragraph{Invarianza delle scelte carbon-aware rispetto al carico.}
-Nella fase di confronto quantitativo, le relazioni tra energia,
-emissioni e qualità replicano il pattern degli Esperimenti~1 e~2.
-\emph{Adaptive-ci} si colloca in posizione intermedia tra le due
-baseline: consuma più di $\Lambda_0$ ma con qualità superiore, e meno
-di $\Lambda_1$ con una degradazione di qualità contenuta. La
-distribuzione delle varianti selezionate conferma che lo scheduler
-risponde al segnale di carbon intensity, non al numero di richieste
-concorrenti: la composizione delle scelte varia tra funzioni in funzione
-della struttura delle rispettive frontiere di Pareto, non del tasso di
-arrivo. Il tempo di risposta riflette il peso computazionale della
-variante selezionata, senza overhead misurabile introdotto dal piano di
-controllo.
+Nelle prime tre fasi, usate come regime moderato, \emph{adaptive-ci}
+mantiene lo stesso ruolo osservato negli esperimenti precedenti: riduce
+energia ed emissioni rispetto a $\Lambda_1$ e preserva qualità rispetto a
+$\Lambda_0$. La presenza di richieste concorrenti non modifica quindi la
+semantica della decisione carbon-aware; il tempo di risposta continua a
+riflettere soprattutto il costo computazionale della variante scelta.
 
-\paragraph{Throughput effettivo e soglia di saturazione.}
-Sotto carico crescente emergono differenze operative significative tra
-le policy. $\Lambda_0$ completa il 100\% delle richieste in tutte le
-fasi, con latenza nell'ordine del millisecondo: le varianti leggere che
-seleziona hanno tempi di esecuzione così contenuti da non saturare mai
-il nodo. La policy \emph{adaptive-ci} completa il 99\% delle richieste
-sull'intero workload; i pochi fallimenti si concentrano nella fase
-\emph{Peak} (25~req/s) e corrispondono a timeout dovuti a code
-transitorie, non a errori di configurazione (HTTP~422 è sempre zero
-per tutte le policy).
-
-$\Lambda_1$ mostra un comportamento qualitativamente diverso: già dalla
-fase \emph{Medium} (5~req/s) il throughput effettivo diverge dal tasso
-configurato e si stabilizza intorno a 1,25~req/s, indipendentemente da
-quanto il carico aumenti nelle fasi successive. Il nodo non collassa,
-ma raggiunge il suo limite di capacità: la scelta sistematica di
-varianti computazionalmente costose abbassa la capacità di servizio
-effettiva del sistema fino a un valore fisso, determinato dal tempo
-medio di esecuzione delle varianti ad alta qualità.
-
-Questo risultato ha rilievo autonomo: mostra che il costo operativo di
-una strategia di scheduling non può essere valutato indipendentemente
-dal profilo di carico. Una policy che privilegia sempre la qualità può
-essere sostenibile a basso traffico, ma introduce un tetto fisso al
-throughput raggiungibile a carichi medi o elevati. Lo scheduler
-carbon-aware, selezionando varianti più leggere nelle fasi di alta CI,
-mantiene una capacità di servizio sufficiente a seguire il profilo di
-arrivo in tutti i regimi testati.
+La differenza emerge quando il tasso di arrivo cresce. $\Lambda_0$ resta
+stabile perché seleziona sempre varianti leggere, mentre $\Lambda_1$
+raggiunge presto il proprio limite di capacità: dalla fase \emph{Medium}
+il throughput effettivo non segue più il carico configurato e si assesta
+intorno a 1,25~req/s. \emph{Adaptive-ci} evita questo comportamento nella
+quasi totalità discostandosi di poco dal workload solo nella fase \emph{Peak}. Il risultato indica
+che la scelta dinamica della variante non è solo un compromesso
+energetico, ma contribuisce anche a mantenere il sistema operativo sotto
+carico variabile.
 
 % -----------------------------------------------------------
-\section{Discussione generale}
-\label{sec:discussione-generale}
+\section{Conclusioni del capitolo}
+\label{sec:conclusioni-capitolo5}
 % -----------------------------------------------------------
 
-I tre esperimenti rispondono a domande complementari. I primi due
-confrontano due modi diversi di interpretare il segnale di carbon
-intensity. La calibrazione europea dell'Esperimento~1 fornisce una scala
-comune: è utile per confrontare zone diverse senza introdurre soglie
-specifiche per ciascuna rete e per osservare come la stessa politica si
-comporta al variare del mix elettrico. La calibrazione locale
-dell'Esperimento~2 è invece più vicina a un deployment reale: il valore di
-$\lambda$ riflette quanto la CI corrente sia alta o bassa rispetto alla
-storia della zona, evitando che una soglia europea unica produca decisioni
-non proporzionate in reti strutturalmente molto diverse.
+Il capitolo ha verificato sperimentalmente che lo scheduler proposto
+traduce la carbon intensity in scelte coerenti lungo la frontiera di
+Pareto delle varianti disponibili. La calibrazione europea
+dell'Esperimento~1 mostra il comportamento atteso su una scala comune:
+nelle zone a bassa CI lo scheduler resta vicino a $\Lambda_1$, mentre
+nelle zone più carbon-intensive si sposta verso varianti più efficienti.
+Con calibrazione locale, usata negli Esperimenti~2 e~3, la decisione
+diventa relativa alla storia della singola zona e non dipende solo dalla
+CI assoluta.
 
-In entrambi i casi lo scheduler occupa una posizione intermedia tra
-\emph{always-accurate}, che preserva la qualità ignorando il costo
-ambientale, e \emph{always-energy}, che minimizza il consumo ignorando la
-qualità. Il terzo esperimento verifica infine che questa selezione possa
-essere eseguita anche in presenza di carico variabile, senza introdurre un
-overhead tale da compromettere la latenza del servizio.
+I risultati principali sono i seguenti:
+%
+\begin{itemize}
+  \item rispetto a $\Lambda_1$, lo scheduler riduce sistematicamente
+        energia ed emissioni. Nell'Esperimento~2 il risparmio energetico
+        è pari a circa 62--92\% per funzione e zona, mentre la riduzione
+        stimata di CO\textsubscript{2} arriva fino al 94.82\%;
+  \item il costo qualitativo rimane contenuto nelle funzioni numeriche
+        ($\Delta Q$ circa 0.01--0.61\% nell'Esperimento~2), mentre è più
+        visibile nelle funzioni ML, dove i salti tra modelli portano a
+        perdite comprese tra circa 4.34\% e 10.55\%;
+  \item rispetto a $\Lambda_0$, lo scheduler mantiene una qualità
+        superiore: nell'Esperimento~2 il guadagno qualitativo è circa
+        0.13--4.62\% per le funzioni numeriche e 23.40--32.19\% per le
+        funzioni ML;
+  \item sotto carico variabile per 30~minuti consecutivi (2--25~req/s),
+        \emph{adaptive-ci} mantiene piena stabilità operativa in tutte le
+        cinque fasi del workload; il risparmio di CO\textsubscript{2}
+        rispetto a $\Lambda_1$ si attesta tra il 66\% e il 93\% a seconda
+        della funzione, confermando che il beneficio ambientale si accumula
+        in modo proporzionale anche sotto carico sostenuto. Rispetto a
+        $\Lambda_0$, tuttavia, il consumo energetico risulta superiore ---
+        fino a oltre un ordine di grandezza per alcune funzioni --- a
+        fronte di un guadagno qualitativo sensibile, in particolare nelle
+        funzioni ML\@.
+\end{itemize}
 
-\paragraph{Limitazioni.}
-I risultati evidenziano alcune limitazioni del sistema proposto. La prima
-riguarda le zone con CI prossima al punto medio della sigmoide: in tali
-condizioni, piccole variazioni della CI possono attraversare soglie di
-selezione e produrre cambi più frequenti di variante. La seconda riguarda
-le funzioni con frontiera di Pareto poco estesa: quando sono disponibili
-solo pochi punti non dominati, lo scheduler ha meno possibilità di
-modulare gradualmente il compromesso e i salti di qualità possono essere
-più marcati. La terza riguarda i burst molto intensi: il sistema resta
-vincolato alla capacità del piano di controllo, alla latenza di
-\texttt{etcd} e alla frequenza con cui le metriche energetiche vengono
-aggiornate.
-
-\paragraph{Sintesi.}
-Nel complesso, la valutazione mostra che l'estensione proposta consente di
-collocare Serverledge tra due estremi operativi ben definiti:
-\emph{always-accurate}, che massimizza la qualità ignorando il costo
-ambientale, e \emph{always-energy}, che minimizza il consumo ignorando la
-qualità. Lo scheduler carbon-aware occupa una regione intermedia e
-variabile dello spazio di trade-off, determinata dalla carbon intensity
-della zona e vincolata al consenso esplicito dell'utente. La riduzione
-delle emissioni non è ottenuta tramite una degradazione indiscriminata,
-ma attraverso una scelta contestuale e misurabile lungo la frontiera di
-Pareto, coerente con il segnale ambientale osservato a runtime.
+Questi risultati indicano che la riduzione delle emissioni non deriva da
+una degradazione indiscriminata della qualità, ma da una selezione
+contestuale delle varianti. Il vincolo principale resta la forma della
+frontiera di Pareto: quando sono disponibili molte varianti vicine, il
+compromesso è graduale; quando le varianti sono pochi modelli distinti,
+il risparmio energetico comporta salti qualitativi più evidenti.
