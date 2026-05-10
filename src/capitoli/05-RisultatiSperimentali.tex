@@ -2,14 +2,13 @@
 \label{cap:RisultatiSperimentali}
 
 \emph{Questo capitolo valuta sperimentalmente l'estensione carbon-aware
-di Serverledge proposta in questa tesi. La valutazione non mira a
-dimostrare una riduzione generalizzata del consumo energetico: il consumo
-è considerato una dimensione del trade-off con la qualità del risultato,
-da modulare in funzione del contesto carbonico dell'esecuzione.
-L'obiettivo è verificare che lo scheduler carbon-aware traduca la carbon
-intensity della zona in scelte coerenti lungo la frontiera di Pareto:
-privilegiare varianti più efficienti quando il costo carbonico
-dell'energia è elevato, mantenere varianti più accurate quando tale costo
+di Serverledge proposta in questa tesi. La valutazione verifica che lo
+scheduler carbon-aware traduca la carbon intensity della zona in scelte
+coerenti lungo la frontiera di Pareto, modulando il consumo energetico in
+funzione dell'impatto carbonico contestuale dell'esecuzione. Il consumo
+è considerato una dimensione del trade-off con la qualità del risultato:
+lo scheduler privilegia varianti più efficienti quando il costo carbonico
+dell'energia è elevato, mantenendo varianti più accurate quando tale costo
 è ridotto.}
 
 % -----------------------------------------------------------
@@ -208,6 +207,10 @@ sia contestuale all'impatto carbonico dell'energia disponibile.
 \section{Protocollo di valutazione}
 \label{sec:protocollo-valutazione}
 % -----------------------------------------------------------
+
+Per ciascuna zona è disponibile una traccia storica di carbon intensity
+oraria estratta da ElectricityMaps~\cite{electricitymaps2024}, utilizzata
+per guidare le decisioni dello scheduler durante la simulazione.
 
 Gli Esperimenti~1 e~2 sono condotti a tempo discreto: per ciascuna zona
 viene riletta una traccia di invocazioni da file e ogni richiesta viene
@@ -574,6 +577,11 @@ come riferimento.
     }
 \end{table}
 
+Come atteso, lo scheduler tende a coincidere con $\Lambda_1$ nelle zone
+a bassa CI e si avvicina a $\Lambda_0$ nelle zone più carbon-intensive;
+la distanza tra i due estremi cresce progressivamente spostandosi dalla
+Francia alla Polonia.
+
 \subsection{Interpretazione}
 \label{subsec:esperimento1-interpretazione}
 
@@ -805,36 +813,24 @@ ImageClassification, DistilBERT al 56\% in SentimentAnalysis, BERT-tiny al
 90\% in SpamDetection. Le varianti a massima accuratezza sono praticamente
 assenti ($\leq 3$\%): la griglia francese opera già quasi sempre ai propri
 valori minimi di CI, e non vi sono episodi di CI insolitamente bassa rispetto
-alla norma locale. Le varianti a minima energia risultano invece più presenti
-di quanto ci si aspetterebbe: in LnHarmonic e PiLeibniz raggiungono il 10\%
-e il 12\%, rispettivamente, perché anche una griglia stabile presenta occasionali
-fluttuazioni al rialzo della CI che, amplificate dalla calibrazione locale,
-producono $\lambda$ sufficientemente bassi da attivare le varianti più leggere.
+alla norma locale. Le varianti a minima energia compaiono al 10--12\% in corrispondenza delle
+fluttuazioni occasionali al rialzo della CI locale: anche in una griglia
+stabile, questi episodi producono valori di $\lambda$ sufficientemente bassi
+da attivare le varianti più leggere.
 
-\paragraph{Spagna}
-In Spagna il contributo di solare ed eolico introduce una volatilità maggiore
-rispetto alla Francia. Il profilo di $\lambda$ è più disperso e le selezioni
-si distribuiscono su più punti della frontiera. Per le funzioni numeriche le
-varianti intermedie restano le più frequenti (44\% in LnHarmonic, 45\% in
-MonteCarlo), ma crescono le quote adiacenti: in LnHarmonic
-\texttt{n=10\,000} sale al 22\% e \texttt{n=100\,000} al 24\%.
-Nelle funzioni ML emerge una quota non trascurabile delle varianti più
-accurate --- ViT-Base al 19\% in ImageClassification, RoBERTa-large al 20\%
-in SentimentAnalysis --- assente in Francia: la variabilità rinnovabile genera
-episodi di CI insolitamente bassa rispetto alla media locale, e la calibrazione
-li traduce in $\lambda$ elevati che attivano i modelli più pesanti.
-
-\paragraph{Italia}
-In Italia il baricentro si sposta verso varianti intermedie più leggere. In
-LnHarmonic \texttt{n=10\,000} sale al 33\%, avvicinandosi alla quota di
-\texttt{n=50\,000} (42\%); in PiLeibniz è \texttt{n=5\,000}
-a dominare con il 52\%, mentre una variante più accurata come
-\texttt{n=50\,000} compare per la prima volta in modo non residuale (7\%),
-segnale che alcuni timestamp producono $\lambda$ abbastanza alti da spingere
-lo scheduler verso la regione più accurata della frontiera. Anche
-per le funzioni ML la struttura bimodale di Spagna si conferma: ViT-Base al
-17\% e RoBERTa-large al 18\%, mentre le varianti a minima energia restano
-contenute (3--10\%).
+\paragraph{Spagna e Italia.}
+Nelle zone intermedie la distribuzione si sposta progressivamente verso
+varianti più leggere. In Spagna, il contributo di solare ed eolico introduce
+una volatilità maggiore rispetto alla Francia: le varianti intermedie restano
+le più frequenti (44\% in LnHarmonic, 45\% in MonteCarlo), ma emergono quote
+non trascurabili delle varianti più accurate --- ViT-Base al 19\% in
+ImageClassification, RoBERTa-large al 20\% in SentimentAnalysis --- generate
+dagli episodi di CI insolitamente bassa che la variabilità rinnovabile produce.
+In Italia il baricentro si sposta ulteriormente verso varianti più efficienti:
+\texttt{n=10\,000} sale al 33\% in LnHarmonic e \texttt{n=5\,000} domina al
+52\% in PiLeibniz; anche nelle funzioni ML la struttura bimodale si conferma,
+con varianti accurate (ViT-Base al 17\%, RoBERTa-large al 18\%) e varianti a
+minima energia ancora contenute (3--10\%).
 
 \paragraph{Germania}
 La Germania presenta la distribuzione più ampia tra le cinque zone. In
@@ -1187,7 +1183,7 @@ considerare eventuali tempi di accodamento.
         MonteCarlo
             & \greenval{-91.7\%} & \greenval{-91.5\%}
             & \greenval{-83.5\%} & \redval{-0.6\%}
-            & \redval{+13\mathrm{k}\%} & \redval{+11\mathrm{k}\%}
+            & \redval{+13.000\%} & \redval{+11.000\%}
             & \redval{+548.2\%}  & \greenval{+4.6\%} \\
         PiLeibniz
             & \greenval{-64.1\%} & \greenval{-66.4\%}
@@ -1197,13 +1193,13 @@ considerare eventuali tempi di accodamento.
         SentimentAnalysis
             & \greenval{-70.4\%} & \greenval{-76.5\%}
             & \greenval{-77.2\%} & \redval{-11.8\%}
-            & \redval{+1.0\mathrm{k}\%} & \redval{+752.4\%}
-            & \redval{+3.2\mathrm{k}\%} & \greenval{+26.2\%} \\
+            & \redval{+1.000\%} & \redval{+752.4\%}
+            & \redval{+3.200\%} & \greenval{+26.2\%} \\
         SpamDetection
             & \greenval{-77.7\%} & \greenval{-75.4\%}
             & \greenval{-36.7\%} & \redval{-3.9\%}
-            & \redval{+846.4\%}  & \redval{+1.3\mathrm{k}\%}
-            & \redval{+1.7\mathrm{k}\%} & \greenval{+32.8\%} \\
+            & \redval{+846.4\%}  & \redval{+1.300\%}
+            & \redval{+1.700\%} & \greenval{+32.8\%} \\
         ImageClassification
             & \greenval{-65.4\%} & \greenval{-70.7\%}
             & \greenval{-57.2\%} & \redval{-8.6\%}
@@ -1287,8 +1283,12 @@ delle varianti ad alta qualità.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.90\textwidth]{figures/validation/exp3/throuput.png}
-    \caption{Throughput effettivo vs arrival rate configurato per fase e
-             policy.}
+    \caption{Throughput effettivo rispetto al tasso di arrivo configurato
+             da k6, per fase e policy. $\Lambda_1$ raggiunge la saturazione
+             già dalla fase \emph{Medium} e si stabilizza attorno a
+             1{,}25~req/s nelle fasi successive; $\Lambda_0$ e
+             \emph{adaptive-ci} seguono il profilo configurato fino alla
+             fase \emph{Peak}.}
     \label{fig:exp3-throughput}
 \end{figure}
 
@@ -1311,8 +1311,9 @@ La differenza emerge quando il tasso di arrivo cresce. $\Lambda_0$ resta
 stabile perché seleziona sempre varianti leggere, mentre $\Lambda_1$
 raggiunge presto il proprio limite di capacità: dalla fase \emph{Medium}
 il throughput effettivo non segue più il carico configurato e si assesta
-intorno a 1,25~req/s. \emph{Adaptive-ci} evita questo comportamento nella
-quasi totalità discostandosi di poco dal workload solo nella fase \emph{Peak}. Il risultato indica
+intorno a 1,25~req/s. \emph{Adaptive-ci} evita questo comportamento, mantenendo un throughput
+effettivo aderente al profilo configurato in tutte le fasi, con una lieve
+divergenza solo nella fase \emph{Peak}. Il risultato indica
 che la scelta dinamica della variante non è solo un compromesso
 energetico, ma contribuisce anche a mantenere il sistema operativo sotto
 carico variabile.
@@ -1337,7 +1338,7 @@ I risultati principali sono i seguenti:
 \begin{itemize}
   \item rispetto a $\Lambda_1$, lo scheduler riduce sistematicamente
         energia ed emissioni. Nell'Esperimento~2 il risparmio energetico
-        è pari a circa 62--92\% per funzione e zona, mentre la riduzione
+        è compreso tra il 62\% e il 92\% per funzione e zona, mentre la riduzione
         stimata di CO\textsubscript{2} arriva fino al 94.82\%;
   \item il costo qualitativo rimane contenuto nelle funzioni numeriche
         ($\Delta Q$ circa 0.01--0.61\% nell'Esperimento~2), mentre è più
