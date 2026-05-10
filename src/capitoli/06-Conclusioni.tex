@@ -1,4 +1,4 @@
-\chapter{Conclusioni}
+\chapter{Conclusioni e sviluppi futuri}
 \label{cap:Conclusioni}
 
 \section{Sintesi dei contributi}
@@ -24,9 +24,7 @@ quattro direzioni principali.
 Il primo contributo è il modello di funzione logica con varianti. Una
 funzione logica non corrisponde a una sola implementazione, ma a un insieme
 di varianti compatibili dal punto di vista dell'interfaccia e dello scopo,
-ma diverse per costo energetico e qualità del risultato. In questo modo il
-trade-off energia--qualità diventa un elemento esplicito del sistema, e non
-una proprietà implicita lasciata interamente allo sviluppatore.
+ma diverse per costo energetico e qualità del risultato.
 
 Il secondo contributo riguarda il monitoraggio energetico a granularità di
 funzione. Tramite l'integrazione di Kepler con Prometheus, il sistema
@@ -41,7 +39,11 @@ corrente.
 Il terzo contributo è l'integrazione dell'incertezza nella selezione. Nelle
 fasi iniziali, quando alcune varianti sono state osservate poche volte, il
 sistema applica una stima ottimistica ispirata al principio Lower Confidence
-Bound. Le varianti meno campionate vengono così esplorate con maggiore
+Bound. In letteratura tale principio è l'analogo del più noto Upper
+Confidence Bound (UCB) nei problemi di massimizzazione: poiché l'obiettivo
+è minimizzare il consumo energetico, la stima ottimistica si ottiene
+abbassando il limite di confidenza, favorendo così le varianti meno
+campionate. Le varianti meno campionate vengono esplorate con maggiore
 probabilità, riducendo il rischio che una stima iniziale imprecisa escluda
 prematuramente alternative potenzialmente efficienti.
 
@@ -158,27 +160,32 @@ può influenzare l'aggiornamento dei profili energetici, soprattutto per
 funzioni a basso consumo assoluto. Questo limite non riguarda la natura
 statica dei profili, che nel sistema vengono aggiornati online ed esplorati
 nelle fasi iniziali, ma l'accuratezza della sorgente di misura che alimenta
-tale aggiornamento. Inoltre, la stima delle emissioni considera solo la
-quota operativa dell'esecuzione, cioè l'energia consumata dalla funzione
-moltiplicata per la carbon intensity della zona. Non viene invece modellata
-la \emph{embodied carbon}, ovvero la quota di emissioni associata alla
-produzione, al trasporto, all'installazione e alla dismissione
-dell'hardware, ammortizzata sul ciclo di vita dell'infrastruttura
-computazionale~\cite{gupta2021chasingcarbon}. Questa scelta delimita il
-perimetro del lavoro: lo scheduler riduce l'impatto carbonico operativo
-delle invocazioni, ma non pretende di stimare l'intera impronta ambientale
-del sistema.
+tale aggiornamento.
 
-\paragraph{Assenza di decisioni distribuite.}
-Il sistema decide quale variante eseguire sul nodo corrente, ma non sceglie
-dove eseguirla. In uno scenario cloud-edge reale, la selezione della
-variante e il posizionamento geografico dell'esecuzione sarebbero decisioni
-interdipendenti. Sarebbe necessario valutare se spostare l'esecuzione verso
-una zona con carbon intensity più bassa consenta di ottenere un compromesso
-migliore tra energia, qualità ed emissioni, tenendo però conto del costo di
-trasferimento introdotto dalla decisione: latenza di rete, energia consumata
-per inviare dati o stato applicativo e possibile overhead di avvio sul nodo
-remoto. Questa interazione resta fuori dal perimetro del prototipo attuale.
+Inoltre, la stima delle emissioni adottata in questo lavoro riguarda
+esclusivamente la componente operativa dell'esecuzione, ottenuta
+moltiplicando l'energia consumata dalla funzione per la carbon intensity
+della zona geografica considerata. Tale valore rappresenta quindi una
+stima delle emissioni associate all'esecuzione runtime delle invocazioni,
+ma non una valutazione completa dell'impronta carbonica lungo il ciclo di
+vita del sistema. Non viene infatti modellata la \emph{embodied carbon},
+ovvero la quota di emissioni associata alla produzione, al trasporto,
+all'installazione, alla manutenzione e alla dismissione dell'hardware,
+eventualmente ammortizzata sul ciclo di vita dell'infrastruttura
+computazionale~\cite{gupta2021chasingcarbon}. Questa scelta delimita il
+perimetro del lavoro: lo scheduler proposto mira a ridurre l'impatto
+carbonico operativo delle invocazioni, ma non pretende di stimare l'intera
+impronta ambientale dell'infrastruttura sottostante.
+
+\paragraph{Overhead del meccanismo di monitoraggio.}
+Il sistema di profilazione energetica introduce un costo operativo non
+trascurabile: la raccolta delle metriche tramite Kepler e Prometheus, il
+worker periodico che le associa alle singole invocazioni e le scritture in
+etcd per aggiornare i profili avvengono in continuità con il normale flusso
+di esecuzione. Tale overhead non è stato misurato esplicitamente in questo
+lavoro. In scenari ad alta frequenza di invocazione o con funzioni a latenza
+molto ridotta, il costo relativo del monitoraggio potrebbe risultare
+significativo e richiedere una valutazione dedicata.
 
 \section{Sviluppi futuri}
 
@@ -186,29 +193,30 @@ I limiti individuati aprono diverse direzioni di ricerca e sviluppo, sia a
 breve termine sia verso scenari cloud-edge più ampi.
 
 \paragraph{Generazione automatica di varianti.}
-Un'evoluzione naturale consiste nell'integrare strumenti per generare o
-suggerire automaticamente varianti alternative. Tecniche di traduzione e
-rifattorizzazione automatica del codice, come quelle esplorate in
-\cite{refaas}, potrebbero produrre implementazioni più efficienti dal punto
-di vista energetico. Nel caso delle funzioni ML, tecniche di compressione
-del modello potrebbero svolgere un ruolo analogo: il \emph{pruning} rimuove
-connessioni o componenti poco rilevanti, la quantizzazione rappresenta pesi
-e attivazioni con precisione numerica ridotta, mentre la distillazione
-addestra un modello più piccolo a imitare il comportamento di un modello più
-grande~\cite{han2016deepcompression,hinton2015distilling}. Queste tecniche
-permetterebbero di costruire famiglie di varianti con livelli progressivi
-di costo e accuratezza. Una frontiera più densa ridurrebbe i salti tra
-varianti e permetterebbe allo scheduler di modulare il compromesso con
-maggiore continuità.
+Un'evoluzione naturale consiste nell'integrare strumenti per generare
+automaticamente varianti alternative, riducendo il costo di definizione
+manuale del trade-off energia--qualità. Per le funzioni generali, tecniche
+di traduzione e rifattorizzazione automatica del codice, come quelle
+esplorate in~\cite{refaas}, potrebbero produrre implementazioni
+funzionalmente equivalenti ma con consumo energetico ridotto, da registrare
+direttamente come varianti nel sistema.
 
-\paragraph{Validazione dinamica della qualità.}
-Un'estensione importante riguarda il passaggio da valori statici di qualità
-a metriche dipendenti dagli input e dal contesto applicativo. Lo scheduler
-potrebbe integrare vincoli di qualità minima, classi di richieste con
-criticità diversa o meccanismi di monitoraggio online della correttezza.
-Questo permetterebbe di distinguere richieste per cui l'approssimazione è
-accettabile da richieste per cui la piattaforma deve preservare la variante
-più accurata.
+Per le funzioni ML, tecniche di compressione del modello svolgono un ruolo
+analogo: a partire da un modello di riferimento, è possibile derivare
+varianti con gradi progressivi di approssimazione. Il \emph{pruning} rimuove
+pesi o componenti poco influenti sull'output, riducendo il costo
+computazionale a fronte di una lieve perdita di accuratezza~\cite{han2016deepcompression}.
+La quantizzazione riduce la precisione numerica di pesi e attivazioni,
+ottenendo un effetto simile con un approccio diverso~\cite{han2016deepcompression}.
+La distillazione addestra un modello più compatto a riprodurre il
+comportamento di un modello più grande, costruendo esplicitamente
+un'alternativa leggera~\cite{hinton2015distilling}. Ciascuna di queste
+tecniche produce un punto distinto sul trade-off energia--accuratezza e può
+quindi essere registrata come variante aggiuntiva. Una frontiera più densa
+di varianti ridurrebbe i salti qualitativi osservati nelle funzioni ML e
+permetterebbe allo scheduler di modulare il compromesso con maggiore
+continuità.
+
 
 \paragraph{Calibrazione adattiva e predittiva della carbon intensity.}
 La sigmoide è attualmente calibrata su dati storici. Una calibrazione
@@ -238,11 +246,3 @@ permettendo all'utente di specificare vincoli su qualità minima, latenza,
 impatto carbonico massimo o costo economico. In un modello pay-as-you-go,
 tali preferenze potrebbero essere riflesse anche in politiche di pricing
 differenziate.
-
-\paragraph{Valutazione su workload e infrastrutture reali.}
-Infine, il sistema dovrebbe essere validato su deployment multi-nodo e su
-tracce di workload reali, includendo scenari di autoscaling, cold start,
-interferenza tra tenant e variazioni rapide della domanda. Una campagna
-sperimentale di questo tipo permetterebbe di misurare il comportamento
-dello scheduler in condizioni più vicine alla produzione e di quantificare
-il costo operativo dei meccanismi introdotti.
