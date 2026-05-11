@@ -23,18 +23,18 @@
 \bibitem{Shi2016_EdgeVisionChallenges}
 W.~Shi, J.~Cao, Q.~Zhang, Y.~Li, and L.~Xu, ``Edge computing: Vision and challenges,'' \emph{IEEE Internet of Things Journal}, vol.~3, no.~5, pp. 637--646, 2016.
 
-\bibitem{VanEyk2018_ServerlessIsMore}
-E.~van Eyk, L.~Toader, S.~Talluri, L.~Versluis, A.~Uta, and A.~Iosup, ``Serverless is more: From {PaaS} to present cloud computing,'' \emph{IEEE Internet Computing}, vol.~22, no.~5, pp. 8--17, 2018.
+\bibitem{radovanovic2022carbon}
+A.~Radovanovi{\'c}, R.~Koningstein, I.~Schneider, B.~Chen, A.~Duarte, B.~Roy, D.~Xiao, M.~Haridasan, P.~Hung, N.~Care, S.~Talukdar, E.~Mullen, K.~Smith, M.~Cottman, and W.~Cirne, ``Carbon-aware computing for datacenters,'' \emph{IEEE Transactions on Power Systems}, 2022.
+
+\bibitem{greencourier}
+M.~Chadha, T.~Subramanian, E.~Arima, M.~Gerndt, M.~Schulz, and O.~Abboud, ``{GreenCourier}: Carbon-aware scheduling for serverless functions,'' in \emph{9th International Workshop on Serverless Computing (WoSC '23)}.\hskip 1em plus 0.5em minus 0.4em\relax ACM, 2023, pp. 18--23.
 
 \bibitem{Russo2023_Serverledge}
 G.~Russo, T.~Mannucci, V.~Cardellini, and F.~Lo~Presti, ``Serverledge: Decentralized function-as-a-service for the edge-cloud continuum,'' in \emph{2023 IEEE International Conference on Pervasive Computing and Communications (PerCom)}, 2023, pp. 131--140.
 
-\bibitem{Luo2021_EdgeSchedulingSurvey}
-Q.~Luo, S.~Hu, C.~Li, G.~Li, and W.~Shi, ``Resource scheduling in edge computing: A survey,'' \emph{IEEE Communications Surveys \& Tutorials}, vol.~23, no.~4, pp. 2131--2165, 2021.
-
-\bibitem{IEA2025_Electricity}
+\bibitem{Amaral2023_Kepler}
 \BIBentryALTinterwordspacing
-{International Energy Agency}, ``Electricity 2025 -- emissions,'' 2025, consultato: aprile 2026. [Online]. Available: \url{https://www.iea.org/reports/electricity-2025/emissions}
+M.~Amaral \emph{et~al.}, ``Kepler: A framework to calculate the energy consumption of containerized applications,'' in \emph{Proceedings of IEEE CLOUD 2023}, 2023. [Online]. Available: \url{https://research.ibm.com/publications/kepler-a-framework-to-calculate-the-energy-consumption-of-containerized-applications}
 \BIBentrySTDinterwordspacing
 
 \bibitem{electricitymaps2024}
@@ -43,9 +43,15 @@ Q.~Luo, S.~Hu, C.~Li, G.~Li, and W.~Shi, ``Resource scheduling in edge computing
 \bibitem{jouleguard}
 H.~Hoffmann, ``Jouleguard: energy guarantees for approximate applications,'' in \emph{Proceedings of the 25th Symposium on Operating Systems Principles}, ser. SOSP '15.\hskip 1em plus 0.5em minus 0.4em\relax New York, NY, USA: Association for Computing Machinery, 2015, p. 198–214.
 
-\bibitem{Amaral2023_Kepler}
+\bibitem{VanEyk2018_ServerlessIsMore}
+E.~van Eyk, L.~Toader, S.~Talluri, L.~Versluis, A.~Uta, and A.~Iosup, ``Serverless is more: From {PaaS} to present cloud computing,'' \emph{IEEE Internet Computing}, vol.~22, no.~5, pp. 8--17, 2018.
+
+\bibitem{Luo2021_EdgeSchedulingSurvey}
+Q.~Luo, S.~Hu, C.~Li, G.~Li, and W.~Shi, ``Resource scheduling in edge computing: A survey,'' \emph{IEEE Communications Surveys \& Tutorials}, vol.~23, no.~4, pp. 2131--2165, 2021.
+
+\bibitem{IEA2025_Electricity}
 \BIBentryALTinterwordspacing
-M.~Amaral \emph{et~al.}, ``Kepler: A framework to calculate the energy consumption of containerized applications,'' in \emph{Proceedings of IEEE CLOUD 2023}, 2023. [Online]. Available: \url{https://research.ibm.com/publications/kepler-a-framework-to-calculate-the-energy-consumption-of-containerized-applications}
+{International Energy Agency}, ``Electricity 2025 -- emissions,'' 2025, consultato: aprile 2026. [Online]. Available: \url{https://www.iea.org/reports/electricity-2025/emissions}
 \BIBentrySTDinterwordspacing
 
 \bibitem{lipp2021platypus}
@@ -99,12 +105,6 @@ S.~Mittal, ``A survey of techniques for approximate computing,'' \emph{ACM Compu
 
 \bibitem{refaas}
 S.~Werner, M.~Kähler, and A.~Hakamian, ``Code once, run green: Automated green code translation in serverless computing,'' in \emph{2025 IEEE International Conference on Cloud Engineering (IC2E)}, 2025, pp. 105--113.
-
-\bibitem{radovanovic2022carbon}
-A.~Radovanovi{\'c}, R.~Koningstein, I.~Schneider, B.~Chen, A.~Duarte, B.~Roy, D.~Xiao, M.~Haridasan, P.~Hung, N.~Care, S.~Talukdar, E.~Mullen, K.~Smith, M.~Cottman, and W.~Cirne, ``Carbon-aware computing for datacenters,'' \emph{IEEE Transactions on Power Systems}, 2022.
-
-\bibitem{greencourier}
-M.~Chadha, T.~Subramanian, E.~Arima, M.~Gerndt, M.~Schulz, and O.~Abboud, ``{GreenCourier}: Carbon-aware scheduling for serverless functions,'' in \emph{9th International Workshop on Serverless Computing (WoSC '23)}.\hskip 1em plus 0.5em minus 0.4em\relax ACM, 2023, pp. 18--23.
 
 \bibitem{keplerCNCF2023}
 \BIBentryALTinterwordspacing
