@@ -32,7 +32,7 @@ l'esplorazione di varianti sotto-campionate, raccogliendo dati reali e
 convergendo progressivamente a stime accurate.
  
 Per applicare il principio alla minimizzazione del consumo energetico si
-utilizza il Lower Confidence Bound (LCB), equivalente all'UCB classico:
+utilizza il Lower Confidence Bound (LCB), al più comune UCB:
 \begin{equation}
     \mathrm{LCB}(i) = \mu_i^\text{EMA}
         - \beta \cdot \frac{\sigma_i}{\sqrt{n_i^\text{eff}}}

@@ -10,11 +10,11 @@ secondo è l'interfaccia RAPL (Running Average Power Limit), disponibile
 sui processori Intel e AMD moderni, che permette di leggere i contatori 
 energetici cumulativi direttamente dai registri hardware della CPU.
 
-Una volta raccolti i dati di utilization dei processi e di consumo 
+Una volta raccolti i dati di utilizzo dei processi e di consumo 
 energetico del sistema, Kepler applica il \emph{Ratio Power Model} per 
 attribuire a ciascun container la propria quota di consumo: la potenza 
 dinamica viene distribuita tra i container in proporzione alla loro 
-utilization rispetto all'utilization totale del sistema. Il risultato 
+attività rispetto al carico complessivo del sistema. Il risultato 
 viene aggregato a livello di container e reso disponibile tramite 
 Prometheus nella metrica \texttt{kepler\_container\_cpu\_joules\_total}, 
 un contatore cumulativo espresso in Joule che cresce monotonicamente nel 

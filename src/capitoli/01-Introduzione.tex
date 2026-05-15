@@ -140,6 +140,11 @@ In particolare, Kepler (\emph{Kubernetes-based Efficient Power Level Exporter}) 
 il consumo energetico a livello di singolo processo e container in ambienti Kubernetes,
 esportando metriche accessibili in tempo reale tramite
 Prometheus~\cite{Amaral2023_Kepler}.
+È tuttavia importante osservare che, in generale, gli strumenti di osservabilità
+energetica si concentrano sulle componenti computazionali principali: Kepler raccoglie
+energia da CPU e DRAM tramite l'interfaccia RAPL (\emph{Running Average Power Limit})
+e da GPU NVIDIA tramite NVML, escludendo i consumi associati a storage e interfacce
+di rete, che rimangono non osservati.
 La disponibilità di misurazioni energetiche a livello di container costituisce un
 abilitatore fondamentale: consente di caratterizzare il profilo energetico delle singole
 varianti di funzione e di aggiornarlo a runtime, rendendo possibile una selezione
@@ -179,8 +184,8 @@ a runtime per riflettere il comportamento effettivo delle varianti sul nodo corr
 anziché dipendere esclusivamente da profilazioni statiche soggette a deriva.
 
 Un ulteriore vincolo è di natura contrattuale: la riduzione dell'accuratezza introdotta
-dalle varianti approssimate non può essere imposta unilateralmente dalla piattaforma,
-ma richiede il consenso esplicito dell'utente che formula la richiesta di invocazione.
+dalle varianti approssimate non dovrebbe essere imposta unilateralmente dalla piattaforma,
+ma dovrebbe richiedere il consenso esplicito dell'utente che formula la richiesta di invocazione.
 Solo in presenza di tale consenso lo scheduler può attivare la selezione carbon-aware;
 in assenza, la piattaforma deve garantire il comportamento originale, preservando la
 piena compatibilità retroattiva.
@@ -189,7 +194,7 @@ piena compatibilità retroattiva.
 \section{Contributi e obiettivi della tesi}
 
 L'obiettivo principale di questo lavoro è la progettazione e realizzazione di
-un'estensione carbon-aware della piattaforma
+un'estensione carbon-aware della piattaforma FaaS
 Serverledge~\cite{Russo2023_Serverledge}, in grado di adattare dinamicamente le
 decisioni di selezione delle varianti di funzione in funzione della carbon intensity della
 zona geografica del nodo, minimizzando l'impatto ambientale dell'esecuzione senza
@@ -212,7 +217,7 @@ In particolare, il lavoro si propone di:
 
   \item \textbf{Integrare Kepler per il monitoraggio energetico e l'aggiornamento adattivo dei profili.}
   Il sistema si avvale di Kepler per acquisire stime del consumo energetico 
-  a granularità di container nei nodi Kubernetes, 
+  a granularità di container sui nodi dell'infrastruttura,
   esportate tramite Prometheus. 
   Le misurazioni sono raccolte a runtime durante l'esecuzione delle funzioni e 
   alimentano un meccanismo periodico che aggiorna i profili energetici delle varianti tramite media mobile esponenziale, in modo che le stime riflettano 

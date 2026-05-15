@@ -25,15 +25,12 @@ campionamento ad alta frequenza dei contatori di prestazione hardware
 \cite{powerapi-hwpc}.
 Il sensore si interfaccia direttamente con il sottosistema \texttt{perf\_event} del
 kernel Linux, permettendo di raccogliere metriche dettagliate sull’attività della
-CPU associate a specifici \textit{Control Groups} (cgroups)
-\footnote{Il sottosistema \texttt{perf\_event} del kernel Linux fornisce
-un’interfaccia unificata per il monitoraggio di eventi hardware e software a basso
-livello, come cicli di clock della CPU, istruzioni eseguite e cache miss.
-Attraverso la chiamata di sistema \texttt{perf\_event\_open()}, consente di associare
-le misurazioni a processi, thread o \textit{cgroups}, esponendo i dati tramite
-\textit{file descriptor} e buffer ad anello con overhead contenuto.
-\texttt{perf\_event} costituisce inoltre la base del tool \texttt{perf}, ampiamente
-utilizzato per la profilazione delle prestazioni nei sistemi Linux.} In parallelo, l’HWPC Sensor interroga i \textit{Model Specific Registers} (MSR)
+CPU associate a specifici \textit{Control Groups} (cgroups). Tale sottosistema
+offre un’interfaccia standard per osservare eventi hardware e software a basso
+livello, come cicli di clock, istruzioni eseguite e accessi alla cache, rendendo
+possibile una raccolta delle metriche coerente con la granularità richiesta dal
+modello di stima. In parallelo, l’HWPC Sensor interroga i \textit{Model Specific Registers}
+(MSR)
 tramite l’interfaccia \textit{Running Average Power Limit} (RAPL), ottenendo misure
 cumulative del consumo energetico dei principali domini della CPU
 \cite{rapl-evaluation}.
