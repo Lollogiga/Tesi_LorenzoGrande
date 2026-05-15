@@ -2,9 +2,11 @@
 \label{cap:RisultatiSperimentali}
 
 \emph{Questo capitolo valuta sperimentalmente l'estensione carbon-aware
-di Serverledge proposta in questa tesi. L'obiettivo è verificare se lo scheduler carbon-aware seleziona varianti
-coerenti con la carbon intensity della zona, muovendosi lungo la frontiera
-di Pareto in funzione del contesto carbonico dell'esecuzione. Il consumo
+di Serverledge proposta in questa tesi. L'obiettivo è verificare se lo
+scheduler carbon-aware seleziona varianti coerenti con la carbon intensity
+della zona, muovendosi lungo la frontiera di Pareto in funzione del
+contesto carbonico dell'esecuzione, e se la selezione dinamica delle
+varianti introduce benefici rispetto ad approcci statici. Il consumo
 è considerato una dimensione del trade-off con la qualità del risultato:
 lo scheduler privilegia varianti più efficienti quando il costo carbonico
 dell'energia è elevato, mantenendo varianti più accurate quando tale costo
@@ -211,7 +213,7 @@ Per ciascuna zona è disponibile una traccia storica di carbon intensity
 oraria estratta da ElectricityMaps~\cite{electricitymaps2024}, utilizzata
 per guidare le decisioni dello scheduler durante la simulazione.
 
-Gli Esperimenti~1 e~2 sono condotti a tempo discreto: per ciascuna zona
+Gli Esperimenti~1 e~2 sono condotti emulando un modello temporale discreto: per ciascuna zona
 viene riletta una traccia di invocazioni da file e ogni richiesta viene
 valutata rispetto alla CI associata al passo temporale corrente, estratta
 dalle serie storiche orarie di ElectricityMaps.
@@ -593,13 +595,13 @@ a bassa CI e si avvicina a $\Lambda_0$ nelle zone più carbon-intensive;
 la distanza tra i due estremi cresce progressivamente spostandosi dalla
 Francia alla Polonia.
 
-\subsection{Interpretazione}
+\subsection{Discussione}
 \label{subsec:esperimento1-interpretazione}
 
 I risultati mostrano l'effetto della calibrazione europea sulle scelte
 dello scheduler. Poiché tutte le zone sono valutate rispetto alla stessa
 funzione $\lambda(\mathrm{CI})$, il valore assoluto della CI determina la
-posizione lungo la frontiera: le reti più pulite si avvicinano a
+posizione lungo la frontiera: le regioni più pulite si avvicinano a
 $\Lambda_1$, mentre quelle più carbon-intensive si avvicinano a
 $\Lambda_0$.
 
@@ -669,33 +671,38 @@ suddivisione usata per individuare le fasce rappresentative.
 
 \begin{figure}[p]
     \centering
-    \begin{subfigure}{0.49\textwidth}
+    \begin{subfigure}{0.94\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/ci_distribution_FR.png}
         \caption{Francia (FR)}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.49\textwidth}
+
+    \vspace{0.25cm}
+    \begin{subfigure}{0.94\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/ci_distribution_ES.png}
         \caption{Spagna (ES)}
     \end{subfigure}
 
     \vspace{0.25cm}
-    \begin{subfigure}{0.49\textwidth}
+    \begin{subfigure}{0.94\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/ci_distribution_IT.png}
         \caption{Italia (IT)}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.49\textwidth}
+\end{figure}
+
+\begin{figure}[p]
+    \centering
+    \setcounter{subfigure}{3}
+    \begin{subfigure}{0.94\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/ci_distribution_DE.png}
         \caption{Germania (DE)}
     \end{subfigure}
 
     \vspace{0.25cm}
-    \begin{subfigure}{0.49\textwidth}
+    \begin{subfigure}{0.94\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/ci_distribution_PL.png}
         \caption{Polonia (PL)}
@@ -710,14 +717,14 @@ suddivisione usata per individuare le fasce rappresentative.
 
 \begin{figure}[p]
     \centering
-    \begin{subfigure}{0.80\textwidth}
+    \begin{subfigure}{0.90\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/lambda_curve_FR1.png}
         \caption{Francia (FR)}
     \end{subfigure}
 
-    \vspace{0.25cm}
-    \begin{subfigure}{0.80\textwidth}
+    \vspace{0.15cm}
+    \begin{subfigure}{0.90\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/lambda_curve_PL1.png}
         \caption{Polonia (PL)}
@@ -993,7 +1000,7 @@ CO\textsubscript{2}, tempo e qualità rispetto alle due baseline.
 
 \clearpage
 
-\subsection{Interpretazione}
+\subsection{Discussione}
 \label{subsec:esperimento2-interpretazione}
 
 L'Esperimento~2 mostra come le decisioni cambiano quando la CI viene
@@ -1051,9 +1058,10 @@ uniforme e possono concentrarsi in burst o fasi di picco; è quindi utile
 osservare non solo quale variante lo scheduler seleziona, ma anche se il
 sistema mantiene throughput accettabile al variare del tasso di arrivo.
 
-Il workload è deterministico: a parità di seed, la sequenza di richieste
---- funzione invocata, zona geografica e valore di carbon intensity --- è
-identica per le tre policy, al fine di mantenerle comparabili.
+Il workload è deterministico: a parità di seed e configurazione, la
+sequenza di richieste --- funzione invocata, zona geografica e valore di
+carbon intensity --- è identica per le tre policy, al fine di mantenerle
+comparabili.
 
 % -----------------------------------------------------------
 \subsection{Configurazione del workload}
@@ -1074,13 +1082,19 @@ Il tempo del workload non coincide con l'orario reale di esecuzione del
 test, ma viene usato per simulare l'arrivo di invocazioni a partire da
 un punto della traccia di carbon intensity. Ogni fase è quindi ancorata
 a un orario iniziale della traccia, indicato da \texttt{ciHourStart}.
-Durante il flusso di richieste, lo script seleziona in modo deterministico
-la zona geografica e associa a ciascuna invocazione la carbon intensity
-osservata nella traccia per il contesto temporale simulato, inoltrandola
-poi a Serverledge tramite il campo \texttt{ci\_override}. In questo modo,
-il workload non rappresenta solo un profilo sintetico di arrivi, ma anche
-una sequenza controllata e variabile di condizioni carbon-aware osservate
-dallo scheduler.
+Durante il flusso di richieste, sia la funzione da invocare sia la zona
+geografica sono selezionate tramite un generatore pseudo-casuale
+inizializzato con seed fisso. Le estrazioni avvengono sugli insiemi di
+funzioni e zone definiti nella configurazione del workload, che ne
+specifica anche i pesi relativi. Il seed rende riproducibile la sequenza:
+a parità di indice dell'invocazione, lo script produce quindi sempre la
+stessa coppia funzione-zona, indipendentemente dalla policy in esecuzione.
+A ciascuna invocazione viene poi associata la carbon intensity osservata
+nella traccia per il contesto temporale simulato, inoltrandola a
+Serverledge tramite il campo \texttt{ci\_override}. In questo modo, il
+workload non rappresenta solo un profilo sintetico di arrivi, ma anche una
+sequenza controllata e variabile di condizioni carbon-aware osservate dallo
+scheduler.
 
 Il workload è composto da cinque fasi consecutive, con tasso di arrivo
 compreso tra 2 e 25~richieste al secondo e durata complessiva pari a
@@ -1266,7 +1280,7 @@ delle varianti ad alta qualità.
     \label{fig:exp3-throughput}
 \end{figure}
 
-\subsection{Interpretazione}
+\subsection{Discussione}
 \label{subsec:esperimento3-interpretazione}
 
 I risultati dell'Esperimento~3 completano la valutazione dello scheduler
