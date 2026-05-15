@@ -226,6 +226,24 @@ distribuzione storica della zona. L'Esperimento~3 adotta infine un modello
 a tempo continuo, con richieste che arrivano secondo un profilo di carico
 variabile, al fine di valutare la stabilità del sistema.
 
+\paragraph{Metriche comuni.}
+In tutti gli esperimenti, oltre alle metriche energetiche e prestazionali,
+viene stimata anche l'emissione di CO\textsubscript{2} associata a ciascuna
+invocazione. Il valore è calcolato combinando l'energia consumata
+dall'invocazione con la carbon intensity corrente della zona:
+%
+\begin{equation}
+    \mathrm{CO_2}(r) =
+        \frac{E(r)}{3{,}6 \cdot 10^6}
+        \cdot \mathrm{CI}(r)
+    \label{eq:emissioni-invocazione}
+\end{equation}
+%
+dove $E(r)$ è l'energia dell'invocazione $r$ espressa in joule e
+$\mathrm{CI}(r)$ è la carbon intensity corrente in
+gCO\textsubscript{2}eq/kWh. Il fattore $3{,}6 \cdot 10^6$ converte
+l'energia da joule a kWh, poiché $1~\mathrm{kWh}=3{,}6 \cdot 10^6~\mathrm{J}$.
+
 \paragraph{Zone considerate.}
 Le zone geografiche considerate in tutti gli esperimenti sono Francia (FR),
 Spagna (ES), Italia (IT), Germania (DE) e Polonia (PL), ordinate per CI
@@ -311,9 +329,9 @@ regimi \emph{always-accurate}, \emph{always-energy} e carbon-aware.
 \paragraph{Metriche raccolte.}
 Per ogni invocazione vengono raccolti l'energia consumata, il tempo di
 esecuzione, la qualità associata alla variante selezionata e l'identità
-della variante scelta. A partire da queste misure si calcolano le medie
-aggregate per zona e funzione e la distribuzione percentuale delle
-varianti selezionate.
+della variante scelta. A partire da queste misure e dalla CI corrente si
+calcolano anche le emissioni stimate, le medie aggregate per zona e
+funzione e la distribuzione percentuale delle varianti selezionate.
 
 \subsection{Risultati}
 \label{subsec:esperimento1-risultati}
@@ -724,51 +742,6 @@ Questa differenza evidenzia il ruolo della calibrazione locale: $\lambda$
 non misura quanto una CI sia alta in senso assoluto, ma quanto sia alta
 rispetto al comportamento usuale della zona considerata.
 
-Rispetto all'Esperimento~1, l'analisi include una metrica aggiuntiva:
-l'emissione stimata di CO\textsubscript{2} per invocazione, calcolata
-moltiplicando l'energia dell'invocazione per la carbon intensity corrente
-della zona:
-%
-\begin{equation}
-    \mathrm{CO_2}(r) =
-        \frac{E(r)}{3{,}6 \cdot 10^6}
-        \cdot \mathrm{CI}(r)
-    \label{eq:emissioni-invocazione}
-\end{equation}
-%
-dove $E(r)$ è l'energia dell'invocazione $r$ espressa in joule e
-$\mathrm{CI}(r)$ è la carbon intensity corrente in
-gCO\textsubscript{2}eq/kWh. Il fattore $3{,}6 \cdot 10^6$ converte
-l'energia da joule a kWh, poiché $1~\mathrm{kWh}=3{,}6 \cdot 10^6~\mathrm{J}$.
-
-%In questo esperimento l'attenzione si sposta dalle sole quote di selezione
-%alle metriche aggregate: energia totale, emissioni totali e tempo medio di
-%esecuzione. Per ciascuna zona viene calcolato il delta percentuale dello
-%scheduler carbon-aware rispetto ad \emph{always-accurate}:
-%%
-%\begin{equation}
-%    \Delta_{\mathrm{CO_2}} =
-%        \frac{\mathrm{CO_2}_{\mathrm{accurate}} -
-%              \mathrm{CO_2}_{\mathrm{carbon}}}
-%             {\mathrm{CO_2}_{\mathrm{accurate}}}
-%        \cdot 100
-%    \label{eq:delta-co2}
-%\end{equation}
-%%
-%e il costo qualitativo medio:
-%%
-%\begin{equation}
-%    \Delta_Q =
-%        \frac{Q_{\mathrm{accurate}} - Q_{\mathrm{carbon}}}
-%             {Q_{\mathrm{accurate}}}
-%        \cdot 100 .
-%    \label{eq:delta-qualita}
-%\end{equation}
-%%
-%Questi due indici sono sempre riportati congiuntamente, poiché una
-%riduzione delle emissioni non può essere valutata correttamente senza
-%quantificare il costo qualitativo che la accompagna.
-
 \subsection{Risultati}
 \label{subsec:esperimento2-risultati}
 
@@ -930,9 +903,9 @@ modelli selezionati.
     \label{fig:tradeoff-ml-exp2}
 \end{figure}
 
-La Tabella~\ref{tab:baseline-comparison-exp2} quantifica gli stessi
-scostamenti rispetto alle due baseline, includendo anche le emissioni
-stimate di CO\textsubscript{2}.
+La Tabella~\ref{tab:baseline-comparison-exp2} quantifica, per la
+configurazione locale, gli scostamenti di energia, emissioni stimate di
+CO\textsubscript{2}, tempo e qualità rispetto alle due baseline.
 
 \begin{table}[p]
     \centering
