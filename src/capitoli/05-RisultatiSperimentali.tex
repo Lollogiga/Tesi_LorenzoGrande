@@ -93,8 +93,7 @@ regione della frontiera effettivamente attraversata durante l'esecuzione.
 
 \begin{table}[H]
     \centering
-    \caption{Funzioni utilizzate nella valutazione sperimentale e profili
-             energetici iniziali delle varianti.}
+    \caption{Funzioni utilizzate nella valutazione sperimentale.}
     \label{tab:funzioni-varianti}
     \begin{tabular}{llrrr}
         \toprule
@@ -344,7 +343,7 @@ e~\ref{fig:variant-distribution-ml-exp1} riportano, per ciascuna funzione,
 la composizione percentuale delle varianti scelte dallo scheduler con
 calibrazione europea nelle cinque zone, ordinate per CI media crescente.
 
-\begin{figure}[p]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_LnHarmonic.png}
     \vspace{0.2cm}
@@ -356,7 +355,7 @@ calibrazione europea nelle cinque zone, ordinate per CI media crescente.
     \label{fig:variant-distribution-numeric-exp1}
 \end{figure}
 
-\begin{figure}[p]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.72\textwidth]{figures/validation/01_variant_distribution_SentimentAnalysis.png}
     \vspace{0.2cm}
@@ -465,7 +464,7 @@ come riferimento.
              positivi di $\Delta Q$ indicano qualità superiore alla
              baseline indicata dal pedice.}
     \label{tab:baseline-comparison-exp1}
-    \resizebox{\textwidth}{!}{%
+    \makebox[\textwidth][c]{\resizebox{1.12\textwidth}{!}{%
     \begin{tabular}{llrrrrrrrr}
         \toprule
         Funzione & Zona
@@ -587,7 +586,7 @@ come riferimento.
             & \redval{+22.14\%} & \redval{+6.25\%} & \redval{+16.82\%} & \greenval{+1.39\%} \\
         \bottomrule
     \end{tabular}
-    }
+    }}
 \end{table}
 
 Come atteso, lo scheduler tende a coincidere con $\Lambda_1$ nelle zone
@@ -667,9 +666,16 @@ rilevanti per la decisione carbon-aware, includendo sia momenti in cui la
 rete è relativamente pulita rispetto alla propria storia, sia momenti più
 carbon-intensive. La Figura~\ref{fig:exp2-ci-distribution-sampling}
 mostra, per ciascuna zona, la distribuzione annuale della CI e la
-suddivisione usata per individuare le fasce rappresentative.
+suddivisione usata per individuare le fasce rappresentative. 
 
-\begin{figure}[p]
+Nei due esempi di Figura~\ref{fig:exp2-crf-locali} il punto medio della
+CRF coincide con la media storica locale: in Francia la transizione scatta a CI
+assolute molto basse, mentre in Polonia lo stesso criterio si applica a
+valori molto più alti. Questo mostra che la calibrazione locale fa sì
+che $\lambda$ indichi non quanto la CI sia alta in assoluto, ma quanto
+lo sia rispetto al comportamento usuale della zona considerata.
+
+\begin{figure}[H]
     \centering
     \begin{subfigure}{0.94\textwidth}
         \centering
@@ -692,7 +698,7 @@ suddivisione usata per individuare le fasce rappresentative.
     \end{subfigure}
 \end{figure}
 
-\begin{figure}[p]
+\begin{figure}[H]
     \centering
     \setcounter{subfigure}{3}
     \begin{subfigure}{0.94\textwidth}
@@ -715,7 +721,7 @@ suddivisione usata per individuare le fasce rappresentative.
     \label{fig:exp2-ci-distribution-sampling}
 \end{figure}
 
-\begin{figure}[p]
+\begin{figure}[H]
     \centering
     \begin{subfigure}{0.90\textwidth}
         \centering
@@ -741,21 +747,37 @@ suddivisione usata per individuare le fasce rappresentative.
     \label{fig:exp2-crf-locali}
 \end{figure}
 
-Nei due esempi della Figura~\ref{fig:exp2-crf-locali}, il punto medio
-della CRF coincide con la media storica locale: per la Francia la
-transizione avviene a valori assoluti di CI molto bassi, mentre per la
-Polonia la stessa logica decisionale è centrata su valori molto più elevati.
-Questa differenza evidenzia il ruolo della calibrazione locale: $\lambda$
-non misura quanto una CI sia alta in senso assoluto, ma quanto sia alta
-rispetto al comportamento usuale della zona considerata.
-
 \subsection{Risultati}
 \label{subsec:esperimento2-risultati}
 
 Come nell'Esperimento~1, il primo indicatore osservato è la distribuzione
-delle varianti selezionate. Le Figure~\ref{fig:variant-distribution-numeric-exp2}
-e~\ref{fig:variant-distribution-ml-exp2} riportano le quote di selezione
+delle varianti selezionate. La Figura~\ref{fig:variant-distribution-exp2} riporta le quote di selezione
 ottenute con calibrazione locale della CI.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_LnHarmonic.png}
+    \vspace{0.2cm}
+    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_MonteCarlo.png}
+    \vspace{0.2cm}
+    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_PiLeibniz.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_SentimentAnalysis.png}
+    \vspace{0.2cm}
+    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_ImageClassification.png}
+    \vspace{0.2cm}
+    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_SpamDetection.png}
+    \caption{Distribuzione delle varianti selezionate per le funzioni numeriche
+             e ML nell'Esperimento~2. Per le funzioni numeriche, la calibrazione
+             locale mantiene lo scheduler in una regione intermedia della frontiera.
+             Per le funzioni ML, le transizioni sono discrete e la calibrazione locale
+             produce combinazioni diverse di modelli nelle cinque zone, senza imporre
+             una soglia globale unica.}
+    \label{fig:variant-distribution-exp2}
+\end{figure}
 
 Un primo segnale del corretto funzionamento dello scheduler è che la
 calibrazione locale evita il collasso sistematico su uno dei due estremi
@@ -853,37 +875,6 @@ modelli selezionati.
 
 \begin{figure}[p]
     \centering
-    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_LnHarmonic.png}
-    \vspace{0.2cm}
-    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_MonteCarlo.png}
-    \vspace{0.2cm}
-    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_PiLeibniz.png}
-    \caption{Distribuzione delle varianti selezionate per le funzioni
-             numeriche nell'Esperimento~2. La calibrazione locale mantiene
-             lo scheduler in una regione intermedia della frontiera: le
-             varianti più efficienti crescono nei timestamp più sfavorevoli,
-             ma le scelte non collassano sistematicamente sulla variante a
-             energia minima.}
-    \label{fig:variant-distribution-numeric-exp2}
-\end{figure}
-
-\begin{figure}[p]
-    \centering
-    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_SentimentAnalysis.png}
-    \vspace{0.2cm}
-    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_ImageClassification.png}
-    \vspace{0.2cm}
-    \includegraphics[width=0.72\textwidth]{figures/validation/exp2/01_variant_distribution_SpamDetection.png}
-    \caption{Distribuzione delle varianti selezionate per le funzioni ML
-             nell'Esperimento~2. Le transizioni sono discrete perché ogni
-             variante corrisponde a un modello distinto; la calibrazione
-             locale produce quindi combinazioni diverse di modelli nelle
-             cinque zone, senza imporre una soglia globale unica.}
-    \label{fig:variant-distribution-ml-exp2}
-\end{figure}
-
-\begin{figure}[p]
-    \centering
     \includegraphics[width=0.78\textwidth]{figures/validation/exp2/03_tradeoff_LnHarmonic.png}
     \vspace{0.2cm}
     \includegraphics[width=0.78\textwidth]{figures/validation/exp2/03_tradeoff_MonteCarlo.png}
@@ -914,7 +905,7 @@ La Tabella~\ref{tab:baseline-comparison-exp2} quantifica, per la
 configurazione locale, gli scostamenti di energia, emissioni stimate di
 CO\textsubscript{2}, tempo e qualità rispetto alle due baseline.
 
-\begin{table}[p]
+\begin{table}[H]
     \centering
     \caption{Variazione percentuale dello scheduler carbon-aware
              dell'Esperimento~2 rispetto alle due baseline.}
