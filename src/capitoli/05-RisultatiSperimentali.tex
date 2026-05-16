@@ -327,13 +327,6 @@ collocazione delle zone lungo l'asse decisionale.
 Per ogni coppia funzione-zona viene eseguita la stessa traccia nei tre
 regimi \emph{always-accurate}, \emph{always-energy} e carbon-aware.
 
-\paragraph{Metriche raccolte.}
-Per ogni invocazione vengono raccolti l'energia consumata, il tempo di
-esecuzione, la qualità associata alla variante selezionata e l'identità
-della variante scelta. A partire da queste misure e dalla CI corrente si
-calcolano anche le emissioni stimate, le medie aggregate per zona e
-funzione e la distribuzione percentuale delle varianti selezionate.
-
 \subsection{Risultati}
 \label{subsec:esperimento1-risultati}
 
@@ -613,6 +606,13 @@ $\Lambda_1$, segnalando il passaggio verso varianti più leggere. Il
 fenomeno è più evidente in Polonia, dove la riduzione energetica rispetto
 alla baseline accurata diventa marcata, soprattutto per le funzioni con
 un ampio divario tra variante più accurata e variante più efficiente.
+
+Vale la pena osservare che la riduzione di CO\textsubscript{2} tende a
+superare, nelle zone più carbon-intensive, la corrispondente riduzione
+energetica: poiché lo scheduler seleziona varianti più efficienti proprio
+nei momenti di CI più elevata, il risparmio si concentra sulle
+invocazioni a maggior costo carbonico, amplificando il beneficio
+ambientale oltre il solo risparmio energetico.
 
 Il confronto con $\Lambda_0$ mostra il lato opposto del compromesso. Lo
 scheduler consuma in genere più della baseline energeticamente minima, ma
