@@ -1,13 +1,15 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-Questa tesi affronta il problema della sostenibilità ambientale
-nell'esecuzione di funzioni serverless distribuite lungo il continuum
-Edge--Cloud~\cite{Shi2016_EdgeVisionChallenges}. Le piattaforme
-Function-as-a-Service guidano tipicamente le decisioni di scheduling in base
-a latenza, disponibilità e uso delle risorse, senza considerare in modo
+Il modello Function-as-a-Service (FaaS) ha acquisito crescente rilevanza come
+paradigma di esecuzione event-driven nel continuum
+Edge--Cloud~\cite{Shi2016_EdgeVisionChallenges}: distribuire funzioni
+stateless su nodi eterogenei e geograficamente dispersi consente di ridurre la
+latenza percepita e soddisfare i requisiti di applicazioni real-time.
+Le piattaforme FaaS guidano tuttavia tipicamente le decisioni di scheduling in
+base a latenza, disponibilità e uso delle risorse, senza considerare in modo
 esplicito il costo carbonico dell'energia consumata.
-In un sistema geograficamente distribuito, tuttavia, la carbon intensity della
+In un sistema geograficamente distribuito, la carbon intensity della
 rete elettrica varia nel tempo e nello spazio in funzione del mix energetico
 locale: una stessa invocazione può produrre emissioni molto diverse a seconda
 di dove e quando viene eseguita. Il problema studiato è quindi come ridurre
@@ -70,12 +72,12 @@ Confidence Bound per evitare decisioni premature su varianti poco osservate.
 
 Il contributo si colloca all'intersezione di tre linee di ricerca che, prese
 singolarmente, non risolvono il problema. Gli strumenti di osservabilità energetica come Kepler forniscono misure
-accurate ma nessuna politica di selezione applicativa; analogamente,
-l'approximate computing~\cite{jouleguard} modula il compromesso energia--qualità senza
-collegarlo alla variabilità temporale e geografica della carbon intensity.
-Le soluzioni carbon-aware in ambito cloud intervengono invece sul
-posizionamento geografico del carico o sul suo differimento temporale,
-trascurando la scelta della variante computazionale da eseguire localmente.
+accurate ma nessuna politica di selezione applicativa; l'approximate
+computing~\cite{jouleguard} modula il compromesso energia--qualità senza
+collegarlo alla variabilità carbonale; le soluzioni carbon-aware in ambito
+cloud intervengono invece sul posizionamento geografico del carico o sul
+differimento temporale, trascurando la scelta della variante computazionale
+locale.
 Il contributo distintivo di questo lavoro consiste nel combinare profilazione
 energetica adattiva a livello di container, approximate computing orientato
 alla qualità e un segnale carbonico calibrato per zona in una piattaforma FaaS
