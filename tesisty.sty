@@ -39,7 +39,7 @@
 {\huge\textbf{UNIVERSIT\`A DEGLI STUDI DI ROMA TOR VERGATA}}\\[2cm]
 %{\Large FACOLT\`A DI INGEGNERIA}\\[1.5cm]
 {\Large MACROAREA DI INGEGNERIA}\\[0.5cm]
-{\large CORSO DI LAUREA MAGISTRALE IN INGEGNERIA INFORMATICA}\\[1cm]
+{\large CORSO DI LAUREA MAGISTRALE IN\\ INGEGNERIA INFORMATICA}\\[1cm]
 {\Large \@anno}\\[0.5cm]
 {\large\textbf{Tesi di laurea magistrale}}\\[0.5cm]
 {\Large \@titoloTesi}
@@ -71,12 +71,11 @@
 %     \> \> \@matricola
 %     \end{tabbing}
 
-    \begin{tabbing}
-    \hspace{12cm}\=\kill
-    \textbf{RELATORI:} \> \textbf{CANDIDATO:}\\
-    \@relatore \> \@candidato
-    
-    \end{tabbing}
+    \begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}l@{}}
+    \textbf{RELATORI:} & \textbf{CANDIDATO:}\\
+    \begin{tabular}[t]{@{}l@{}}\@relatore\end{tabular} &
+    \begin{tabular}[t]{@{}l@{}}\@candidato\end{tabular}
+    \end{tabular*}
     \begin{tabbing}
     %\textbf{CORRELATORE:} \\\@correlatore
     \end{tabbing}}
@@ -117,4 +116,3 @@
  \fancyhead[R]{\rightmark} \fancyfoot[L]{\leftmark}
  \fancyfoot[R]{\thepage}
 }
-
