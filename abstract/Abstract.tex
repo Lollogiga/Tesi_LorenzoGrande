@@ -3,41 +3,44 @@
 
 Il modello Function-as-a-Service (FaaS) ha acquisito crescente rilevanza come
 paradigma di esecuzione event-driven nel continuum
-Edge--Cloud~\cite{Shi2016_EdgeVisionChallenges}: distribuire funzioni
-stateless su nodi eterogenei e geograficamente dispersi consente di ridurre la
+Edge--Cloud: distribuire funzioni
+stateless su nodi eterogenei e geograficamente distribuiti consente di ridurre la
 latenza percepita e soddisfare i requisiti di applicazioni real-time.
 Le piattaforme FaaS guidano tuttavia tipicamente le decisioni di scheduling in
 base a latenza, disponibilità e uso delle risorse, senza considerare in modo
 esplicito il costo carbonico dell'energia consumata.
-In un sistema geograficamente distribuito, la carbon intensity della
-rete elettrica varia nel tempo e nello spazio in funzione del mix energetico
-locale: una stessa invocazione può produrre emissioni molto diverse a seconda
-di dove e quando viene eseguita. Il problema studiato è quindi come ridurre
-l'impatto carbonico operativo delle funzioni FaaS senza imporre una
-degradazione indiscriminata della qualità del risultato.
+In un sistema geograficamente distribuito, la carbon intensity, ovvero la
+quantità di emissioni di CO\textsubscript{2} associata alla produzione o al
+consumo di una determinata quantità di energia elettrica, della rete elettrica
+varia nel tempo e nello spazio in funzione del mix energetico locale; di
+conseguenza, una stessa invocazione può produrre emissioni molto diverse a
+seconda del luogo e del momento in cui viene eseguita. Il problema affrontato
+in questa tesi è quindi come ridurre l'impatto carbonico operativo delle
+funzioni FaaS senza imporre una degradazione indiscriminata della qualità del
+risultato.
 
 Allo stato dell'arte, il problema della sostenibilità nei sistemi serverless
-viene affrontato lungo direzioni complementari ma parziali. Gli strumenti di
-monitoraggio energetico permettono di osservare i consumi, ma non stabiliscono
-quale versione applicativa debba essere eseguita. Le politiche carbon-aware
-tendono invece a spostare il carico verso zone a minore intensità carbonica o
-a differirne l'esecuzione nel tempo~\cite{radovanovic2022carbon,greencourier}.
-Rimane quindi aperta la possibilità di
-intervenire localmente, scegliendo quale implementazione di una funzione
-eseguire sul nodo corrente in base al contesto carbonico e al compromesso tra
-energia e qualità.
+viene affrontato lungo direzioni complementari ma parziali. Le tecniche di
+approximate computing sfruttano l'esistenza di implementazioni alternative di
+una stessa funzione, ciascuna con un diverso profilo energia--qualità, per
+modulare tale compromesso a seconda delle condizioni di esecuzione, ma senza
+collegarlo alla variabilità del segnale carbonico. Le politiche carbon-aware
+considerano le emissioni di carbonio agendo sul posizionamento geografico del
+carico o sul differimento temporale. Rimane quindi aperta la possibilità di
+selezionare, a livello locale, quale implementazione di una funzione eseguire
+sul nodo corrente in funzione dell'impatto carbonico corrente e del compromesso
+tra energia e qualità.
 
-Il risultato principale è un'estensione carbon-aware della piattaforma
-open-source Serverledge~\cite{Russo2023_Serverledge}, nella quale ogni funzione logica è associata a un
-insieme di varianti funzionalmente equivalenti ma differenziate per profilo
-energia--qualità. Uno scheduler adattivo seleziona a runtime la variante più
-adatta al contesto carbonico corrente, privilegiando l'accuratezza nelle
-fasce di bassa intensità e orientandosi verso varianti a minore consumo quando
-la rete è più carbon-intensive. La selezione di varianti approssimate è consentita solo se la richiesta lo
-dichiara esplicitamente: in assenza di consenso, la piattaforma preserva il
-comportamento tradizionale e invoca la variante di riferimento.
-Il sistema realizza così un compromesso adattivo, evitando sia una politica
-sempre accurata sia una politica sempre orientata al minimo consumo. La valutazione sperimentale su cinque zone
+Il risultato principale di questa tesi è un'estensione carbon-aware della
+piattaforma open-source Serverledge, nella quale ogni funzione logica è
+associata a un insieme di varianti funzionalmente equivalenti ma differenziate
+per profilo energia--qualità. Uno scheduler adattivo seleziona a runtime la
+variante più adatta alla quantità corrente di emissioni di CO\textsubscript{2},
+privilegiando l'accuratezza nelle fasce di bassa intensità e orientandosi
+verso varianti a minore consumo quando la rete è più carbon-intensive. Il
+sistema realizza così un compromesso adattivo, evitando sia una politica che
+fornisce sempre la versione più accurata sia una politica sempre orientata al
+minimo consumo. La valutazione sperimentale su cinque zone
 europee e sei funzioni, tre numeriche e tre di classificazione ML, mostra che,
 rispetto alla politica che seleziona sempre la variante a massima qualità, il
 sistema ottiene risparmi energetici tra il 62\% e il 92\% e una riduzione
@@ -54,21 +57,23 @@ del server, mentre l'approccio proposto riduce la pressione computazionale
 media sul nodo quando il contesto carbonico rende preferibili varianti meno
 costose.
 
-La metodologia combina monitoraggio energetico, normalizzazione del segnale
-carbonico e scheduling adattivo. Il monitoraggio si basa su
-Kepler~\cite{Amaral2023_Kepler} e Prometheus per raccogliere stime di consumo a granularità di
-container in Kubernetes; i profili delle varianti vengono aggiornati
-incrementalmente tramite media mobile esponenziale, adattandosi al
-comportamento osservato sul nodo corrente. Il segnale carbonico, ottenuto
-tramite API ElectricityMaps~\cite{electricitymaps2024}, viene normalizzato rispetto ai percentili
-storici della zona tramite la \emph{Carbon Response Function} (CRF), una
-funzione logistica che restituisce un parametro $\lambda \in [0,1]$
-rappresentante la posizione della carbon intensity corrente nel contesto
-locale, senza ricorrere a soglie globali indipendenti dalle caratteristiche
-della zona considerata. Lo scheduler usa $\lambda$
-per scalarizzare la frontiera di Pareto energia--qualità costruita sulle
-varianti non dominate, con un termine di esplorazione ispirato al Lower
-Confidence Bound per evitare decisioni premature su varianti poco osservate.
+La metodologia si articola in tre componenti integrati. I profili energia--qualità
+delle varianti vengono stimati a runtime tramite Kepler, strumento di misura del
+consumo energetico a granularità di container, e Prometheus, sistema di raccolta
+di metriche; tali profili vengono aggiornati incrementalmente tramite media mobile
+esponenziale per adattarsi al comportamento osservato sul nodo. Poiché varianti
+poco invocate possono avere profili stimati con scarsa precisione, la selezione
+incorpora un termine di esplorazione ispirato al Lower Confidence Bound, che evita
+di penalizzarle prematuramente. Sulla base dei profili correnti, lo scheduler
+costruisce la frontiera di Pareto delle varianti non dominate, ossia quelle per le
+quali nessun'altra offre simultaneamente minore consumo e maggiore qualità. Il
+segnale carbonico, acquisito tramite l'API ElectricityMaps e normalizzato rispetto
+ai percentili storici della zona attraverso la \emph{Carbon Response Function}
+(CRF), una funzione logistica che restituisce un parametro $\lambda \in [0,1]$
+indicante quanto la carbon intensity corrente si discosti dalla media storica
+locale, viene usato per scalarizzare tale frontiera: valori elevati di $\lambda$
+orientano la selezione verso varianti a basso consumo, valori bassi verso quelle
+ad alta accuratezza.
 
 Il contributo si colloca all'intersezione di tre linee di ricerca che, prese
 singolarmente, non risolvono il problema. Gli strumenti di osservabilità energetica come Kepler forniscono misure
